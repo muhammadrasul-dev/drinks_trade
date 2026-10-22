@@ -325,3 +325,11 @@ git push origin main
 ```
 bro start unrelated tasks in separate sessions
 ```
+
+---
+
+## Prompt 27 — Merge'dan oldin soddalashtirish (2026-10-22)
+
+```
+yes merge them, but do simply refactor theese tasks before merge
+```
