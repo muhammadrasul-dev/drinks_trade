@@ -2,4 +2,5 @@
 // domain, each shaped as architecture §5.1 describes.
 export * from './audit';
 export * from './auth';
+export * from './cash';
 export * from './users';

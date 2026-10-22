@@ -241,6 +241,12 @@ Hech qachon xarid qilinmagan mahsulot ortiqcha chiqsa, `avgCost = 0` → ortiqch
 
 Har yozuvda: lock cashbox → balansni yangilash → `balance_after` → audit.
 
+Amalga oshirilishi (T-402, `packages/server/src/modules/cash`): yagona yozish nuqtasi — `cash.record(tx, ctx, cashbox, input)`.
+- Chaqiruvchi avval `lockCashboxes` (§2, 4-qadam) bilan kerakli kassalarni bitta chaqiruvda qulflaydi va qaytgan `LockedCashbox` ni uzatadi; `record` o'zi qulf olmaydi (savdoda u 9-qadamda, ya'ni `stock_balance` dan keyin chaqiriladi).
+- Balans bitta `UPDATE … SET balance = balance + delta WHERE … AND balance + delta >= 0 RETURNING balance` bilan o'zgaradi; qaytgan qiymat — `balance_after`. Qator qaytmasa → `CASHBOX_INSUFFICIENT { cashbox: CASH | CARD }` — **params'da summa yo'q** (rolga qaramay; OQ-02, CLAUDE.md 6-qoida). Xato chaqiruvchi tranzaksiyasini butunlay rollback qiladi. Bajarishdagi oldindan tekshiruv (§4.3 5-qadam, §5.2 4-qadam) ixtiyoriy — yakuniy kafolat `record` va DB `CHECK`.
+- Yo'nalish turdan olinadi (`CASH_TX_DIRECTION`); `MANUAL_REVERSAL` da `direction` va `reversalOfId` aniq beriladi. `OTHER_EXPENSE` izohsiz → `NOTE_REQUIRED`. Har yozuvga audit `CREATE` / `cash_transaction`.
+- Ruxsat (`assertCan`), kiritma validatsiyasi, sana (OQ-07) va qarzdagi izoh — chaqiruvchida (savdo/xarid bajarish, T-403 qarzlar, T-702 kassa amallari).
+
 Qarz qaytarish: `debt.repaidAmount += amount`; teng bo'lsa `status = CLOSED`. Qarz qaysi kassaga qaytishini foydalanuvchi tanlaydi (FR-7.2). Nasiya savdo/xarid qarzi ham shu usulda qaytariladi.
 
 Qo'lda kiritilgan yozuvni bekor qilish (OQ-08): faqat OWNER, teskari `MANUAL_REVERSAL` yozuvi bilan (`reversal_of_id` → asl yozuv); asl yozuv o'chirilmaydi. Teskari yozuv kassa yo'nalishini teskari qiladi (chiqim bekor → kirim), shuning uchun kirimni bekor qilishda balans tekshiriladi. Qarz berish/olish storno'si qarzni `CANCELLED` qiladi (qaytarishlari bo'lsa — bloklanadi). P&L o'qishda storno qilingan yo'l kira hisobga olinmaydi.
