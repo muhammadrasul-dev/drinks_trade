@@ -32,6 +32,8 @@ Parolni unutsangiz — Egasiga murojaat qiling, u yangi parol o'rnatadi.
 | Kassa, qarzlar | ✅ | ❌ |
 | Foydalanuvchilar, audit jurnali | ✅ | ❌ |
 
+Xodim menyusida unga yopiq bo'limlar ko'rinmaydi. Bunday bo'lim manzilini qo'lda ochsa — **Ruxsat yo'q** (403) sahifasi chiqadi.
+
 
 ## 4. Asosiy tushunchalar
 - **Dona / Blok.** Har mahsulotda "blokdagi dona soni" bor. Masalan, Cola 0.5 L — blokda 12 dona. 27 dona = **2 blok 3 dona**.

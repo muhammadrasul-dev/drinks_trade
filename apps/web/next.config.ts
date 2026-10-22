@@ -20,6 +20,8 @@ const nextConfig: NextConfig = {
   transpilePackages: ['@drinks/shared', '@drinks/ui', '@drinks/server', '@drinks/db'],
   // Dev logs print Server Action arguments verbatim — loginAction would leak passwords.
   logging: { serverFunctions: false },
+  // forbidden() + app/[locale]/(app)/forbidden.tsx: a real 403 for pages the role may not open.
+  experimental: { authInterrupts: true },
 };
 
 export default withNextIntl(nextConfig);

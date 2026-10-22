@@ -9,9 +9,48 @@
     "ru": "Русский"
   },
   "home": {
-    "title": "drinks_trade",
-    "description": "Система учёта для магазина напитков",
     "greeting": "Добро пожаловать, {name} ({role})."
+  },
+  "common": {
+    "cancel": "Отмена",
+    "confirm": "Подтвердить",
+    "comingSoon": "Этот раздел появится на следующих этапах.",
+    "som": "сум"
+  },
+  "nav": {
+    "label": "Главное меню",
+    "open": "Открыть меню",
+    "groups": {
+      "main": "Главное",
+      "catalog": "Справочники",
+      "documents": "Документы",
+      "finance": "Финансы",
+      "reports": "Отчёты",
+      "admin": "Администрирование"
+    },
+    "sections": {
+      "dashboard": "Главная",
+      "products": "Товары",
+      "warehouses": "Склады",
+      "sales": "Продажи",
+      "purchases": "Закупки",
+      "stockCounts": "Инвентаризация",
+      "cash": "Касса",
+      "debts": "Долги",
+      "stockReport": "Отчёт по остаткам",
+      "salesReport": "Отчёт по продажам",
+      "pnlReport": "P&L (прибыли и убытки)",
+      "users": "Пользователи",
+      "audit": "Журнал аудита"
+    }
+  },
+  "userMenu": {
+    "label": "Меню пользователя"
+  },
+  "forbidden": {
+    "title": "Доступ запрещён",
+    "description": "У вас нет прав на просмотр этой страницы.",
+    "backHome": "На главную"
   },
   "auth": {
     "login": {

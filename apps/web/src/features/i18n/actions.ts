@@ -6,7 +6,7 @@ import { ErrorCode } from '@drinks/shared';
 import { hasLocale } from 'next-intl';
 
 import { routing } from '@/i18n/routing';
-import { toActionError } from '@/lib/action-error';
+import { toActionError } from '@/lib/action';
 import { getCurrentSession, getRequestMeta } from '@/lib/session';
 
 /**
