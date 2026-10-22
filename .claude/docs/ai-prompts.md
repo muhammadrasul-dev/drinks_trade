@@ -317,3 +317,11 @@ T-102 start on new session
 ```
 git push origin main
 ```
+
+---
+
+## Prompt 26 — T-103: dev bazani reset qilishga rozilik (2026-10-22)
+
+```
+Ha, dev bazani reset qil
+```

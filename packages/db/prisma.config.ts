@@ -11,6 +11,8 @@ export default defineConfig({
   schema: 'prisma/schema.prisma',
   migrations: {
     path: 'prisma/migrations',
+    // `prisma db seed` (pnpm db:seed); Prisma 7 no longer seeds after migrate reset.
+    seed: 'tsx prisma/seed.ts',
   },
   datasource: {
     // `prisma generate` needs no database, so a missing URL must not fail

@@ -881,7 +881,9 @@ SRS bo'yicha boshlang'ich import yo'q. `seed.ts` faqat tizim ishlashi uchun mini
 3. `user`: OWNER (`SEED_OWNER_USERNAME` / `SEED_OWNER_PASSWORD` env'dan).
 4. `doc_sequence`: SALE, PURCHASE, STOCK_COUNT → 0.
 
-Dev uchun alohida `seed.dev.ts` — namunaviy mahsulotlar, omborlar, xaridlar (faqat lokalda).
+Idempotentlik: tashkilot va do'kon — birinchisi bor bo'lsa qayta yaratilmaydi; kassa va `doc_sequence` — `upsert` (mavjudi o'zgarmaydi, hisoblagich nolga tushmaydi); OWNER tashkilotda bor bo'lsa umuman tegilmaydi (login/paroli o'zgargan bo'lishi mumkin). Login env'dan kichik harfga o'giriladi va `user_username_format` qoidasiga, parol ≥ 8 belgiga tekshiriladi. Parol hashi — argon2id (`@node-rs/argon2`, PHC satr). OWNER F.I.O — "Egasi", tashkilot "Drinks Trade", do'kon "Asosiy do'kon" (keyin UI'da o'zgartiriladi).
+
+Dev uchun alohida `seed.dev.ts` (faqat lokalda, `pnpm db:seed:dev`): avval `seed.ts`, keyin 2 ombor (3 + 2 sub-ombor), 5 toifa, 8 brend, 13 mahsulot (`sku` bo'yicha upsert), 2 xodim (`staff1`, `staff2`, parol `staff1234`). Qoldiq va xaridlar yo'q — ular faqat inventar/xarid servislari orqali yoziladi; servislar tayyor bo'lgach (T-4xx) qo'shiladi.
 
 ## 9. Migratsiya qoidalari
 - Har bir sxema o'zgarishi — `prisma migrate dev --name <ma'noli_nom>`; migratsiya fayli kod bilan birga commit qilinadi.

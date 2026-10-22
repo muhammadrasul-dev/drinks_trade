@@ -10,6 +10,9 @@
     "postinstall": "prisma generate",
     "generate": "prisma generate",
     "migrate": "prisma migrate dev",
+    "reset": "prisma migrate reset --force",
+    "seed": "prisma db seed",
+    "seed:dev": "tsx prisma/seed.dev.ts",
     "studio": "prisma studio",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
@@ -22,11 +25,13 @@
   "devDependencies": {
     "@drinks/config": "workspace:*",
     "@drinks/shared": "workspace:*",
+    "@node-rs/argon2": "2.2.2",
     "@types/node": "24.19.2",
     "@types/pg": "8.23.1",
     "dotenv": "18.0.8",
     "pg": "8.23.1",
     "prisma": "7.10.1",
+    "tsx": "4.23.15",
     "typescript": "6.0.3",
     "vite": "8.3.4",
     "vitest": "5.0.5"

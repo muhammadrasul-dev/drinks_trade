@@ -20,6 +20,9 @@
     "db:logs": "docker compose -f docker/compose.dev.yml logs -f postgres",
     "db:generate": "pnpm --filter @drinks/db generate",
     "db:migrate": "pnpm --filter @drinks/db migrate",
+    "db:reset": "pnpm --filter @drinks/db reset",
+    "db:seed": "pnpm --filter @drinks/db seed",
+    "db:seed:dev": "pnpm --filter @drinks/db seed:dev",
     "db:studio": "pnpm --filter @drinks/db studio"
   },
   "devDependencies": {
