@@ -1,12 +1,11 @@
 import type { Locale } from '@drinks/shared';
 import { setRequestLocale } from 'next-intl/server';
 
-import { ComingSoon } from '@/components/coming-soon';
-import { requireSection } from '@/lib/session';
+import { WarehousesPage } from '@/features/warehouses/components/warehouses-page';
 
-export default async function WarehousesPage({ params }: PageProps<'/[locale]/warehouses'>) {
+export default async function Page({ params, searchParams }: PageProps<'/[locale]/warehouses'>) {
   const { locale } = await params;
   setRequestLocale(locale as Locale);
-  await requireSection(locale as Locale, 'warehouses');
-  return <ComingSoon section="warehouses" />;
+  const { archived } = await searchParams;
+  return <WarehousesPage locale={locale as Locale} archived={archived === '1'} />;
 }

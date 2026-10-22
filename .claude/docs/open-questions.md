@@ -29,6 +29,7 @@ SRS'dagi biznes savollar yopilgan. Bu yerda — arxitektura va DB loyihalashda c
 | OQ-17 | `pnpm user:reset-password` faolsiz akkauntga nima qiladi? | Parol tiklanadi, akkaunt faolsizligicha qoladi (CLI ogohlantiradi) | Yopilgan — A: parol tiklanadi, akkaunt faolsizligicha qoladi |
 | OQ-18 | Savdo storno'sida bir mahsulot bir necha qatorda bo'lsa, o'rtacha tannarx qatorma-qator hisoblanadimi yoki mahsulot bo'yicha bir marta? | Mahsulot bo'yicha bir marta (xarid §5.2 kabi) | Yopilgan — A: mahsulot bo'yicha bir marta |
 | OQ-19 | Nasiya savdo/xaridda izoh (qarz izohi) majburiymi? | Ha — `paidCredit > 0` bo'lsa hujjat izohi majburiy (`NOTE_REQUIRED`), qarzga o'sha izoh yoziladi | Yopilgan — A: izoh majburiy, `debts.open` ham tekshiradi |
+| OQ-21 | Ochiq (DRAFT) inventarizatsiyasi bor bo'sh ombor/sub-omborni arxivlash mumkinmi? | Yo'q — `WAREHOUSE_IN_STOCK_COUNT`; avval sanoqni bajaring yoki bekor qiling | Ochiq — tavsiya bo'yicha qilingan (T-304) |
 
 ---
 
@@ -102,3 +103,11 @@ BR-10: kontragent ro'yxati yo'q, qarz **izoh** bilan yuritiladi; kassa orqali qa
 - **A (tavsiya):** `paidCredit > 0` bo'lsa hujjatni bajarishda izoh majburiy (`NOTE_REQUIRED`); `debt.note` = hujjat izohi. Tekshiruv T-405 / T-503 da.
 - **B:** izoh ixtiyoriy qoladi; ro'yxatda izoh o'rniga hujjat raqami ko'rsatiladi.
 T-403 da `debts.open` `SALE`/`PURCHASE` qarzda bo'sh izohni qabul qilardi — Prompt 36 da bu ham `NOTE_REQUIRED` ga o'zgartirildi.
+
+### OQ-21 — Ochiq inventarizatsiya va ombor/sub-omborni arxivlash
+**Holat: ochiq — tavsiya (A) bo'yicha qilingan (T-304).**
+FR-2.2 faqat "bo'sh bo'lmagan ombor/sub-omborni arxivlab bo'lmaydi" deydi. Lekin ombor bo'sh bo'lsa-yu, unda ochiq (DRAFT) inventarizatsiya bo'lsa-chi? Sanoqda shu sub-ombor uchun "ortiqcha topilgan" qator bo'lishi mumkin — bajarilganda tovar arxivdagi joyga tushadi (BR-8).
+- **A (tavsiya, qilingan):** arxivlash rad etiladi — `WAREHOUSE_IN_STOCK_COUNT { warehouseName, stockCountNumber }` (ombor uchun ham, uning sub-ombori uchun ham). Foydalanuvchi avval sanoqni bajaradi yoki bekor qiladi. Mavjud xato kodi va xabari ishlatiladi.
+- **B:** arxivlashda ochiq sanoq avtomatik bekor qilinadi (`CANCEL`). Qulay, lekin foydalanuvchi kiritgan sanoq natijalari jimgina yo'qoladi.
+- **C:** ruxsat beriladi, sanoqni bajarishda arxivdagi sub-ombor qatorlari rad etiladi (T-602 murakkablashadi).
+B yoki C ga o'tish — `warehouses.service.ts` dagi `assertNoOpenStockCount`.

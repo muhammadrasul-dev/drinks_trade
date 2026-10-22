@@ -50,7 +50,7 @@ newAvg = (Q * avg + inCost) / (Q + q)      // inCost — kirim summasi (so'm), q
 - `adjust(tx, ctx, { docDate, stockCountId?, lines: [{ subWarehouseId, productId, countedQty }] })` — `systemQty` qulf ostida o'qiladi; `delta ≠ 0` → `balance = countedQty`, `stock_movement(COUNT_ADJUSTMENT, delta, avg, costAmount(delta, avg))`; natija `products[]` = bitta `stock_count_result` (`systemQty`, `countedQty`, `qtyDelta`, `avgCost`, `amount = costAmount(Σ delta, avg)`), `product_cost.total_qty += Σ delta`, avg o'zgarmaydi.
 - Natija — har qator uchun yozilgan `stock_movement` (ishorali: `qtyDelta`, `costAmount`; tannarxlar 4 xonali satr). Xatolarda qoldiq miqdorlari bor (maxfiy emas), summa yo'q. Xato chaqiruvchi tranzaksiyasini rollback qiladi.
 - Audit yo'q: `stock_movement` o'zi jurnal (`created_by_id`), hujjat `POST` / `REVERSE` auditini chaqiruvchi yozadi.
-- So'rovlar (qulfsiz): `getAvailable(db, ctx, keys)` — kalitlar tartibida qoldiq (yo'q yoki boshqa do'kon → 0; qoralama ogohlantirishi FR-3.3, inventarizatsiya formasi); `getProductTotals(db, ctx, productIds)` — do'kon bo'yicha `totalQty`, `avgCost` faqat `report.sales.cost` egasiga (CLAUDE.md 6-qoida).
+- So'rovlar (qulfsiz): `getAvailable(db, ctx, keys)` — kalitlar tartibida qoldiq (yo'q yoki boshqa do'kon → 0; qoralama ogohlantirishi FR-3.3, inventarizatsiya formasi); `getProductTotals(db, ctx, productIds)` — do'kon bo'yicha `totalQty`, `avgCost` faqat `report.sales.cost` egasiga (CLAUDE.md 6-qoida); `getStockedSubWarehouses(db, ctx, subWarehouseIds?)` — qoldig'i bor (`qty > 0`) sub-omborlar to'plami (T-304: omborlar sahifasidagi belgi va arxivlash tekshiruvi — u 2-qadam qulfi ostida chaqiriladi, §9b).
 
 ## 2. Qulflash tartibi (deadlock'ning oldini olish)
 
@@ -82,6 +82,8 @@ agar EXISTS stock_count WHERE warehouse_id IN warehouseIds AND status='DRAFT'
   → DomainError(WAREHOUSE_IN_STOCK_COUNT, { warehouseName, stockCountNumber })
 ```
 Inventarizatsiya yaratish omborni `FOR UPDATE` bilan qulflaydi → u bajarilayotgan savdo tugashini kutadi, savdo esa yangi ochilgan inventarizatsiyani ko'radi. Poyga holati yo'q.
+
+Shu qulfdan keyin arxiv tekshiruvi ham bajariladi: `warehouses.resolveActive(tx, ctx, subWarehouseIds)` → ombor yoki sub-ombor arxivda bo'lsa `ENTITY_ARCHIVED` (§9b). Ombor/sub-omborni arxivlash shu ombor qatorini `FOR UPDATE` qiladi, shuning uchun arxivlangan joyga tovar kira olmaydi va qoldiqli joy arxivlanmaydi. Inventarizatsiya ochishda (T-601) ham arxivdagi ombor rad etiladi.
 
 Qoralama yaratish/tahrirlash bloklanmaydi (BR-8).
 
@@ -294,6 +296,31 @@ Filtr: kun / oy / yil / ixtiyoriy oraliq (Toshkent vaqti).
 - Boshqa tashkilotniki → `NOT_FOUND { entity }`. O'zgarishsiz nom / qayta arxivlash / qayta tiklash — no-op (yozuv va audit yo'q).
 - Audit: `CREATE` (`after.name`), `UPDATE` (`before/after.name`), `ARCHIVE` / `RESTORE` (`archivedAt`); `entityType` = `category` | `brand`.
 
+## 9b. Omborlar va sub-omborlar (T-304, FR-2.1–2.2)
+`packages/server/src/modules/warehouses/warehouses.service.ts` — do'kon darajasida (`store_id`, katalogdan farqli — ADR-011), daraxt **aniq 2 daraja**: `warehouse` → `sub_warehouse`; sub-omborning bolasi yo'q (sxemada ota ustuni yo'q).
+- `warehouses.list(ctx, { archived? })` — `warehouse.read`; default faol omborlar, `archived: true` — arxivdagilar; har omborda **barcha** sub-omborlari (arxivdagilar ham, `archived` belgisi bilan), `hasStock` (biror mahsulot `qty > 0`) belgisi. DTO — `WarehouseItem` / `SubWarehouseItem` (`@drinks/shared`).
+- `warehouses.options(ctx)` — hujjat formalari (xarid, savdo, inventarizatsiya) uchun: faqat faol omborlar va ularning faol sub-omborlari; faol sub-ombori yo'q ombor tushiriladi (`WarehouseOption`).
+- `warehouses.resolveActive(db, ctx, subWarehouseIds)` — hujjat servislari uchun server himoyasi (T-404+): boshqa do'konniki/yo'q → `NOT_FOUND { entity: 'sub_warehouse' }`; ombori arxivda → `ENTITY_ARCHIVED { entity: 'warehouse', name }`; o'zi arxivda → `ENTITY_ARCHIVED { entity: 'sub_warehouse', name }`. Natija — `sub-ombor id → ombor id` (§2 2-qadamda qulflanadigan omborlar). Qoralama saqlashda bir marta chaqiriladi; **bajarish/storno'da 2-qadamdan keyin yana chaqiriladi** (qulf ostidagi arxiv holati yakuniy).
+- Yaratish/tahrirlash/arxivlash/tiklash — `warehouse.write` (Egasi ham, Xodim ham), kiritma `@drinks/shared/schemas` (`warehouse*InputSchema`, `subWarehouseCreateInputSchema`: nom trim, 1–100):
+  - `warehouses.create/rename/archive/restore`, `subWarehouses.create/rename/archive/restore`.
+  - `subWarehouses.create({ warehouseId })` — `warehouseId` do'kondagi **ombor** bo'lishi shart: sub-ombor id'si berilsa → `NOT_FOUND { entity: 'warehouse' }` (3-daraja yo'q). Ota ombor `FOR SHARE` (2-qadam) qulflanadi; arxivda bo'lsa → `ENTITY_ARCHIVED`.
+- **Nom takrori** (katta-kichik harfga sezgirsiz, arxivdagilar ham, T-302 kabi) → `DUPLICATE_VALUE { entity: 'warehouse' | 'sub_warehouse', field: 'name', archived }`: ombor nomi — **do'kon** bo'yicha, sub-ombor nomi — **ombor** bo'yicha (boshqa omborda bir xil nom mumkin). DB unique (`store_id, name` / `warehouse_id, name`) parallel so'rovda P2002 → `DUPLICATE_VALUE`.
+- **Arxivlash (FR-2.2):**
+  ```
+  BEGIN
+   1. ombor qatori FOR UPDATE (§2 2-qadam; sub-ombor uchun — uning ombori)
+   2. allaqachon arxivda → no-op
+   3. omborda DRAFT inventarizatsiya → WAREHOUSE_IN_STOCK_COUNT { warehouseName, stockCountNumber } (OQ-21)
+   4. qoldiq (qulf ostida o'qiladi): sub-omborda / ombordagi istalgan sub-omborda qty > 0 →
+      ENTITY_NOT_EMPTY { entity, name, subWarehouses? }   (ombor uchun — qoldiqli sub-omborlar nomlari)
+   5. archived_at = now(); audit ARCHIVE
+  COMMIT
+  ```
+  **Nega bu yetarli:** har bajarish/storno (savdo, xarid, inventarizatsiya) `stock_balance` ga (7-qadam) tegishidan oldin omborni `FOR SHARE`/`FOR UPDATE` (2-qadam) bilan qulflaydi. Arxivlash `FOR UPDATE` ni olgach: (a) avval boshlangan bajarishlar commit bo'lgan — READ COMMITTED'da keyingi so'rov ularning qoldig'ini ko'radi; (b) keyin boshlanganlari arxivlash commit bo'lguncha kutadi, so'ng `resolveActive` orqali `ENTITY_ARCHIVED` oladi. Shu sababli tekshiruv va arxivlash orasida tovar kira olmaydi. Sub-ombor qatorlari qulf tartibida yo'q — ularning arxivi ham **ota ombor** qatori orqali tartiblanadi. `stock_balance` faqat `inventory.getStockedSubWarehouses` (T-401 moduli) orqali o'qiladi.
+- Ombor arxivlanganda sub-omborlari o'z `archived_at` holatini saqlaydi (kaskad yo'q): ombor arxivda ekan ular `options`/`resolveActive` da yo'q; ombor tiklansa, alohida arxivlanmagan sub-omborlar qaytadi. Arxivdagi ombor ichidagi sub-omborni tiklash → `ENTITY_ARCHIVED { entity: 'warehouse' }` (avval omborni tiklang). Tiklash ham ombor qatorini `FOR UPDATE` qiladi.
+- Boshqa do'konniki → `NOT_FOUND { entity }`. O'zgarishsiz nom / qayta arxivlash / qayta tiklash — no-op. Arxivdagi tugunni qayta nomlash mumkin.
+- Audit: `CREATE` (`after.name`, sub-omborda `after.warehouseId` ham), `UPDATE` (`before/after.name`), `ARCHIVE` / `RESTORE` (`archivedAt`); `entityType` = `warehouse` | `sub_warehouse`.
+
 ## 10. Xato kodlari (`shared/errors.ts`)
 
 | Kod | Qachon |
@@ -305,7 +332,7 @@ Filtr: kun / oy / yil / ixtiyoriy oraliq (Toshkent vaqti).
 | `DOCUMENT_NOT_DRAFT` / `DOCUMENT_NOT_POSTED` | noto'g'ri holatda amal |
 | `INSUFFICIENT_STOCK` | BR-7 |
 | `PURCHASE_REVERSAL_INSUFFICIENT_STOCK` | BR-3 |
-| `WAREHOUSE_IN_STOCK_COUNT` | BR-8 |
+| `WAREHOUSE_IN_STOCK_COUNT` | BR-8; ochiq inventarizatsiyali ombor/sub-omborni arxivlash (OQ-21) |
 | `STOCK_COUNT_ALREADY_OPEN` | BR-8 |
 | `PAYMENT_SPLIT_MISMATCH` | BR-9 |
 | `CASHBOX_INSUFFICIENT` | BR-9 (STAFF uchun xabarda balans summasi ko'rsatilmaydi) |
@@ -313,8 +340,8 @@ Filtr: kun / oy / yil / ixtiyoriy oraliq (Toshkent vaqti).
 | `DEBT_CANCELLED` | qarz allaqachon bekor qilingan (masalan, ikki marta storno) |
 | `DEBT_OVERPAYMENT` | qaytarish > qarz qoldig'i |
 | `NOTE_REQUIRED` | boshqa chiqim / qarz izohsiz; nasiya qismli savdo/xarid izohsiz (OQ-19) |
-| `ENTITY_NOT_EMPTY` | bo'sh bo'lmagan ombor/sub-omborni arxivlash (FR-2.2) |
-| `ENTITY_ARCHIVED` | arxivlangan mahsulot/omborni hujjatda tanlash |
+| `ENTITY_NOT_EMPTY` | bo'sh bo'lmagan ombor/sub-omborni arxivlash (FR-2.2; `{ entity, name, subWarehouses? }`, §9b) |
+| `ENTITY_ARCHIVED` | arxivlangan mahsulot/omborni hujjatda tanlash; arxivdagi omborga sub-ombor qo'shish yoki uning sub-omborini tiklash (§9b) |
 | `DUPLICATE_VALUE` | SKU / shtrix-kod / nom / login takrorlangan |
 | `DOC_DATE_IN_FUTURE` | hujjat yoki kassa sanasi kelajakda (OQ-07) |
 | `UNITS_PER_BLOCK_CHANGED` | qoralama saqlangandan keyin blokdagi dona soni o'zgargan (OQ-06) |
