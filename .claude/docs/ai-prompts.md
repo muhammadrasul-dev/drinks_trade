@@ -260,3 +260,11 @@ T-004 start on new session
 ```
 T-005 start on new session
 ```
+
+---
+
+## Prompt 19 — AGENTS.md ni commit qilish (2026-10-22)
+
+```
+do commit
+```
