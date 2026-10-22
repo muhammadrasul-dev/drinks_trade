@@ -167,7 +167,13 @@ describe('debts.open', () => {
     const staff: ServiceContext = { ...ctx, user: { ...ctx.user, id: f.staff.id, role: 'STAFF' } };
 
     const [receivable, payable] = await withTransaction(async (tx) => [
-      await debts.open(tx, staff, { source: 'SALE', saleId: sale.id, amount: 12_000, debtDate }),
+      await debts.open(tx, staff, {
+        source: 'SALE',
+        saleId: sale.id,
+        amount: 12_000,
+        note: 'Aziz aka',
+        debtDate,
+      }),
       await debts.open(tx, staff, {
         source: 'PURCHASE',
         purchaseId: purchase.id,
@@ -183,7 +189,7 @@ describe('debts.open', () => {
       source: 'SALE',
       saleId: sale.id,
       purchaseId: null,
-      note: '',
+      note: 'Aziz aka',
       debtDate,
       createdById: f.staff.id,
     });
@@ -206,6 +212,19 @@ describe('debts.open', () => {
           note: '  ',
           cashbox: await lockOne(tx, 'CASH'),
         }),
+      ),
+    );
+    expect(error).toMatchObject({ code: ErrorCode.NOTE_REQUIRED });
+    expect(await prisma.debt.count({ where: { storeId: f.store.id } })).toBe(0);
+  });
+
+  it('OQ-19: a credit document debt without a note throws NOTE_REQUIRED', async () => {
+    const sale = await prisma.sale.create({
+      data: { storeId: f.store.id, number: 'S-OQ19', docDate: new Date(), createdById: f.staff.id },
+    });
+    const error = await caught(
+      withTransaction((tx) =>
+        debts.open(tx, ctx, { source: 'SALE', saleId: sale.id, amount: 1_000, note: ' ' }),
       ),
     );
     expect(error).toMatchObject({ code: ErrorCode.NOTE_REQUIRED });
@@ -328,7 +347,12 @@ describe('debts.cancel', () => {
       data: { storeId: f.store.id, number: 'P-T403', docDate: new Date(), createdById: f.owner.id },
     });
     const opened = await withTransaction(async (tx) =>
-      debts.open(tx, ctx, { source: 'PURCHASE', purchaseId: purchase.id, amount: 8_000 }),
+      debts.open(tx, ctx, {
+        source: 'PURCHASE',
+        purchaseId: purchase.id,
+        amount: 8_000,
+        note: 'x',
+      }),
     );
 
     const result = await withTransaction(async (tx) =>
@@ -363,7 +387,7 @@ describe('debts.cancel', () => {
       data: { storeId: f.store.id, number: 'S-T403', docDate: new Date(), createdById: f.owner.id },
     });
     const opened = await withTransaction(async (tx) =>
-      debts.open(tx, ctx, { source: 'SALE', saleId: sale.id, amount: 5_000 }),
+      debts.open(tx, ctx, { source: 'SALE', saleId: sale.id, amount: 5_000, note: 'x' }),
     );
     await repay(opened.id, 5_000);
     expect((await debtOf(opened.id)).status).toBe('CLOSED');

@@ -37,8 +37,11 @@ type Cashbox = Pick<LockedCashbox, 'id' | 'type'>;
 interface DebtOpenBase {
   /** Whole so'm, > 0. */
   amount: number;
-  /** BR-10: the note stands in for the counterparty. */
-  note?: string | null;
+  /**
+   * BR-10: the note stands in for the counterparty, so it is required for
+   * every source (OQ-19: a credit document's note becomes its debt's note).
+   */
+  note: string;
   /** Defaults to now. Callers validate it (OQ-07). */
   debtDate?: Date;
 }
@@ -80,8 +83,8 @@ export async function open(
     throw new RangeError(`Debt amount must be positive, got ${input.amount}`);
   }
   const amount = moneyToBigInt(input.amount);
-  const note = input.note?.trim() ?? '';
-  if (input.source === DebtSource.MANUAL && note === '') {
+  const note = input.note.trim();
+  if (note === '') {
     throw new DomainError(ErrorCode.NOTE_REQUIRED);
   }
   const direction =

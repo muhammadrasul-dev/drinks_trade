@@ -41,7 +41,7 @@ Xodim menyusida unga yopiq bo'limlar ko'rinmaydi. Bunday bo'lim manzilini qo'lda
 - **Qoralama** — saqlangan, lekin hali qoldiq va pulga ta'sir qilmagan hujjat. Tahrirlash va o'chirish mumkin, boshqa xodim yaratgan qoralamani ham.
 - **Bajarish** — hujjat kuchga kiradi: tovar kiradi/chiqadi, pul harakati yoziladi. Bajarilgan hujjat o'zgartirilmaydi.
 - **Storno** — bajarilgan hujjatni bekor qilish (hammasi teskari qaytadi). Hujjat o'chmaydi, "Storno qilingan" holatida qoladi.
-- **Nasiya** — to'lanmagan qism; avtomatik qarzlar ro'yxatiga tushadi.
+- **Nasiya** — to'lanmagan qism; avtomatik qarzlar ro'yxatiga tushadi. Nasiya bo'lsa hujjat **izohi majburiy** (kim qarzdor/kimga qarz — qarzlar ro'yxatida shu izoh ko'rinadi).
 
 ## 5. Birinchi sozlash (Egasi)
 1. **Omborlar** → "Ombor qo'shish" → nom. Ichida → "Sub-ombor qo'shish".

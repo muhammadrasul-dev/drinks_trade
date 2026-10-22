@@ -397,3 +397,11 @@ yes clear these worktrees
 ```
 start all three in separate sessions
 ```
+
+---
+
+## Prompt 36 — OQ-18/OQ-19 tavsiya bo'yicha, worktree'larni tozalash, yangi vazifa (2026-10-22)
+
+```
+OQ-18 va OQ-19 shoul be as your reccommended answer. And then follow the instruction. Clear theese work tree t-203, t-401, t-403. And then begin one or any task in '/Users/home/Desktop/Muhammadrasul/drinks_trade/.claude/docs/tasks.md' which not started yet. Give me answer in uzbek.
+```

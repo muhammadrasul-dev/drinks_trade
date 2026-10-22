@@ -6,6 +6,8 @@ SRS'dagi biznes savollar yopilgan. Bu yerda — arxitektura va DB loyihalashda c
 
 **2026-10-22 (Prompt 9):** OQ-06, 07, 09, 10, 14, 15 yopildi. OQ-06 — tavsiyadan farqli: blokdagi dona sonini Xodim ham o'zgartira oladi. OQ-10 kengaytirildi: xodimlar soni cheklanmagan, akkauntlarini Egasi boshqaradi ([architecture.md §11](architecture.md)). **Ochiq savol qolmadi** (OQ-12 — deploy, keyingi bosqich).
 
+**2026-10-22 (Prompt 36):** OQ-18 va OQ-19 yopildi — ikkalasi ham tavsiya bo'yicha (A).
+
 | # | Savol | Tavsiya | Holat |
 |---|---|---|---|
 | OQ-01 | Storno qilingan savdo P&L'da qaysi sanada aks etadi? | Asl hujjat sanasida (hujjat davr hisobidan butunlay chiqadi) | Yopilgan — asl sanada (A) |
@@ -25,8 +27,8 @@ SRS'dagi biznes savollar yopilgan. Bu yerda — arxitektura va DB loyihalashda c
 | OQ-15 | Sotuv narxi dona uchunmi? | Ha, `sale_price` = 1 dona narxi; blok = narx × dona soni | Yopilgan — ha, dona uchun |
 | OQ-16 | Prefikssiz `/` ochilganda til qanday tanlanadi? | `NEXT_LOCALE` cookie → brauzer tili (`Accept-Language`) → `uz` (next-intl standarti) | Ochiq — tavsiya bo'yicha qilingan (T-202) |
 | OQ-17 | `pnpm user:reset-password` faolsiz akkauntga nima qiladi? | Parol tiklanadi, akkaunt faolsizligicha qoladi (CLI ogohlantiradi) | Yopilgan — A: parol tiklanadi, akkaunt faolsizligicha qoladi |
-| OQ-18 | Savdo storno'sida bir mahsulot bir necha qatorda bo'lsa, o'rtacha tannarx qatorma-qator hisoblanadimi yoki mahsulot bo'yicha bir marta? | Mahsulot bo'yicha bir marta (xarid §5.2 kabi) | Ochiq — tavsiya bo'yicha qilingan (T-401) |
-| OQ-19 | Nasiya savdo/xaridda izoh (qarz izohi) majburiymi? | Ha — `paidCredit > 0` bo'lsa hujjat izohi majburiy (`NOTE_REQUIRED`), qarzga o'sha izoh yoziladi | Ochiq — T-403 da yadro bo'sh izohni qabul qiladi |
+| OQ-18 | Savdo storno'sida bir mahsulot bir necha qatorda bo'lsa, o'rtacha tannarx qatorma-qator hisoblanadimi yoki mahsulot bo'yicha bir marta? | Mahsulot bo'yicha bir marta (xarid §5.2 kabi) | Yopilgan — A: mahsulot bo'yicha bir marta |
+| OQ-19 | Nasiya savdo/xaridda izoh (qarz izohi) majburiymi? | Ha — `paidCredit > 0` bo'lsa hujjat izohi majburiy (`NOTE_REQUIRED`), qarzga o'sha izoh yoziladi | Yopilgan — A: izoh majburiy, `debts.open` ham tekshiradi |
 
 ---
 
@@ -89,12 +91,14 @@ Login'dan keyin baribir `user.locale` ga yo'naltiriladi (T-201), shuning uchun f
 **Javob (2026-10-22, Prompt 33): A.** business-logic §11 bu holatni aytmaydi. **A (tanlandi):** parol tiklanadi, sessiyalar va `login_attempt` tozalanadi, lekin `is_active` o'zgarmaydi — CLI "akkaunt faolsiz va shunday qoladi" deb ogohlantiradi; faollashtirish Egasining alohida amali. **B:** faolsiz akkauntga CLI rad etadi (xato). **C:** CLI parolni tiklab, akkauntni faollashtiradi ham. Egasini faolsizlantirib bo'lmaydi, shuning uchun amalda bu faqat xodimlarga tegishli.
 
 ### OQ-18 — Savdo storno'sida o'rtacha tannarx: qatorma-qator yoki mahsulot bo'yicha
+**Javob (2026-10-22, Prompt 36): A** — T-401 dagi amalga oshirish o'zgarmaydi; business-logic §4.3 7-qadam shunga moslandi.
 business-logic §4.3 7-qadam "har qator" deydi, xarid (§5.2 6-qadam) esa mahsulot bo'yicha guruhlaydi. Farq faqat bitta savdoda bir mahsulot bir necha qatorda bo'lsa va faqat 4-xona yaxlitlashda: qatorma-qator hisobda har qadam alohida yaxlitlanadi.
 - **A (tavsiya, T-401 da shunday):** mahsulot bo'yicha bir marta — `avgOnReceipt(Q, avg, Σ qty, Σ costAmount)`; shu mahsulotning barcha harakatlarida `avg_cost_before/after` bir xil. Matematik jihatdan aniqroq, xarid bilan bir xil.
 - **B:** har qator ketma-ket — har harakatning `avg_cost_before` oldingisining `avg_cost_after` i.
 B ga o'tish — `inventory.receive` da bitta tsikl.
 ### OQ-19 — Nasiya hujjat qarzining izohi
+**Javob (2026-10-22, Prompt 36): A.** Bajarish (T-405, T-502) `paidCredit > 0` va bo'sh izohda boshqa ishdan oldin `NOTE_REQUIRED` qaytaradi; `debts.open` ham barcha manbalarda izohsiz qarzni rad etadi (himoya qatlami); `debt.note` = hujjat izohi.
 BR-10: kontragent ro'yxati yo'q, qarz **izoh** bilan yuritiladi; kassa orqali qarz berish/olishda izoh majburiy (business-logic §7). Lekin savdo/xarid izohi ixtiyoriy (FR-3.1, FR-4.1), shuning uchun nasiya qismidan ochilgan qarz izohsiz qolishi mumkin — qarzlar ro'yxatida (FR-7.1) kim qarzdor ekani ko'rinmaydi (faqat hujjat raqami orqali).
 - **A (tavsiya):** `paidCredit > 0` bo'lsa hujjatni bajarishda izoh majburiy (`NOTE_REQUIRED`); `debt.note` = hujjat izohi. Tekshiruv T-405 / T-503 da.
 - **B:** izoh ixtiyoriy qoladi; ro'yxatda izoh o'rniga hujjat raqami ko'rsatiladi.
-Hozir (T-403): `debts.open` `MANUAL` qarzda izohsiz → `NOTE_REQUIRED`; `SALE`/`PURCHASE` qarzda bo'sh izohni (`''`) qabul qiladi — qaror chaqiruvchida (bajarish) qo'llanadi, yadroni o'zgartirish shart emas.
+T-403 da `debts.open` `SALE`/`PURCHASE` qarzda bo'sh izohni qabul qilardi — Prompt 36 da bu ham `NOTE_REQUIRED` ga o'zgartirildi.

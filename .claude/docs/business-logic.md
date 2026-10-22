@@ -105,6 +105,7 @@ BEGIN
  2. lock warehouses FOR SHARE; inventarizatsiya bloki (§3)
  3. paidCash + paidCard + paidCredit = totalAmount, aks holda PAYMENT_SPLIT_MISMATCH
     docDate ≤ hozir, aks holda DOC_DATE_IN_FUTURE
+    paidCredit > 0 va sale.note bo'sh → NOTE_REQUIRED (OQ-19: izoh kontragent o'rnida)
     BLOCK qatorlar: qty = inputQty × product.unitsPerBlock (joriy) bo'lishi shart, aks holda
     UNITS_PER_BLOCK_CHANGED { lines } — foydalanuvchi qoralamani qayta saqlaydi (OQ-06)
  4. lock cashboxes (agar paidCash/paidCard > 0)
@@ -121,7 +122,7 @@ BEGIN
       UPDATE sale_line SET unit_cost, cost_amount
  9. paidCash > 0 → cash_transaction(CASH, IN, SALE_RECEIPT, paidCash); cashbox.balance += 
     paidCard > 0 → cash_transaction(CARD, IN, SALE_RECEIPT, paidCard)
-10. paidCredit > 0 → debt(RECEIVABLE, SALE, amount=paidCredit, note = "Savdo S-000123" + sale.note)
+10. paidCredit > 0 → debt(RECEIVABLE, SALE, amount=paidCredit, note = sale.note)  (OQ-19)
 11. sale: status=POSTED, costTotal=Σ costAmount, postedAt=now(), postedById
 12. audit POST
 COMMIT
@@ -138,11 +139,12 @@ BEGIN
  5. lock cashboxes; paidCash ≤ CASH.balance va paidCard ≤ CARD.balance,
     aks holda CASHBOX_INSUFFICIENT { cashbox }  (BR-9: kassa manfiy bo'lmaydi)
  6. lock product_cost, stock_balance
- 7. har qator (tovar QAYTADI, savdodagi tannarx bilan):
-      inCost = line.costAmount
-      newAvg = (Q × avg + inCost) / (Q + qty)
-      stock_balance.qty += qty; product_cost: totalQty += qty, avgCost = newAvg
-      INSERT stock_movement(SALE_REVERSAL, +qty, line.unitCost, +inCost, avgBefore, avgAfter)
+ 7. mahsulot bo'yicha guruhlab (tovar QAYTADI, savdodagi tannarx bilan; OQ-18):
+      q = Σ qty; inCost = Σ line.costAmount
+      newAvg = avgOnReceipt(Q, avg, q, inCost)
+    har qator: stock_balance.qty += qty;
+      INSERT stock_movement(SALE_REVERSAL, +qty, line.unitCost, +line.costAmount, avgBefore, avgAfter)
+    product_cost: totalQty += q, avgCost = newAvg
  8. cash_transaction(SALE_REFUND, OUT) — naqd va karta qismlari uchun
  9. debt.status = CANCELLED
 10. sale: status=REVERSED, reversedAt, reversedById, reverseReason
@@ -162,7 +164,7 @@ COMMIT
 BEGIN
  1. lock purchase; DRAFT
  2. inventarizatsiya bloki (§3)
- 3. to'lov yig'indisi = totalAmount
+ 3. to'lov yig'indisi = totalAmount; paidCredit > 0 va izoh bo'sh → NOTE_REQUIRED (OQ-19)
  4. lock cashboxes; paidCash ≤ CASH.balance, paidCard ≤ CARD.balance → aks holda CASHBOX_INSUFFICIENT
  5. lock product_cost (yo'q bo'lsa yaratiladi), stock_balance (yo'q bo'lsa yaratiladi)
  6. mahsulot bo'yicha guruhlab:
@@ -172,7 +174,7 @@ BEGIN
       INSERT stock_movement(PURCHASE, +qty, unitCost, lineTotal, avgBefore, avgAfter)
     product_cost: totalQty += q, avgCost = newAvg
  7. cash_transaction(PURCHASE_PAYMENT, OUT) — naqd/karta
- 8. paidCredit > 0 → debt(PAYABLE, PURCHASE)
+ 8. paidCredit > 0 → debt(PAYABLE, PURCHASE, note = purchase.note)
  9. status=POSTED; audit POST
 COMMIT
 ```
@@ -263,7 +265,7 @@ Qarz qaytarish: `debt.repaidAmount += amount`; teng bo'lsa `status = CLOSED`. Qa
 Qo'lda kiritilgan yozuvni bekor qilish (OQ-08): faqat OWNER, teskari `MANUAL_REVERSAL` yozuvi bilan (`reversal_of_id` → asl yozuv); asl yozuv o'chirilmaydi. Teskari yozuv kassa yo'nalishini teskari qiladi (chiqim bekor → kirim), shuning uchun kirimni bekor qilishda balans tekshiriladi. Qarz berish/olish storno'si qarzni `CANCELLED` qiladi (qaytarishlari bo'lsa — bloklanadi). P&L o'qishda storno qilingan yo'l kira hisobga olinmaydi.
 
 Amalga oshirilishi (T-403, `packages/server/src/modules/debts`): yagona yozish nuqtasi `debt` qatorlarini ochish va bekor qilish uchun. Ichki servis — ruxsat, kiritma va sana (OQ-07) chaqiruvchida, qulflarni (§2) ham chaqiruvchi oladi.
-- `debts.open(tx, ctx, input)` → `{ id, direction, cashTransactionId }`. `MANUAL`: `direction` va `lockCashboxes` bilan qulflangan `cashbox` beriladi; izohsiz → `NOTE_REQUIRED`; `RECEIVABLE` → `cash.record(DEBT_GIVEN, OUT)` (yetmasa `CASHBOX_INSUFFICIENT`, butun tranzaksiya rollback), `PAYABLE` → `cash.record(DEBT_TAKEN, IN)`; kassa yozuvi `debt_id` bilan, `tx_date = debt_date`. `SALE` (`saleId`) → `RECEIVABLE`, `PURCHASE` (`purchaseId`) → `PAYABLE`, kassa harakatisiz (to'langan qismlarni bajarish o'zi yozadi); izoh ixtiyoriy (OQ-19). Summa ≤ 0 yoki kasr → `RangeError`. Audit `CREATE debt`.
+- `debts.open(tx, ctx, input)` → `{ id, direction, cashTransactionId }`. `MANUAL`: `direction` va `lockCashboxes` bilan qulflangan `cashbox` beriladi; izohsiz → `NOTE_REQUIRED`; `RECEIVABLE` → `cash.record(DEBT_GIVEN, OUT)` (yetmasa `CASHBOX_INSUFFICIENT`, butun tranzaksiya rollback), `PAYABLE` → `cash.record(DEBT_TAKEN, IN)`; kassa yozuvi `debt_id` bilan, `tx_date = debt_date`. `SALE` (`saleId`) → `RECEIVABLE`, `PURCHASE` (`purchaseId`) → `PAYABLE`, kassa harakatisiz (to'langan qismlarni bajarish o'zi yozadi). Izoh barcha manbalarda majburiy — bo'sh/probel → `NOTE_REQUIRED` (OQ-19; bajarish buni qulflardan oldin o'zi ham tekshiradi). Summa ≤ 0 yoki kasr → `RangeError`. Audit `CREATE debt`.
 - `debts.cancel(tx, ctx, debt, { cashbox? })` — `debt` = `lockDebt` (5-qadam) natijasi (`direction`, `source`, `status`, `amount`, `repaidAmount`). `CANCELLED` → `DEBT_CANCELLED`; `repaidAmount > 0` (shu jumladan `CLOSED`) → `DEBT_HAS_REPAYMENTS` (OQ-04; params'da summa yo'q). `MANUAL`: asl `DEBT_GIVEN`/`DEBT_TAKEN` yozuvi teskari `MANUAL_REVERSAL` bilan qaytariladi (OQ-08; `reversal_of_id`, `debt_id`) — shu yozuvning kassasi 4-qadamda qulflangan va `cashbox` sifatida berilgan bo'lishi shart; olingan qarzni bekor qilish — chiqim, balans yetmasa `CASHBOX_INSUFFICIENT`. `SALE`/`PURCHASE`: kassa harakatisiz (§5.3 8-qadam). `status = CANCELLED`, audit `CANCEL debt`.
 - Qaytarish (`debt_repayment`, `repaidAmount`, `CLOSED`) — T-704 da (shu bo'limdagi jadval qoidalari bo'yicha).
 
@@ -302,7 +304,7 @@ Filtr: kun / oy / yil / ixtiyoriy oraliq (Toshkent vaqti).
 | `DEBT_HAS_REPAYMENTS` | OQ-04 |
 | `DEBT_CANCELLED` | qarz allaqachon bekor qilingan (masalan, ikki marta storno) |
 | `DEBT_OVERPAYMENT` | qaytarish > qarz qoldig'i |
-| `NOTE_REQUIRED` | boshqa chiqim / qarz izohsiz |
+| `NOTE_REQUIRED` | boshqa chiqim / qarz izohsiz; nasiya qismli savdo/xarid izohsiz (OQ-19) |
 | `ENTITY_NOT_EMPTY` | bo'sh bo'lmagan ombor/sub-omborni arxivlash (FR-2.2) |
 | `ENTITY_ARCHIVED` | arxivlangan mahsulot/omborni hujjatda tanlash |
 | `DUPLICATE_VALUE` | SKU / shtrix-kod / nom / login takrorlangan |
