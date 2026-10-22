@@ -309,3 +309,11 @@ git push origin main
 ```
 T-102 start on new session
 ```
+
+---
+
+## Prompt 25 — T-102 ni push qilish (2026-10-22)
+
+```
+git push origin main
+```
