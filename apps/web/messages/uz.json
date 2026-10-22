@@ -382,5 +382,83 @@
       "drafts": "Blokda kiritilgan qoralama qatorlari bajarishda qayta tekshiriladi.",
       "confirm": "Oʻzgartirish"
     }
+  },
+  "purchases": {
+    "title": "Xaridlar",
+    "add": "Yangi xarid",
+    "newTitle": "Yangi xarid",
+    "docTitle": "Xarid {number}",
+    "docDescription": "{date} · {author}",
+    "empty": "Xarid topilmadi.",
+    "filters": {
+      "label": "Filtrlar",
+      "number": "Raqam",
+      "status": "Holati",
+      "allStatuses": "Barcha holatlar",
+      "from": "dan",
+      "to": "gacha"
+    },
+    "columns": {
+      "number": "Raqam",
+      "date": "Sana",
+      "status": "Holati",
+      "total": "Summa",
+      "payment": "Toʻlov",
+      "lines": "Qatorlar",
+      "author": "Kiritgan"
+    },
+    "payment": {
+      "cash": "Naqd",
+      "card": "Karta",
+      "credit": "Nasiya"
+    },
+    "pagination": {
+      "label": "Sahifalar",
+      "range": "{from}–{to} / {total}",
+      "prev": "Oldingi",
+      "next": "Keyingi"
+    },
+    "view": {
+      "postedAt": "Bajarilgan",
+      "reversedAt": "Storno qilingan"
+    },
+    "form": {
+      "date": "Sana",
+      "note": "Izoh",
+      "notePlaceholder": "Masalan, yetkazib beruvchi nomi",
+      "lines": "Qatorlar",
+      "product": "Mahsulot",
+      "subWarehouse": "Sub-omborga",
+      "unit": "Birlik",
+      "qty": "Soni",
+      "price": "Narxi (birlik uchun)",
+      "lineTotal": "Summa",
+      "productSearch": "Nom, SKU yoki shtrix-kod",
+      "noProducts": "Mahsulot topilmadi",
+      "pickSubWarehouse": "Tanlang",
+      "pieces": "= {count} dona",
+      "removeLine": "{n}-qatorni oʻchirish",
+      "addLine": "Qator qoʻshish",
+      "noLines": "Kamida bitta qator kiriting.",
+      "payment": "Toʻlov",
+      "total": "Jami",
+      "paidCash": "Naqd",
+      "paidCard": "Karta",
+      "paidCredit": "Nasiya",
+      "splitOk": "Toʻlov qismlari jami summaga teng.",
+      "splitUnder": "Toʻlov yetishmayapti:",
+      "splitOver": "Toʻlov ortiqcha:",
+      "restToCash": "Qolganini naqdga",
+      "creditNote": "Nasiya bor — bajarishdan oldin izohga kimdan olinganini yozing.",
+      "reload": "Sahifani yangilash",
+      "back": "Roʻyxatga qaytish",
+      "delete": "Oʻchirish",
+      "deleteTitle": "{number} qoralamasini oʻchirasizmi?",
+      "deleteDescription": "Qoralama butunlay oʻchiriladi, raqami qayta ishlatilmaydi.",
+      "created": "{number} qoralamasi saqlandi",
+      "deleted": "{number} oʻchirildi",
+      "archivedOption": "{name} (arxiv)",
+      "archivedItem": "«{name}» arxivlangan — qatorni oʻzgartiring."
+    }
   }
 }

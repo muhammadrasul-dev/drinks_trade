@@ -824,7 +824,7 @@ CREATE INDEX product_name_trgm ON product USING gin (lower(name) gin_trgm_ops);
 
 ### 6.3 Hujjatlar (`sale`, `purchase`, `stock_count`)
 - `number` — `doc_sequence` dan, qoralama **yaratilganda** beriladi (qoralama o'chirilsa raqam bo'sh qoladi — bu normal).
-- `doc_date` — foydalanuvchi tanlaydi (default: hozir). O'tgan sana mumkin (BR-13). **Kelajak sana taqiqlanadi** (OQ-07): `doc_date ≤ hozir` (Toshkent vaqti). Bu servisda tekshiriladi va UI'dagi sana tanlagichda kelajak kunlar o'chiq bo'ladi. Shu qoida kassa yozuvlari (`tx_date`), qarz (`debt_date`) va qaytarish (`repaid_at`) sanalariga ham tegishli.
+- `doc_date` — foydalanuvchi tanlaydi (default: hozir). Forma faqat kunni yuboradi: bugun → `now()`, o'tgan kun → o'sha kun 12:00 Toshkent vaqti (T-404, [business-logic.md §5.1](business-logic.md)). O'tgan sana mumkin (BR-13). **Kelajak sana taqiqlanadi** (OQ-07): `doc_date ≤ hozir` (Toshkent vaqti). Bu servisda tekshiriladi va UI'dagi sana tanlagichda kelajak kunlar o'chiq bo'ladi. Shu qoida kassa yozuvlari (`tx_date`), qarz (`debt_date`) va qaytarish (`repaid_at`) sanalariga ham tegishli.
 - Qoralama qatorlari erkin tahrirlanadi va o'chiriladi (`DELETE` faqat `status = 'DRAFT'` bo'lsa — servis tekshiradi).
 - `POSTED` dan keyin hujjat va qatorlari o'zgarmaydi (faqat `status`, `reversed_*` maydonlari).
 

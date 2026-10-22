@@ -162,6 +162,17 @@ COMMIT
 - Qoldiq tekshiruvi yo'q.
 - Sana (OQ-07), qoralamani istalgan foydalanuvchi tahrirlashi (OQ-14) va bajarishda blok tekshiruvi (OQ-06) — savdodagi kabi.
 
+**Amalda (T-404)** — `packages/server/src/modules/purchases/purchases.service.ts` (`purchases.list/get/create/update/remove`, ruxsat `purchase.write`; `create`/`update` — `document.paymentSplit.write` ham):
+- Kiritma — `@drinks/shared/schemas` `purchaseDraftInputSchema` (forma ham shu): 1–200 qator, `inputQty` 1…1 000 000, `inputPrice` 0…1 000 000 000 (0 — bonus tovar, OQ-23), to'lov qismlari ≥ 0, izoh ≤ 500 (bo'sh → `null`), hujjat jami xavfsiz butun son.
+- **Sana:** forma kunni (`YYYY-MM-DD`, Toshkent) yuboradi. Bugundan keyin → `DOC_DATE_IN_FUTURE`; bugun → `now()`; o'tgan kun → o'sha kun 12:00 (UTC+5) — kun har qanday vaqt zonasi o'girishida saqlanadi. Tahrirlashda kun o'zgarmasa saqlangan vaqt qoladi. O'tgan sana → audit `backdated`.
+- Mahsulot tashkilotniki va faol bo'lishi shart (yo'q → `NOT_FOUND { entity: 'product' }`, arxivda → `ENTITY_ARCHIVED { entity: 'product', name }`); sub-ombor — `warehouses.resolveActive` (§9c). Qoralama saqlanayotganda ham tekshiriladi.
+- `BLOCK` qator `qty` si mahsulotning **joriy** blokdagi dona soni bilan hisoblanadi; bajarishda qayta tekshiriladi (`UNITS_PER_BLOCK_CHANGED`, OQ-06 — T-405).
+- To'lov qismlari qoralamada jami summaga teng bo'lishi shart emas (DB `purchase_payment_split` ham faqat `DRAFT` dan boshqasini tekshiradi) — forma farqni ko'rsatadi, bajarish `PAYMENT_SPLIT_MISMATCH` beradi. Nasiya + bo'sh izoh — formada ogohlantirish, bajarishda `NOTE_REQUIRED` (OQ-19).
+- **Yaratish:** qatorlar tekshiriladi → `nextDocNumber(PURCHASE)` (§2 3-qadam) → `P-000001`; xato bo'lsa raqam bo'sh qoladi (database §6.3).
+- **Tahrirlash / o'chirish:** `lockPurchase` (§2 1-qadam) → `DRAFT` emas → `DOCUMENT_NOT_DRAFT`; `version` forma yuklagandagidan farq qilsa → `DOCUMENT_CHANGED` (optimistik qulf; qulf ostida taqqoslanadi, shuning uchun bir vaqtdagi ikki saqlashdan faqat bittasi o'tadi). Tahrir — sarlavha + qatorlar to'liq almashtiriladi, `version + 1`. O'chirish — qoralama va qatorlari butunlay o'chiriladi.
+- Audit (`entityType: 'purchase'`): `CREATE` (`after`), `UPDATE` (`before`/`after`), `DELETE` (`before`) — raqam, sana, izoh, summalar va qatorlar (pul `number`).
+- Ro'yxat: holat, sana oralig'i (Toshkent kunlari, ikkala chet kiradi), raqam qismi (`45` → `P-000045`); yangilari birinchi (`docDate`, `number` kamayish), 50 tadan. Formadagi mahsulot tanlovi — `products.options(ctx)` (faqat faol), sub-omborlar — `warehouses.options(ctx)`.
+
 ### 5.2 Bajarish (BR-4)
 ```
 BEGIN

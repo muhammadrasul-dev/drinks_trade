@@ -41,3 +41,12 @@ export interface ProductPage {
   page: number;
   pageSize: number;
 }
+
+/** What document forms offer in the product picker: active products only. */
+export interface ProductOption {
+  id: string;
+  name: string;
+  sku: string | null;
+  barcode: string | null;
+  unitsPerBlock: number;
+}
