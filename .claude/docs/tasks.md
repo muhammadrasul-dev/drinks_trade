@@ -53,7 +53,7 @@ Bog'liq: [01-srs.md](01-srs.md) · [architecture.md](architecture.md) · [databa
 |---|---|---|---|---|
 | T-001 | Git va monorepo skeleti | — | architecture §3 | ✅ |
 | T-002 | Umumiy config paketi (TS, ESLint, Prettier) | T-001 | architecture §3.1, conventions §2–3 | ✅ |
-| T-003 | Docker: lokal PostgreSQL | T-001 | architecture §8 | ⬜ |
+| T-003 | Docker: lokal PostgreSQL | T-001 | architecture §8 | ⏸ Docker o'rnatilmagan — runtime tekshiruvi kutilmoqda |
 | T-004 | `apps/web` Next.js + Tailwind + `packages/ui` (shadcn) | T-002 | architecture §2, §6 | ⬜ |
 | T-005 | `packages/shared` va `packages/server` skeleti + Vitest | T-002 | architecture §3, §10 | ⬜ |
 | T-006 | CI (GitHub Actions): lint, typecheck, test | T-005 | conventions §5–6 | ⬜ |
@@ -332,3 +332,4 @@ Tayyor bo'lishi uchun (umumiy): STAFF savdo hisobotida tannarx/foyda maydonlari 
 | 2026-10-22 | Birinchi versiya (Prompt 11) |
 | 2026-10-22 | T-001 bajarildi (Prompt 12). pnpm 12 o'rniga pnpm 10.34.7: corepack 0.32 pnpm 12 native binary'sini ishga tushira olmadi |
 | 2026-10-22 | T-002 bajarildi (Prompt 14). Og'ishlar: (1) lint turbo orqali emas, root'da bitta `eslint .` (turbo.json dan `lint` vazifasi olib tashlandi) — chegaralar butun repoga yo'l bo'yicha qo'llanadi; (2) TypeScript 6.0.3 (7.x typescript-eslint 8.72 bilan mos emas); (3) Prettier `*.md` hujjatlarga tegmaydi |
+| 2026-10-22 | T-003 fayllari tayyor (Prompt 15): `docker/compose.dev.yml`, init SQL, `.env.example`, `db:up/down/logs`. Holat ⏸: mashinada Docker yo'q, `pnpm db:up` + `psql` tekshiruvi Docker Desktop o'rnatilgach bajariladi |

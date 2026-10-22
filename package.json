@@ -13,7 +13,10 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "typecheck": "turbo run typecheck",
-    "test": "turbo run test"
+    "test": "turbo run test",
+    "db:up": "docker compose -f docker/compose.dev.yml up -d --wait postgres",
+    "db:down": "docker compose -f docker/compose.dev.yml down",
+    "db:logs": "docker compose -f docker/compose.dev.yml logs -f postgres"
   },
   "devDependencies": {
     "@drinks/config": "workspace:*",

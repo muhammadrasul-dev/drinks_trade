@@ -1,0 +1,38 @@
+# Local development: PostgreSQL only (Next.js runs on the host).
+# Usage: pnpm db:up | pnpm db:down | pnpm db:logs
+# Adminer (optional): docker compose -f docker/compose.dev.yml --profile tools up -d
+name: drinks-trade
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: drinks
+      POSTGRES_PASSWORD: drinks
+    ports:
+      - '5433:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -h 127.0.0.1 -U drinks -d drinks_trade']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  adminer:
+    image: adminer:5
+    profiles: [tools]
+    restart: unless-stopped
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres
+    ports:
+      - '8080:8080'
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  pgdata:

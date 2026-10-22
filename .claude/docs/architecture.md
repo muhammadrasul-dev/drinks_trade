@@ -77,6 +77,8 @@ Aniq versiyalar loyiha `init` qilinganda `package.json` da qotiriladi (pin) va s
 | eslint-config-prettier | 10.1.8 | `packages/config` |
 | globals | 17.13.0 | `packages/config` |
 | Prettier | 3.9.10 | root `devDependencies` |
+| PostgreSQL (image) | `postgres:17-alpine` | `docker/compose.dev.yml` (major qotirilgan, minor yangilanadi) |
+| Adminer (image) | `adminer:5` | `docker/compose.dev.yml` (`profiles: [tools]`) |
 
 ## 3. Monorepo tuzilmasi
 
@@ -301,7 +303,9 @@ Tekshiruv **3 joyda**: (1) servis (`assertCan`) — majburiy; (2) mapper — max
 - Faqat **PostgreSQL** Docker'da; Next.js host'da `pnpm dev` bilan (tez HMR).
 - `docker/compose.dev.yml`:
   - `postgres` — `postgres:17-alpine`, port `5433:5432` (hostdagi boshqa Postgres bilan to'qnashmasligi uchun), named volume `pgdata`, healthcheck `pg_isready`, init skript ikkita DB yaratadi: `drinks_trade` va `drinks_trade_test`.
-  - `adminer` — ixtiyoriy (`profiles: [tools]`), port `8080`.
+  - `adminer` — ixtiyoriy (`profiles: [tools]`), port `8080`. Yoqish: `docker compose -f docker/compose.dev.yml --profile tools up -d`.
+- Init skript: `docker/postgres/init/01-create-databases.sql` — faqat `pgdata` volume bo'sh bo'lganda (birinchi ishga tushishda) bajariladi. Qayta yaratish uchun: `docker compose -f docker/compose.dev.yml down -v` (ma'lumotlar o'chadi).
+- Healthcheck `pg_isready -h 127.0.0.1` — TCP orqali, shuning uchun init tugamaguncha `healthy` bo'lmaydi.
 
 ### 8.2 Muhit o'zgaruvchilari (`.env.example`)
 ```
@@ -314,10 +318,11 @@ SEED_OWNER_USERNAME=owner
 SEED_OWNER_PASSWORD=change-me
 ```
 
-### 8.3 Root skriptlar (reja)
+### 8.3 Root skriptlar
 | Skript | Vazifa |
 |---|---|
-| `pnpm db:up` / `db:down` | Docker Postgres'ni yoqish/o'chirish |
+| `pnpm db:up` / `db:down` | Docker Postgres'ni yoqish (`--wait`: `healthy` bo'lguncha kutadi) / o'chirish (volume saqlanadi) |
+| `pnpm db:logs` | Postgres loglarini kuzatish |
 | `pnpm db:migrate` | `prisma migrate dev` |
 | `pnpm db:seed` | boshlang'ich ma'lumot (OWNER, do'kon, 2 kassa) |
 | `pnpm db:studio` | Prisma Studio |
