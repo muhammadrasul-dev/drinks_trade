@@ -64,8 +64,10 @@ export async function record(
   cashbox: Pick<LockedCashbox, 'id' | 'type'>,
   input: CashRecordInput,
 ): Promise<CashRecordResult> {
-  if (!(input.amount > 0))
+  // NaN fails `> 0` too; fractions are rejected by moneyToBigInt.
+  if (!(input.amount > 0)) {
     throw new RangeError(`Cash amount must be positive, got ${input.amount}`);
+  }
   const amount = moneyToBigInt(input.amount);
   const note = input.note?.trim() || null;
   if (input.type === CashTxType.OTHER_EXPENSE && note === null) {
