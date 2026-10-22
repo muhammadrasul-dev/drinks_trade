@@ -236,3 +236,11 @@ yes start but on new session
 ```
 T-003 start on new session
 ```
+
+---
+
+## Prompt 16 — DB'ni ishga tushirish (2026-10-22)
+
+```
+pnpm db:up
+```
