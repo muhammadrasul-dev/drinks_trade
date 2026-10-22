@@ -79,6 +79,23 @@ Aniq versiyalar loyiha `init` qilinganda `package.json` da qotiriladi (pin) va s
 | Prettier | 3.9.10 | root `devDependencies` |
 | PostgreSQL (image) | `postgres:17-alpine` | `docker/compose.dev.yml` (major qotirilgan, minor yangilanadi) |
 | Adminer (image) | `adminer:5` | `docker/compose.dev.yml` (`profiles: [tools]`) |
+| Next.js | 16.4.2 | `apps/web` (App Router, Turbopack, `output: 'standalone'`) |
+| React / React DOM | 19.3.1 | `apps/web`, `packages/ui` (peer) |
+| @types/react / @types/react-dom | 19.3.0 | `apps/web`, `packages/ui` |
+| @types/node | 24.19.2 | `apps/web` (Node 24 ga mos) |
+| Tailwind CSS / @tailwindcss/postcss | 4.3.3 | `packages/ui` (tema), `apps/web` |
+| tw-animate-css | 1.4.0 | `packages/ui` |
+| shadcn (CLI) | 4.22.1 | `pnpm dlx` orqali, `packages/ui/components.json` (style `new-york`, `neutral`) |
+| radix-ui | 1.8.1 | `packages/ui` |
+| class-variance-authority | 0.7.1 | `packages/ui` |
+| clsx | 2.1.1 | `packages/ui` |
+| tailwind-merge | 3.7.0 | `packages/ui` |
+| lucide-react | 1.61.0 | `packages/ui` |
+| sonner | 2.0.8 | `packages/ui` (toast) |
+| next-themes | 0.4.6 | `packages/ui` (`sonner` komponenti uchun) |
+| react-hook-form | 7.90.0 | `packages/ui` (`form` komponenti) |
+| @next/eslint-plugin-next | 16.4.2 | `packages/config` |
+| eslint-plugin-react-hooks | 7.1.1 | `packages/config` |
 
 ## 3. Monorepo tuzilmasi
 
@@ -187,7 +204,8 @@ apps/web ──► packages/server ──► packages/db
 | `web` | — | `server`, `shared`, `ui` |
 
 - `apps/web` **to'g'ridan-to'g'ri Prisma'ni chaqirmaydi** — faqat `packages/server` servislarini. Bu qoida ESLint (`no-restricted-imports`) bilan majburlanadi.
-- ESLint chegaralari `packages/config/eslint/index.js` da (`webBoundaries`, `sharedBoundaries`): `apps/web` → `@prisma/*`, `prisma`, `@drinks/db`, `**/packages/db` taqiqlangan; `packages/shared` → shularga qo'shimcha Node built-in modullari (`node:*`, `fs`, `path` …) taqiqlangan.
+- ESLint chegaralari `packages/config/eslint/index.js` da (`webBoundaries`, `sharedBoundaries`, `uiBoundaries`): `apps/web` → `@prisma/*`, `prisma`, `@drinks/db`, `**/packages/db` taqiqlangan; `packages/shared` → shularga qo'shimcha Node built-in modullari (`node:*`, `fs`, `path` …) taqiqlangan; `packages/ui` → Prisma, `db`, `server`, `apps/web` va Node built-in modullari taqiqlangan (faqat `shared` mumkin). `apps/web` va `packages/ui` ga `react-hooks`, `apps/web` ga Next.js (`core-web-vitals`) qoidalari qo'llanadi (`react()` preset).
+- `packages/ui` build qilinmaydi: TS manbasi `exports` (`@drinks/ui/components/*`, `@drinks/ui/lib/*`, `@drinks/ui/globals.css`, `@drinks/ui/postcss.config`) orqali beriladi, `apps/web` uni `transpilePackages` bilan kompilyatsiya qiladi. Tailwind tema tokenlari va `@source` (ilovalar + ui) — `packages/ui/src/styles/globals.css`. Yangi shadcn komponent: `packages/ui` ichida `pnpm dlx shadcn@4.22.1 add <nom>` (keyin versiyani qotirish va `cn` importini tekshirish).
 - ESLint **bitta root `eslint.config.js`** bilan butun repo bo'ylab ishga tushadi (`pnpm lint`), chegaralar fayl yo'li bo'yicha qo'llanadi — yangi paket o'z lint sozlamasini unutsa ham chegarani chetlab o'ta olmaydi. Paketlarda alohida `lint` skript yo'q; `typecheck`/`test` esa turbo orqali paket bo'yicha.
 - `packages/server` `import 'server-only'` bilan belgilanadi — client bundle'ga tushib qolmaydi.
 - Qoida: **"ikki tomonda kerak bo'lsa → `shared`"**. Masalan, blok/dona konvertatsiyasi formada ham (oldindan ko'rish), serverda ham (saqlash) kerak → `shared/units.ts`.

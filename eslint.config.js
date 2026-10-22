@@ -4,7 +4,9 @@ import {
   base,
   nodeFiles,
   prettierCompat,
+  react,
   sharedBoundaries,
+  uiBoundaries,
   webBoundaries,
 } from '@drinks/config/eslint';
 
@@ -13,5 +15,11 @@ export default [
   ...nodeFiles(['*.{js,mjs,cjs}', 'packages/{config,server,db}/**/*.{js,mjs,cjs,ts,mts,cts}']),
   ...webBoundaries(),
   ...sharedBoundaries(),
+  ...uiBoundaries(),
+  ...react({
+    files: ['{apps/web,packages/ui}/**/*.{ts,tsx}'],
+    nextFiles: ['apps/web/**/*.{js,jsx,mjs,ts,tsx,mts}'],
+    nextRootDir: 'apps/web/',
+  }),
   ...prettierCompat,
 ];

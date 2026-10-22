@@ -3,7 +3,9 @@
 import { builtinModules } from 'node:module';
 
 import js from '@eslint/js';
+import nextPlugin from '@next/eslint-plugin-next';
 import prettier from 'eslint-config-prettier';
+import reactHooks from 'eslint-plugin-react-hooks';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
@@ -48,7 +50,21 @@ const NODE_BUILTINS = [
 const NODE_PATTERNS = [
   {
     group: NODE_BUILTINS,
-    message: 'packages/shared must run in the browser: Node built-in modules are not allowed.',
+    message: 'Browser code (packages/shared, packages/ui): Node built-in modules are not allowed.',
+  },
+];
+
+const SERVER_PATTERNS = [
+  {
+    group: ['@drinks/server', '@drinks/server/*', '**/packages/server', '**/packages/server/*'],
+    message: 'packages/server may only be imported by apps/web.',
+  },
+];
+
+const WEB_PATTERNS = [
+  {
+    group: ['@drinks/web', '@drinks/web/*', '**/apps/web', '**/apps/web/*'],
+    message: 'Packages must not depend on apps/web.',
   },
 ];
 
@@ -80,6 +96,7 @@ export function webBoundaries(files = [`apps/web/**/*.${SOURCE_EXT}`]) {
     {
       name: 'drinks/boundaries/web',
       files,
+      languageOptions: { globals: { ...globals.browser, ...globals.node } },
       rules: {
         'no-restricted-imports': ['error', { patterns: [...PRISMA_PATTERNS, ...DB_PATTERNS] }],
       },
@@ -100,6 +117,44 @@ export function sharedBoundaries(files = [`packages/shared/**/*.${SOURCE_EXT}`])
           { patterns: [...PRISMA_PATTERNS, ...DB_PATTERNS, ...NODE_PATTERNS] },
         ],
       },
+    },
+  ];
+}
+
+/** packages/ui: may import packages/shared only; runs in the browser like shared. */
+export function uiBoundaries(files = [`packages/ui/**/*.${SOURCE_EXT}`]) {
+  return [
+    {
+      name: 'drinks/boundaries/ui',
+      files,
+      languageOptions: { globals: { ...globals.browser } },
+      rules: {
+        'no-restricted-imports': [
+          'error',
+          {
+            patterns: [
+              ...PRISMA_PATTERNS,
+              ...DB_PATTERNS,
+              ...SERVER_PATTERNS,
+              ...WEB_PATTERNS,
+              ...NODE_PATTERNS,
+            ],
+          },
+        ],
+      },
+    },
+  ];
+}
+
+/** React rules for UI code; Next.js rules only where Next.js runs. */
+export function react({ files, nextFiles = [], nextRootDir }) {
+  return [
+    { ...reactHooks.configs.flat.recommended, name: 'drinks/react-hooks', files },
+    {
+      ...nextPlugin.configs['core-web-vitals'],
+      name: 'drinks/next',
+      files: nextFiles,
+      settings: { next: { rootDir: nextRootDir } },
     },
   ];
 }

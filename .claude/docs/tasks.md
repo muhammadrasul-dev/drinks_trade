@@ -54,7 +54,7 @@ Bog'liq: [01-srs.md](01-srs.md) · [architecture.md](architecture.md) · [databa
 | T-001 | Git va monorepo skeleti | — | architecture §3 | ✅ |
 | T-002 | Umumiy config paketi (TS, ESLint, Prettier) | T-001 | architecture §3.1, conventions §2–3 | ✅ |
 | T-003 | Docker: lokal PostgreSQL | T-001 | architecture §8 | ✅ |
-| T-004 | `apps/web` Next.js + Tailwind + `packages/ui` (shadcn) | T-002 | architecture §2, §6 | ⬜ |
+| T-004 | `apps/web` Next.js + Tailwind + `packages/ui` (shadcn) | T-002 | architecture §2, §6 | ✅ |
 | T-005 | `packages/shared` va `packages/server` skeleti + Vitest | T-002 | architecture §3, §10 | ⬜ |
 | T-006 | CI (GitHub Actions): lint, typecheck, test | T-005 | conventions §5–6 | ⬜ |
 
@@ -334,3 +334,4 @@ Tayyor bo'lishi uchun (umumiy): STAFF savdo hisobotida tannarx/foyda maydonlari 
 | 2026-10-22 | T-002 bajarildi (Prompt 14). Og'ishlar: (1) lint turbo orqali emas, root'da bitta `eslint .` (turbo.json dan `lint` vazifasi olib tashlandi) — chegaralar butun repoga yo'l bo'yicha qo'llanadi; (2) TypeScript 6.0.3 (7.x typescript-eslint 8.72 bilan mos emas); (3) Prettier `*.md` hujjatlarga tegmaydi |
 | 2026-10-22 | T-003 fayllari tayyor (Prompt 15): `docker/compose.dev.yml`, init SQL, `.env.example`, `db:up/down/logs`. Holat ⏸: mashinada Docker yo'q, `pnpm db:up` + `psql` tekshiruvi Docker Desktop o'rnatilgach bajariladi |
 | 2026-10-22 | T-003 runtime tekshiruvi o'tdi: `pnpm db:up` → healthy, ikkala bazaga 5433 orqali ulanildi. Docker Desktop o'rnatilgan edi, CLI (`~/.docker/bin`) faqat `~/.zprofile` da PATH'ga qo'shilgan |
+| 2026-10-22 | T-004 bajarildi (Prompt 17): Next.js 16.4.2 + Tailwind 4.3.3 + `packages/ui` (shadcn, 10 komponent), `/api/health`. Og'ishlar: (1) ESLint'ga `uiBoundaries` va `react()` preset (react-hooks + Next.js qoidalari) qo'shildi; (2) bosh sahifadagi matn vaqtincha qattiq yozilgan — `messages/*.json` T-202 da; (3) shadcn CLI `cn` aliasini noto'g'ri `"cn"` npm paketiga aylantirdi — importlar `@drinks/ui/lib/utils` ga tuzatildi, `cn` paketi olib tashlandi; `zod`/`@hookform/resolvers` `ui` ga qo'shilmadi (T-005 `shared` da); (4) `test` vazifasi hali yo'q (0 task, yashil) — Vitest T-005 da |
