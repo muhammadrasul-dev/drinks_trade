@@ -220,3 +220,11 @@ Starting work with follow @.claude/docs/tasks.md and begin first not started tas
 ```
 docs/Filling-mainly-technical-docs.md this isnot need. Remove that, we have one new ai-prompts doc
 ```
+
+---
+
+## Prompt 14 — T-002 ni yangi sessiyada boshlash (2026-10-22)
+
+```
+yes start but on new session
+```
