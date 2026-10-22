@@ -421,3 +421,11 @@ yes merge it and push, and then give me any tasks for suitable next step for doi
 ```
 ok, start all theese 3 task in seperate sessins
 ```
+
+---
+
+## Prompt 39 — OQ-22 va xodimning "Mening akkauntim" cheklovi o'z holicha, T-303 tugagach uchalasini merge qilish (2026-10-23)
+
+```
+yes keep both as is, merge all three when T-303 done
+```
