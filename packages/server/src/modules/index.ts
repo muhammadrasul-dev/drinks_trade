@@ -5,4 +5,5 @@ export * from './auth';
 export * from './cash';
 export * from './debts';
 export * from './inventory';
+export * from './products';
 export * from './users';

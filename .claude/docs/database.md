@@ -682,7 +682,7 @@ model AuditLog {
   id         BigInt   @id @default(autoincrement())
   storeId    String?  @map("store_id") @db.Uuid
   userId     String?  @map("user_id") @db.Uuid   // tizim amallari uchun null
-  action     String                              // CREATE | UPDATE | DELETE | POST | REVERSE | CANCEL | ARCHIVE | LOGIN | LOGIN_FAILED | ...
+  action     String                              // CREATE | UPDATE | DELETE | POST | REVERSE | CANCEL | ARCHIVE | RESTORE | LOGIN | LOGIN_FAILED | ...
   entityType String   @map("entity_type")        // "sale", "product", ...
   entityId   String   @map("entity_id")
   before     Json?
@@ -803,6 +803,10 @@ CREATE INDEX product_name_trgm ON product USING gin (lower(name) gin_trgm_ops);
 - `units_per_block` ni Egasi ham, Xodim ham o'zgartira oladi (OQ-06). UI ogohlantirish oynasi chiqaradi, o'zgarish audit'ga yoziladi. Qoldiq donada saqlangani uchun tarix buzilmaydi, faqat blok ko'rinishi qayta hisoblanadi. Bajarilgan hujjat qatorlari (`qty` donada) o'zgarmaydi. Blokda kiritilgan **qoralama** qatorlari bajarishda tekshiriladi ([business-logic.md §4.2](business-logic.md)).
 - `sku`, `barcode` ixtiyoriy, lekin to'ldirilsa — tashkilot bo'yicha yagona.
 - Arxivlangan mahsulot yangi hujjatlarda tanlanmaydi, eski hujjat/hisobotlarda ko'rinadi.
+
+### 6.1a `category` va `brand` (T-302)
+- Nom tashkilot bo'yicha yagona: DB `UNIQUE (organization_id, name)` (katta-kichik harfga sezgir) + servis katta-kichik harfga **sezgirsiz** tekshiradi (`Suv` va `suv` — takror). Arxivlangan qator ham nomni band qiladi → `DUPLICATE_VALUE { archived: true }` (UI "arxivdan chiqaring" deydi).
+- O'chirilmaydi: `archived_at` bilan arxivlanadi va qaytariladi (`RESTORE`). Arxivlangan toifa/brend mahsulot formasida taklif qilinmaydi, unga bog'langan mahsulotlar o'zgarmaydi.
 
 ### 6.2 `stock_balance` va `product_cost`
 - Mahsulot birinchi marta sub-omborga kirganda qator yaratiladi (`INSERT ... ON CONFLICT DO NOTHING`, keyin `FOR UPDATE`).

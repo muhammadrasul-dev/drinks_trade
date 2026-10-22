@@ -45,9 +45,10 @@ Xodim menyusida unga yopiq bo'limlar ko'rinmaydi. Bunday bo'lim manzilini qo'lda
 
 ## 5. Birinchi sozlash (Egasi)
 1. **Omborlar** → "Ombor qo'shish" → nom. Ichida → "Sub-ombor qo'shish".
-2. **Mahsulotlar** → "Mahsulot qo'shish": nom, blokdagi dona soni, sotuv narxi (1 dona), toifa, brend, SKU, shtrix-kod, rasm, minimal qoldiq, yaroqlilik muddati (ixtiyoriy, faqat ma'lumot).
-3. **Foydalanuvchilar** → "Xodim qo'shish": F.I.O, login, parol. Xodimlar soni cheklanmagan, har biriga alohida login bering (umumiy akkaunt ishlatmang, aks holda audit kim nima qilganini ko'rsata olmaydi).
-4. Boshlang'ich qoldiqni kiritish uchun — **Xarid** hujjati orqali (alohida import yo'q).
+2. **Mahsulotlar** → **Toifalar** / **Brendlar** → "Toifa qo'shish" / "Brend qo'shish" (nom takrorlanmaydi, katta-kichik harf farq qilmaydi). Kerak bo'lmay qolganini **arxivlang** — u yangi mahsulotlarda tanlanmaydi, mavjud mahsulotlarda saqlanib qoladi; "Arxiv" ro'yxatidan qaytarish mumkin.
+3. **Mahsulotlar** → "Mahsulot qo'shish": nom, blokdagi dona soni, sotuv narxi (1 dona), toifa, brend, SKU, shtrix-kod, rasm, minimal qoldiq, yaroqlilik muddati (ixtiyoriy, faqat ma'lumot).
+4. **Foydalanuvchilar** → "Xodim qo'shish": F.I.O, login, parol. Xodimlar soni cheklanmagan, har biriga alohida login bering (umumiy akkaunt ishlatmang, aks holda audit kim nima qilganini ko'rsata olmaydi).
+5. Boshlang'ich qoldiqni kiritish uchun — **Xarid** hujjati orqali (alohida import yo'q).
 
 ## 6. Xarid (tovar kirimi)
 1. **Xaridlar** → "Yangi xarid".
