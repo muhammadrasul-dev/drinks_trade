@@ -17,10 +17,10 @@ import {
   type Store,
 } from '../src/generated/prisma/client';
 
-export const ORGANIZATION_NAME = 'Drinks Trade';
-export const STORE_NAME = "Asosiy do'kon";
-export const STORE_TIMEZONE = 'Asia/Tashkent';
-export const OWNER_FULL_NAME = 'Egasi';
+const ORGANIZATION_NAME = 'Drinks Trade';
+const STORE_NAME = "Asosiy do'kon";
+const STORE_TIMEZONE = 'Asia/Tashkent';
+const OWNER_FULL_NAME = 'Egasi';
 
 const CASHBOXES = [
   { type: CashboxType.CASH, name: 'Naqd' },
@@ -120,10 +120,6 @@ export async function seed(prisma: PrismaClient, owner: OwnerCredentials): Promi
   });
 }
 
-export function loadEnv(): void {
-  config({ path: fileURLToPath(new URL('../../../.env', import.meta.url)), quiet: true });
-}
-
 export function createClient(connectionString = process.env.DATABASE_URL): PrismaClient {
   if (!connectionString) {
     throw new Error('DATABASE_URL is not set');
@@ -131,17 +127,28 @@ export function createClient(connectionString = process.env.DATABASE_URL): Prism
   return new PrismaClient({ adapter: new PrismaPg({ connectionString }) });
 }
 
-async function main(): Promise<void> {
-  loadEnv();
+/**
+ * Entry point shared by seed.ts and seed.dev.ts: runs `run` against
+ * DATABASE_URL from the repo-root .env, only when `moduleUrl` is the script
+ * being executed (not when a test imports it).
+ */
+export async function runSeedScript(
+  moduleUrl: string,
+  run: (prisma: PrismaClient) => Promise<void>,
+): Promise<void> {
+  if (process.argv[1] !== fileURLToPath(moduleUrl)) {
+    return;
+  }
+  config({ path: fileURLToPath(new URL('../../../.env', import.meta.url)), quiet: true });
   const prisma = createClient();
   try {
-    const { store } = await seed(prisma, ownerFromEnv());
-    console.log(`Seed done: store "${store.name}" (${store.id})`);
+    await run(prisma);
   } finally {
     await prisma.$disconnect();
   }
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  await main();
-}
+await runSeedScript(import.meta.url, async (prisma) => {
+  const { store } = await seed(prisma, ownerFromEnv());
+  console.log(`Seed done: store "${store.name}" (${store.id})`);
+});
