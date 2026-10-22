@@ -276,3 +276,12 @@ do commit
 ```
 T-006 start on new session
 ```
+
+---
+
+## Prompt 21 — GitHub remote havolasi (2026-10-22)
+
+```
+https://github.com/muhammadrasul-dev/drinks_trade.git
+this is remote link
+```
