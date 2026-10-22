@@ -35,6 +35,18 @@ async function inRolledBackTx(fn: (tx: Tx) => Promise<void>): Promise<void> {
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+/** A document author; lives only inside the rolled-back transaction. */
+const createUser = (tx: Tx) =>
+  tx.user.create({
+    data: {
+      organizationId: f.organizationId,
+      username: `t104_${Date.now()}`,
+      passwordHash: 'x',
+      fullName: 'T-104',
+      role: 'STAFF',
+    },
+  });
+
 interface Fixtures {
   organizationId: string;
   storeId: string;
@@ -149,15 +161,7 @@ describe('nextDocNumber', () => {
 describe('locks (business-logic §2)', () => {
   it('takes every lock in order and returns typed rows', async () => {
     await inRolledBackTx(async (tx) => {
-      const user = await tx.user.create({
-        data: {
-          organizationId: f.organizationId,
-          username: `t104_${Date.now()}`,
-          passwordHash: 'x',
-          fullName: 'T-104',
-          role: 'STAFF',
-        },
-      });
+      const user = await createUser(tx);
       const sale = await tx.sale.create({
         data: { storeId: f.storeId, number: 'S-T104', docDate: new Date(), createdById: user.id },
       });
@@ -215,15 +219,7 @@ describe('locks (business-logic §2)', () => {
 
   it('locks purchase and stock count rows, FOR UPDATE on warehouses', async () => {
     await inRolledBackTx(async (tx) => {
-      const user = await tx.user.create({
-        data: {
-          organizationId: f.organizationId,
-          username: `t104_${Date.now()}`,
-          passwordHash: 'x',
-          fullName: 'T-104',
-          role: 'STAFF',
-        },
-      });
+      const user = await createUser(tx);
       const count = await tx.stockCount.create({
         data: {
           storeId: f.storeId,

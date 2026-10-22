@@ -46,8 +46,17 @@ export function assertLockOrder(tx: Tx, step: LockStep): void {
 
 const unique = <T>(values: readonly T[]): T[] => [...new Set(values)];
 
-function notFound(entity: string): DomainError {
-  return new DomainError(ErrorCode.NOT_FOUND, { entity });
+/** The single locked row, or NOT_FOUND when it is missing or in another store. */
+function only<T>(rows: T[], entity: string): T {
+  const row = rows[0];
+  if (!row) throw new DomainError(ErrorCode.NOT_FOUND, { entity });
+  return row;
+}
+
+/** All requested rows, or NOT_FOUND when any is missing or in another store. */
+function every<T>(rows: T[], expected: number, entity: string): T[] {
+  if (rows.length !== expected) throw new DomainError(ErrorCode.NOT_FOUND, { entity });
+  return rows;
 }
 
 // ── 1. Document row ──────────────────────────────────────────────────────
@@ -68,9 +77,7 @@ export async function lockSale(
     SELECT id, status::text AS status, version FROM sale
     WHERE id = ${id}::uuid AND store_id = ${storeId}::uuid
     FOR UPDATE`;
-  const row = rows[0];
-  if (!row) throw notFound('sale');
-  return row;
+  return only(rows, 'sale');
 }
 
 export async function lockPurchase(
@@ -83,9 +90,7 @@ export async function lockPurchase(
     SELECT id, status::text AS status, version FROM purchase
     WHERE id = ${id}::uuid AND store_id = ${storeId}::uuid
     FOR UPDATE`;
-  const row = rows[0];
-  if (!row) throw notFound('purchase');
-  return row;
+  return only(rows, 'purchase');
 }
 
 export async function lockStockCount(
@@ -98,9 +103,7 @@ export async function lockStockCount(
     SELECT id, status::text AS status, version, warehouse_id AS "warehouseId" FROM stock_count
     WHERE id = ${id}::uuid AND store_id = ${storeId}::uuid
     FOR UPDATE`;
-  const row = rows[0];
-  if (!row) throw notFound('stock_count');
-  return row;
+  return only(rows, 'stock_count');
 }
 
 // ── 2. Warehouses ────────────────────────────────────────────────────────
@@ -132,8 +135,7 @@ export async function lockWarehouses(
         SELECT id, archived_at AS "archivedAt" FROM warehouse
         WHERE id = ANY(${wanted}::uuid[]) AND store_id = ${storeId}::uuid
         ORDER BY id FOR SHARE`;
-  if (rows.length !== wanted.length) throw notFound('warehouse');
-  return rows;
+  return every(rows, wanted.length, 'warehouse');
 }
 
 // ── 3. doc_sequence → core/numbering.ts (nextDocNumber) ──────────────────
@@ -159,8 +161,10 @@ export async function lockCashboxes(
     SELECT id, type::text AS type, balance FROM cashbox
     WHERE store_id = ${storeId}::uuid AND type::text = ANY(${wanted}::text[])
     ORDER BY type::text FOR UPDATE`;
-  if (rows.length !== wanted.length) throw notFound('cashbox');
-  return rows.map((row) => ({ ...row, balance: moneyToNumber(row.balance) }));
+  return every(rows, wanted.length, 'cashbox').map((row) => ({
+    ...row,
+    balance: moneyToNumber(row.balance),
+  }));
 }
 
 // ── 5. Debt ──────────────────────────────────────────────────────────────
@@ -180,8 +184,7 @@ export async function lockDebt(tx: Tx, storeId: string, id: string): Promise<Loc
     SELECT id, status::text AS status, amount, repaid_amount AS "repaidAmount" FROM debt
     WHERE id = ${id}::uuid AND store_id = ${storeId}::uuid
     FOR UPDATE`;
-  const row = rows[0];
-  if (!row) throw notFound('debt');
+  const row = only(rows, 'debt');
   return {
     ...row,
     amount: moneyToNumber(row.amount),
@@ -243,10 +246,12 @@ export async function lockStockBalances(
   keys: readonly StockKey[],
 ): Promise<LockedStockBalance[]> {
   assertLockOrder(tx, LockStep.STOCK_BALANCE);
-  const byKey = new Map(keys.map((key) => [`${key.subWarehouseId}:${key.productId}`, key]));
-  if (byKey.size === 0) return [];
-  const subWarehouseIds = [...byKey.values()].map((key) => key.subWarehouseId);
-  const productIds = [...byKey.values()].map((key) => key.productId);
+  const wanted = [
+    ...new Map(keys.map((key) => [`${key.subWarehouseId}:${key.productId}`, key])).values(),
+  ];
+  if (wanted.length === 0) return [];
+  const subWarehouseIds = wanted.map((key) => key.subWarehouseId);
+  const productIds = wanted.map((key) => key.productId);
   await tx.$executeRaw`
     INSERT INTO stock_balance (sub_warehouse_id, product_id, qty, updated_at)
     SELECT k.sub_warehouse_id, k.product_id, 0, now()
