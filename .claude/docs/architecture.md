@@ -386,6 +386,14 @@ Mahsulot rasmi (FR-1.1) — v1 da server diskidagi `UPLOAD_DIR` (Docker volume).
 
 Vitest sozlamasi: har paketda `vitest.config.ts` (`defineProject`, testlar `src/**/*.test.ts`, paket ichida `test` skripti `vitest run`); `pnpm test` turbo orqali paketlar bo'yicha ishlaydi. Root `vitest.config.ts` barcha paketlarni `projects` sifatida bitta jarayonda ishga tushiradi (`pnpm exec vitest`).
 
+Integratsiya testlari (`pnpm test:int`): har paketda `vitest.int.config.ts` (`test/int/**/*.int.test.ts`, `fileParallelism: false`); root skript paketlarni ketma-ket ishga tushiradi (`pnpm -r --workspace-concurrency=1 --if-present run test:int`), chunki hammasi bitta `drinks_trade_test` bazasini ishlatadi. Umumiy to'plam — `@drinks/db/test-utils` (`packages/db/test-utils/README.md`):
+- `globalSetup` → `@drinks/db/test-utils/global-setup`: `prisma migrate deploy` → `DATABASE_URL_TEST` (nomi `*_test` bo'lishi shart);
+- `setupFiles` → `@drinks/db/test-utils/setup`: `DATABASE_URL` ni test bazasiga yo'naltiradi va **har test faylidan oldin** `truncateAll` (`TRUNCATE … RESTART IDENTITY CASCADE`; append-only triggerlar TRUNCATE'da ishlamaydi — testda tekshirilgan);
+- fabrikalar: `makeOrganization`, `makeStore`, `makeUser`, `makeCategory`, `makeBrand`, `makeProduct`, `makeWarehouse` (+ sub-omborlar), `makeSubWarehouse`, `makeCashbox`, `makeStoreFixture`;
+- `assertInvariants(db)` — `stock_balance.qty = Σ stock_movement.qty_delta`, `product_cost.total_qty = Σ stock_balance.qty` (do'kon bo'yicha), `cashbox.balance = Σ IN − Σ OUT`. Zaxira yoki kassaga tegadigan **har bir integratsiya testi oxirida** chaqiriladi (odatda `afterEach`).
+
+CI'da `integration` job Postgres 17 service (`drinks_trade_test`) bilan `pnpm test:int` ni ishga tushiradi.
+
 Biznes qoidalar uchun har bir BR-xx ga kamida bitta integratsiya testi bo'lishi shart; test nomida BR raqami yoziladi (`it('BR-7: qoldiq yetmasa savdo bajarilmaydi')`).
 
 ## 11. Foydalanuvchilar va akkauntlar (OQ-10)

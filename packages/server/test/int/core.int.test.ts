@@ -1,10 +1,17 @@
 // T-104: server core against a real Postgres (drinks_trade_test).
-// Fixtures that parallel transactions must see are committed in beforeAll and
-// deleted in afterAll; everything else runs in a transaction that is rolled
-// back by throwing ROLLBACK at the end.
+// Fixtures that parallel transactions must see are committed in beforeAll
+// (the kit's setup file empties the database before this file); everything
+// else runs in a transaction that is rolled back by throwing ROLLBACK.
 import { prisma } from '@drinks/db';
+import {
+  assertInvariants,
+  makeProduct,
+  makeStoreFixture,
+  makeUser,
+  type StoreFixture,
+} from '@drinks/db/test-utils';
 import { DomainError, ErrorCode } from '@drinks/shared';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 
 import {
   audit,
@@ -36,16 +43,7 @@ async function inRolledBackTx(fn: (tx: Tx) => Promise<void>): Promise<void> {
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /** A document author; lives only inside the rolled-back transaction. */
-const createUser = (tx: Tx) =>
-  tx.user.create({
-    data: {
-      organizationId: f.organizationId,
-      username: `t104_${Date.now()}`,
-      passwordHash: 'x',
-      fullName: 'T-104',
-      role: 'STAFF',
-    },
-  });
+const createUser = (tx: Tx) => makeUser(tx, { organizationId: f.organizationId });
 
 interface Fixtures {
   organizationId: string;
@@ -57,47 +55,26 @@ interface Fixtures {
 let f: Fixtures;
 
 beforeAll(async () => {
-  const organization = await prisma.organization.create({ data: { name: 'T-104 org' } });
-  const store = await prisma.store.create({
-    data: { organizationId: organization.id, name: 'T-104 store' },
-  });
-  const warehouse = await prisma.warehouse.create({
-    data: { storeId: store.id, name: 'Main', subWarehouses: { create: { name: 'Shelf' } } },
-    include: { subWarehouses: true },
-  });
-  const product = (name: string) =>
-    prisma.product.create({
-      data: { organizationId: organization.id, name, unitsPerBlock: 6, salePrice: 12_000n },
-    });
-  const products = [await product('Cola'), await product('Fanta')];
-  await prisma.cashbox.createMany({
-    data: [
-      { storeId: store.id, type: 'CASH', name: 'Naqd', balance: 100_000n },
-      { storeId: store.id, type: 'CARD', name: 'Karta' },
-    ],
-  });
+  const store: StoreFixture = await makeStoreFixture(prisma, { cashBalance: 100_000n });
+  const organizationId = store.organization.id;
+  const products = [
+    await makeProduct(prisma, { organizationId, name: 'Cola' }),
+    await makeProduct(prisma, { organizationId, name: 'Fanta' }),
+  ];
   f = {
-    organizationId: organization.id,
-    storeId: store.id,
-    warehouseId: warehouse.id,
-    subWarehouseId: warehouse.subWarehouses[0]!.id,
+    organizationId,
+    storeId: store.store.id,
+    warehouseId: store.warehouse.id,
+    subWarehouseId: store.subWarehouse.id,
     productIds: [products[0]!.id, products[1]!.id],
   };
 });
 
+afterEach(async () => {
+  await assertInvariants(prisma);
+});
+
 afterAll(async () => {
-  if (f) {
-    const { storeId, organizationId, warehouseId } = f;
-    await prisma.stockBalance.deleteMany({ where: { subWarehouse: { warehouseId } } });
-    await prisma.productCost.deleteMany({ where: { storeId } });
-    await prisma.docSequence.deleteMany({ where: { storeId } });
-    await prisma.cashbox.deleteMany({ where: { storeId } });
-    await prisma.subWarehouse.deleteMany({ where: { warehouseId } });
-    await prisma.warehouse.deleteMany({ where: { storeId } });
-    await prisma.product.deleteMany({ where: { organizationId } });
-    await prisma.store.delete({ where: { id: storeId } });
-    await prisma.organization.delete({ where: { id: organizationId } });
-  }
   await prisma.$disconnect();
 });
 

@@ -4,7 +4,10 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./test-utils": "./test-utils/index.ts",
+    "./test-utils/global-setup": "./test-utils/global-setup.ts",
+    "./test-utils/setup": "./test-utils/setup.ts"
   },
   "scripts": {
     "postinstall": "prisma generate",

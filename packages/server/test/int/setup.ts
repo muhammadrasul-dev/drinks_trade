@@ -1,5 +1,3 @@
-// Runs in each test worker before the test file is imported: @drinks/db's
-// client reads DATABASE_URL when first imported, so point it at the test DB.
-import { testDatabaseUrl } from './env';
-
-process.env.DATABASE_URL = testDatabaseUrl();
+// Per test file: DATABASE_URL → test database, then TRUNCATE all tables
+// (shared kit, packages/db/test-utils).
+import '@drinks/db/test-utils/setup';

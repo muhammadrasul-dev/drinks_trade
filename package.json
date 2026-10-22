@@ -14,7 +14,7 @@
     "format:check": "prettier --check .",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
-    "test:int": "pnpm --filter @drinks/db test:int && pnpm --filter @drinks/server test:int",
+    "test:int": "pnpm -r --workspace-concurrency=1 --if-present run test:int",
     "db:up": "docker compose -f docker/compose.dev.yml up -d --wait postgres",
     "db:down": "docker compose -f docker/compose.dev.yml down",
     "db:logs": "docker compose -f docker/compose.dev.yml logs -f postgres",
