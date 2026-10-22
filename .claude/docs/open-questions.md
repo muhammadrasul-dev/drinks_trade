@@ -26,6 +26,7 @@ SRS'dagi biznes savollar yopilgan. Bu yerda — arxitektura va DB loyihalashda c
 | OQ-16 | Prefikssiz `/` ochilganda til qanday tanlanadi? | `NEXT_LOCALE` cookie → brauzer tili (`Accept-Language`) → `uz` (next-intl standarti) | Ochiq — tavsiya bo'yicha qilingan (T-202) |
 | OQ-17 | `pnpm user:reset-password` faolsiz akkauntga nima qiladi? | Parol tiklanadi, akkaunt faolsizligicha qoladi (CLI ogohlantiradi) | Yopilgan — A: parol tiklanadi, akkaunt faolsizligicha qoladi |
 | OQ-18 | Savdo storno'sida bir mahsulot bir necha qatorda bo'lsa, o'rtacha tannarx qatorma-qator hisoblanadimi yoki mahsulot bo'yicha bir marta? | Mahsulot bo'yicha bir marta (xarid §5.2 kabi) | Ochiq — tavsiya bo'yicha qilingan (T-401) |
+| OQ-19 | Nasiya savdo/xaridda izoh (qarz izohi) majburiymi? | Ha — `paidCredit > 0` bo'lsa hujjat izohi majburiy (`NOTE_REQUIRED`), qarzga o'sha izoh yoziladi | Ochiq — T-403 da yadro bo'sh izohni qabul qiladi |
 
 ---
 
@@ -92,3 +93,8 @@ business-logic §4.3 7-qadam "har qator" deydi, xarid (§5.2 6-qadam) esa mahsul
 - **A (tavsiya, T-401 da shunday):** mahsulot bo'yicha bir marta — `avgOnReceipt(Q, avg, Σ qty, Σ costAmount)`; shu mahsulotning barcha harakatlarida `avg_cost_before/after` bir xil. Matematik jihatdan aniqroq, xarid bilan bir xil.
 - **B:** har qator ketma-ket — har harakatning `avg_cost_before` oldingisining `avg_cost_after` i.
 B ga o'tish — `inventory.receive` da bitta tsikl.
+### OQ-19 — Nasiya hujjat qarzining izohi
+BR-10: kontragent ro'yxati yo'q, qarz **izoh** bilan yuritiladi; kassa orqali qarz berish/olishda izoh majburiy (business-logic §7). Lekin savdo/xarid izohi ixtiyoriy (FR-3.1, FR-4.1), shuning uchun nasiya qismidan ochilgan qarz izohsiz qolishi mumkin — qarzlar ro'yxatida (FR-7.1) kim qarzdor ekani ko'rinmaydi (faqat hujjat raqami orqali).
+- **A (tavsiya):** `paidCredit > 0` bo'lsa hujjatni bajarishda izoh majburiy (`NOTE_REQUIRED`); `debt.note` = hujjat izohi. Tekshiruv T-405 / T-503 da.
+- **B:** izoh ixtiyoriy qoladi; ro'yxatda izoh o'rniga hujjat raqami ko'rsatiladi.
+Hozir (T-403): `debts.open` `MANUAL` qarzda izohsiz → `NOTE_REQUIRED`; `SALE`/`PURCHASE` qarzda bo'sh izohni (`''`) qabul qiladi — qaror chaqiruvchida (bajarish) qo'llanadi, yadroni o'zgartirish shart emas.

@@ -40,6 +40,7 @@
     "PAYMENT_SPLIT_MISMATCH": "Toʻlov qismlari yigʻindisi hujjat summasiga teng emas.",
     "CASHBOX_INSUFFICIENT": "Kassada mablagʻ yetarli emas.",
     "DEBT_HAS_REPAYMENTS": "Qarz boʻyicha qaytarishlar bor. Avval ularni bekor qiling.",
+    "DEBT_CANCELLED": "Qarz allaqachon bekor qilingan.",
     "DEBT_OVERPAYMENT": "Qaytarish summasi qarz qoldigʻidan katta.",
     "NOTE_REQUIRED": "Izoh kiritish majburiy.",
     "ENTITY_NOT_EMPTY": "Boʻsh boʻlmagan obyektni arxivlab boʻlmaydi.",

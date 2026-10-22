@@ -170,6 +170,8 @@ describe('locks (business-logic §2)', () => {
       ]);
       expect(await lockDebt(tx, f.storeId, debt.id)).toEqual({
         id: debt.id,
+        direction: debt.direction,
+        source: debt.source,
         status: 'OPEN',
         amount: 50_000,
         repaidAmount: 10_000,
