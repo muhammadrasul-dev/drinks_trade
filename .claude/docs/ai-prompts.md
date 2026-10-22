@@ -341,3 +341,11 @@ yes merge them, but do simply refactor theese tasks before merge
 ```
 Ha, dev bazani reset qil
 ```
+
+---
+
+## Prompt 29 — Worktree'larni tozalash (2026-10-22)
+
+```
+yes clear theese worktrees
+```
