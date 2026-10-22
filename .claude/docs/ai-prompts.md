@@ -445,3 +445,11 @@ keep OQ-20 and OQ-21 as recommended, start T-404
 ```
 keep OQ-23 as recommended, merge it and start T-405 and other theese  does not interfere tasks in seperate sessions
 ```
+
+---
+
+## Prompt 42 — Boshqa akkauntda limitga tushib to'xtagan T-405, T-701, T-901 ni davom ettirish (2026-10-23)
+
+```
+i have some unfinished tasks in other claude and other claude accaunt, can you continue theese
+```

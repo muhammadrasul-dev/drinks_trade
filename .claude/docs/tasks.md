@@ -176,10 +176,8 @@ Bog'liq: [01-srs.md](01-srs.md) · [architecture.md](architecture.md) · [databa
 |---|---|---|---|---|
 | T-301 | `shared`: birliklar, pul, tannarx formulalari | T-005 | business-logic §1 | ✅ |
 | T-302 | Toifa va brend | T-203 | FR-1.1 | ✅ |
-| T-303 | Mahsulotlar (CRUD, arxiv, rasm, kam qoldiq belgisi) | T-301, T-302 | FR-1.1–1.3, database §6.1, OQ-06, OQ-15 | ⬜ |
 | T-304 | Omborlar va sub-omborlar | T-203 | FR-2.1–2.2 | ✅ |
 | T-303 | Mahsulotlar (CRUD, arxiv, rasm, kam qoldiq belgisi) | T-301, T-302 | FR-1.1–1.3, database §6.1, OQ-06, OQ-15 | ✅ |
-| T-304 | Omborlar va sub-omborlar | T-203 | FR-2.1–2.2 | ⬜ |
 
 **T-301 — Formulalar**
 - `units.ts` (`toPieces`, `splitPieces`, `formatQty`), `money.ts` (`formatSom`, `roundHalfUp`), `costing.ts` (`avgOnReceipt`, `avgOnPurchaseReversal` — 0 chegarasi bilan).
