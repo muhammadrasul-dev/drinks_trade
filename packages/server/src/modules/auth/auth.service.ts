@@ -1,12 +1,17 @@
 // Own session auth (ADR-006, architecture §11–12, business-logic §11):
 // argon2id passwords, DB sessions keyed by the token's SHA-256, 30-day sliding
 // expiry, and a lock after 5 failed attempts per (username, IP) for 15 minutes.
-import { DomainError, ErrorCode, type Locale, type UserRole } from '@drinks/shared';
+import {
+  DomainError,
+  ErrorCode,
+  type Locale,
+  type UserRole,
+  validationError,
+} from '@drinks/shared';
 import { loginInputSchema } from '@drinks/shared/schemas';
 
 import type { ServiceContext } from '../../core/context';
 import { type Tx, withTransaction } from '../../core/tx';
-import { validationError } from '../../core/validation';
 import { audit } from '../audit';
 
 import { getDummyHash, verifyPassword } from './password';

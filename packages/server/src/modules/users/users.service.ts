@@ -1,10 +1,9 @@
-import { DomainError, ErrorCode, Locale, type UserRole } from '@drinks/shared';
+import { DomainError, ErrorCode, Locale, type UserRole, validationError } from '@drinks/shared';
 import { resetPasswordInputSchema } from '@drinks/shared/schemas';
 import { z } from 'zod';
 
 import type { ServiceContext } from '../../core/context';
 import { withTransaction } from '../../core/tx';
-import { validationError } from '../../core/validation';
 import { audit } from '../audit';
 import { hashPassword } from '../auth/password';
 
