@@ -274,6 +274,7 @@ Har bir so'rov `storeId` bilan filtrlanadi — filiallar qo'shilganda kod o'zgar
 
 ### 5.3 Tranzaksiya va bir vaqtdalik (BR-7, NFR "Yaxlitlik")
 - Barcha "bajarish" va "storno" amallari **bitta Postgres tranzaksiyasi** (Prisma interactive transaction, `READ COMMITTED`) ichida.
+  `core/tx.ts` → `withTransaction(fn)`; `@drinks/db` dinamik import qilinadi, shuning uchun `@drinks/server` ni import qilish (unit testlar, `next build`) `DATABASE_URL` talab qilmaydi.
 - Qoldiq va tannarx qatorlari `SELECT ... FOR UPDATE` bilan qulflanadi; qulflar **doim bir xil tartibda** olinadi (deadlock oldini olish) — tartib [business-logic.md §2](business-logic.md) da.
 - Oxirgi himoya chizig'i — DB darajasida `CHECK (qty >= 0)`, `CHECK (balance >= 0)`. Kod xato qilsa ham ma'lumot buzilmaydi.
 - Qoralamalarni tahrirlashda optimistik qulf: `version` ustuni (ikki kishi bir qoralamani bir vaqtda tahrirlasa, ikkinchisi "hujjat o'zgargan, yangilang" xatosini oladi).
@@ -282,6 +283,7 @@ Har bir so'rov `storeId` bilan filtrlanadi — filiallar qo'shilganda kod o'zgar
 - Har bir yozuvchi servis funksiyasi o'sha tranzaksiya ichida `audit.log(tx, {...})` chaqiradi (yashirin Prisma middleware emas — aniq, ko'rinadigan chaqiruv).
 - `audit_log` jadvalida `UPDATE`/`DELETE` DB trigger bilan taqiqlangan.
 - O'tgan sana bilan kiritilgan hujjatlar `meta.backdated = true` bilan belgilanadi (BR-13).
+- Amalda (T-104): `modules/audit` — `audit.log(tx, actor, { action, entityType, entityId, before?, after?, backdated?, meta? })`; `meta.requestId` har doim yoziladi; `before`/`after` dagi `bigint` → string. `isBackdated(docDate)` — `docDate` kuni Toshkent vaqti bo'yicha bugundan oldin.
 
 ### 5.5 RBAC
 Ruxsatlar `shared/permissions.ts` da yagona joyda:
@@ -356,7 +358,7 @@ SEED_OWNER_PASSWORD=change-me
 | `pnpm db:seed` | boshlang'ich ma'lumot (OWNER, do'kon, 2 kassa) |
 | `pnpm db:studio` | Prisma Studio |
 | `pnpm dev` | Next.js dev |
-| `pnpm test` / `test:int` / `test:e2e` | testlar |
+| `pnpm test` / `test:int` / `test:e2e` | testlar (`test` — DB'siz unit; `test:int` — `@drinks/db` va `@drinks/server` integratsiya testlari `DATABASE_URL_TEST` bazasida, `*.int.test.ts`) |
 | `pnpm lint` | root `eslint .` (butun repo, bitta config) |
 | `pnpm format` / `format:check` | Prettier (yozish / tekshirish) |
 | `pnpm typecheck` / `build` | turbo orqali |

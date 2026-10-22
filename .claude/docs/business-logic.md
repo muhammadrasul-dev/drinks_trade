@@ -46,6 +46,12 @@ Har bir bajarish/storno tranzaksiyasi qulflarni **shu tartibda** oladi (kerak bo
 
 Qoida `packages/server/src/core/locks.ts` da funksiyalar sifatida yoziladi; servislar qulfni faqat shu funksiyalar orqali oladi.
 
+Amalga oshirilishi (T-104):
+- Funksiyalar: (1) `lockSale` / `lockPurchase` / `lockStockCount`; (2) `lockWarehouses` (`exclusive: true` → `FOR UPDATE`); (3) `nextDocNumber` (`core/numbering.ts`: `INSERT … ON CONFLICT DO UPDATE … RETURNING` — qator qulfi tranzaksiya oxirigacha); (4) `lockCashboxes` (`ORDER BY type::text`, ya'ni `CARD`, `CASH` — enum e'lon tartibi emas); (5) `lockDebt`; (6) `lockProductCosts`; (7) `lockStockBalances`.
+- Har qadam bitta chaqiruvda olinadi (barcha id'lar birga, tartib SQL `ORDER BY` da). `assertLockOrder` shu tranzaksiyada orqaga qaytishni yoki qadamni takrorlashni xato bilan to'xtatadi.
+- `lockProductCosts` / `lockStockBalances` yo'q qatorlarni avval bo'sh holatda yaratadi (`total_qty = 0, avg_cost = 0` / `qty = 0`, `ON CONFLICT DO NOTHING`, shu tartibda) — chaqiruvchi har kalit uchun qulflangan qator oladi.
+- Topilmagan yoki boshqa do'konga tegishli hujjat/ombor/kassa/qarz → `NOT_FOUND` (`params.entity`).
+
 ## 3. Inventarizatsiya bloki (BR-8) — umumiy tekshiruv
 
 Savdo/xarid **bajarish** va **storno** qilishdan oldin:
