@@ -90,7 +90,6 @@ Bog'liq: [01-srs.md](01-srs.md) · [architecture.md](architecture.md) · [databa
 - `.github/workflows/ci.yml`: pnpm kesh, `lint`, `typecheck`, `test` (unit). Integratsiya testlari uchun Postgres service konteyner (T-105 dan keyin yoqiladi).
 - Tayyor bo'lishi uchun: PR'da CI yashil. (GitHub repo hali bo'lmasa — `⏸`, faqat fayl tayyorlanadi.)
 - `integration` job (Postgres 17 service, `drinks_trade_test`) hozircha o'chiq: `if: vars.RUN_INTEGRATION_TESTS == 'true'` — **T-105 da yoqiladi** (shart olib tashlanadi, migratsiya + integratsiya test buyrug'i qo'shiladi).
-- CI: `.github/workflows/ci.yml` dagi `integration` job'ini yoqish (T-006 da tayyorlangan, `if:` sharti olib tashlanadi).
 
 ---
 
@@ -128,7 +127,7 @@ Bog'liq: [01-srs.md](01-srs.md) · [architecture.md](architecture.md) · [databa
 **T-105 — Test muhiti**
 - `drinks_trade_test` bazasi uchun migratsiya + har test faylidan oldin `TRUNCATE` helper; test fabrikalari (`makeProduct`, `makeWarehouse`, `makeUser` …).
 - Invariant tekshiruvchi helper: `stock_balance = Σ movements`, `product_cost.total_qty = Σ balances`, `cashbox.balance = Σ transactions` — keyingi barcha integratsiya testlari oxirida chaqiriladi.
-- CI'da integratsiya testlari yoqiladi.
+- CI'da integratsiya testlari yoqiladi: `.github/workflows/ci.yml` dagi `integration` job'i (T-006 da tayyorlangan) — `if:` sharti olib tashlanadi, migratsiya + `pnpm test:int` qadamlari qo'shiladi.
 - Tayyor bo'lishi uchun: `pnpm test:int` lokal va CI'da o'tadi.
 
 ---
