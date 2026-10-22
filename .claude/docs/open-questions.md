@@ -25,6 +25,7 @@ SRS'dagi biznes savollar yopilgan. Bu yerda — arxitektura va DB loyihalashda c
 | OQ-15 | Sotuv narxi dona uchunmi? | Ha, `sale_price` = 1 dona narxi; blok = narx × dona soni | Yopilgan — ha, dona uchun |
 | OQ-16 | Prefikssiz `/` ochilganda til qanday tanlanadi? | `NEXT_LOCALE` cookie → brauzer tili (`Accept-Language`) → `uz` (next-intl standarti) | Ochiq — tavsiya bo'yicha qilingan (T-202) |
 | OQ-17 | `pnpm user:reset-password` faolsiz akkauntga nima qiladi? | Parol tiklanadi, akkaunt faolsizligicha qoladi (CLI ogohlantiradi) | Yopilgan — A: parol tiklanadi, akkaunt faolsizligicha qoladi |
+| OQ-18 | Savdo storno'sida bir mahsulot bir necha qatorda bo'lsa, o'rtacha tannarx qatorma-qator hisoblanadimi yoki mahsulot bo'yicha bir marta? | Mahsulot bo'yicha bir marta (xarid §5.2 kabi) | Ochiq — tavsiya bo'yicha qilingan (T-401) |
 
 ---
 
@@ -85,3 +86,9 @@ Login'dan keyin baribir `user.locale` ga yo'naltiriladi (T-201), shuning uchun f
 
 ### OQ-17 — Faolsiz akkaunt parolini CLI orqali tiklash
 **Javob (2026-10-22, Prompt 33): A.** business-logic §11 bu holatni aytmaydi. **A (tanlandi):** parol tiklanadi, sessiyalar va `login_attempt` tozalanadi, lekin `is_active` o'zgarmaydi — CLI "akkaunt faolsiz va shunday qoladi" deb ogohlantiradi; faollashtirish Egasining alohida amali. **B:** faolsiz akkauntga CLI rad etadi (xato). **C:** CLI parolni tiklab, akkauntni faollashtiradi ham. Egasini faolsizlantirib bo'lmaydi, shuning uchun amalda bu faqat xodimlarga tegishli.
+
+### OQ-18 — Savdo storno'sida o'rtacha tannarx: qatorma-qator yoki mahsulot bo'yicha
+business-logic §4.3 7-qadam "har qator" deydi, xarid (§5.2 6-qadam) esa mahsulot bo'yicha guruhlaydi. Farq faqat bitta savdoda bir mahsulot bir necha qatorda bo'lsa va faqat 4-xona yaxlitlashda: qatorma-qator hisobda har qadam alohida yaxlitlanadi.
+- **A (tavsiya, T-401 da shunday):** mahsulot bo'yicha bir marta — `avgOnReceipt(Q, avg, Σ qty, Σ costAmount)`; shu mahsulotning barcha harakatlarida `avg_cost_before/after` bir xil. Matematik jihatdan aniqroq, xarid bilan bir xil.
+- **B:** har qator ketma-ket — har harakatning `avg_cost_before` oldingisining `avg_cost_after` i.
+B ga o'tish — `inventory.receive` da bitta tsikl.
