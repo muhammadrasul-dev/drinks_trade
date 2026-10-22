@@ -6,5 +6,12 @@ export * from './core/locks';
 export { COST_SCALE, decimalToString, moneyToBigInt, moneyToNumber } from './core/money';
 export { DOC_NUMBER_PREFIX, formatDocNumber, nextDocNumber } from './core/numbering';
 export { assertCan } from './core/rbac';
+export {
+  assertStorageKey,
+  DEFAULT_UPLOAD_DIR,
+  getStorage,
+  LocalDiskStorage,
+  type StorageAdapter,
+} from './core/storage';
 export { type TransactionOptions, type Tx, withTransaction } from './core/tx';
 export * from './modules';

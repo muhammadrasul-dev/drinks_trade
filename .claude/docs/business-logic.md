@@ -285,6 +285,7 @@ Filtr: kun / oy / yil / ixtiyoriy oraliq (Toshkent vaqti).
 
 ## 9. Kam qoldiq ogohlantirishi (FR-1.3)
 `Σ stock_balance.qty (do'kon bo'yicha) < product.minStock` (va `minStock > 0`) → mahsulotlar ro'yxatida belgi + dashboard'da "Kam qolgan mahsulotlar" bloki. Push/SMS yo'q.
+Amalda (T-303): `isLowStock(stockQty, minStock)` (`@drinks/shared`); `stockQty` = `product_cost.total_qty` (invariant bo'yicha `Σ stock_balance.qty` ga teng) — `inventory.getProductTotals` orqali; DTO'da `stockQty`, `lowStock`.
 
 ## 9a. Toifa va brend (T-302, FR-1.1)
 `packages/server/src/modules/products/catalog.service.ts` — `categories` va `brands` (bir xil API, jadval adapteri orqali):
@@ -293,6 +294,18 @@ Filtr: kun / oy / yil / ixtiyoriy oraliq (Toshkent vaqti).
 - Nom takrori (katta-kichik harfga sezgirsiz, arxivdagilar ham) → `DUPLICATE_VALUE { entity, field: 'name', archived }`; parallel so'rovda DB unique xatosi (P2002) ham `DUPLICATE_VALUE` ga aylanadi.
 - Boshqa tashkilotniki → `NOT_FOUND { entity }`. O'zgarishsiz nom / qayta arxivlash / qayta tiklash — no-op (yozuv va audit yo'q).
 - Audit: `CREATE` (`after.name`), `UPDATE` (`before/after.name`), `ARCHIVE` / `RESTORE` (`archivedAt`); `entityType` = `category` | `brand`.
+
+## 9b. Mahsulotlar (T-303, FR-1.1–1.3)
+`packages/server/src/modules/products/products.service.ts` — `products`:
+- `list(ctx, { q?, categoryId?, brandId?, archived?, page? })` — `product.read`; `q` nom, SKU yoki shtrix-kod ichida (katta-kichik harfga sezgirsiz) qidiradi; default faqat faol, `archived: true` — faqat arxiv; nom bo'yicha, `PRODUCT_PAGE_SIZE` (50) tadan → `ProductPage { items, total, page, pageSize }`. `get(ctx, { id })` — arxivlangan ham.
+- DTO `Product` (`@drinks/shared`): kartochka maydonlari, `blockPrice = salePrice × unitsPerBlock` (OQ-15, `blockPrice()`), `category`/`brand` (`{ id, name, archived }` — arxivlangani ham ko'rinadi), `imageVersion`, `stockQty`, `lowStock` (§9). **Maxfiy maydon yo'q** (tannarx/foyda) — bir xil DTO Egasi va Xodimga; tannarx kerak bo'lsa `getProductTotals` qoidasi (faqat `report.sales.cost`) qo'llanadi.
+- `create(ctx, input)`, `update(ctx, { id, ...input })` — `product.write` (Egasi ham, Xodim ham); kiritma `productCreateInputSchema` / `productUpdateInputSchema` (`@drinks/shared/schemas`): nom 1–200, `unitsPerBlock` 1–10 000, `salePrice` 0–10¹¹ butun so'm (1 dona), `minStock` ≥ 0 (dona), SKU/shtrix-kod ≤ 64 belgi bo'sh joysiz (bo'sh → `null`), `expiryDate` `YYYY-MM-DD` yoki bo'sh. `update` — barcha maydonlarni almashtiradi; o'zgarish bo'lmasa yozuv va audit yo'q.
+- Takroriy SKU/shtrix-kod → `DUPLICATE_VALUE { entity: 'product', field: 'sku' | 'barcode', archived }` (database §6.1); parallel so'rovda P2002 ham shunga aylanadi (`field` index nomidan).
+- Toifa/brend: yangi tanlov tashkilotniki va faol bo'lishi shart — boshqa tashkilotniki → `NOT_FOUND { entity }`, arxivlangan → `ENTITY_ARCHIVED { entity }`; mahsulotda allaqachon turgan (keyin arxivlangan) qiymat o'zgarmasa — qabul qilinadi.
+- **Blokdagi dona soni** (OQ-06): ikkala rol o'zgartiradi, servis cheklamaydi — UI avval ogohlantirish oynasi chiqaradi (eski → yangi, joriy qoldiqning blok ko'rinishi oldin/keyin, qoralamalar bajarishda tekshirilishi). Qoldiq donada — o'zgarmaydi. Bajarishdagi `UNITS_PER_BLOCK_CHANGED` tekshiruvi — T-405 / T-502.
+- `archive` / `restore` — no-op takrorda; qoldiq bo'lsa ham ruxsat (OQ-20, UI qolgan miqdorni ko'rsatadi). Arxivlangan mahsulotni tahrirlash mumkin.
+- Rasm: `setImage(ctx, { id, data })` — ≤ 2 MB (`PRODUCT_IMAGE_MAX_BYTES`), format **baytlardan** (sharp) aniqlanadi: jpeg/png/webp, aks holda `VALIDATION_FAILED { fieldErrors: { image: ['tooBig' | 'invalidType'] } }`; EXIF bo'yicha aylantiriladi, 512×512 ichiga kichraytiriladi (kattalashtirilmaydi), WebP (q=85). Fayl avval yoziladi, tranzaksiya xato bersa o'chiriladi; almashtirilgan eski fayl commit'dan keyin o'chiriladi. `removeImage(ctx, { id })`, `readImage(ctx, { id })` (`product.read`, yo'q bo'lsa `NOT_FOUND { entity: 'productImage' }`).
+- Audit (`entityType: 'product'`): `CREATE` (`after` — barcha maydonlar, pul `number`), `UPDATE` (`before`/`after` — **faqat o'zgargan** maydonlar; rasm — `imagePath`), `ARCHIVE` / `RESTORE` (`archivedAt`).
 
 ## 10. Xato kodlari (`shared/errors.ts`)
 

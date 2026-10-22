@@ -29,6 +29,7 @@ SRS'dagi biznes savollar yopilgan. Bu yerda — arxitektura va DB loyihalashda c
 | OQ-17 | `pnpm user:reset-password` faolsiz akkauntga nima qiladi? | Parol tiklanadi, akkaunt faolsizligicha qoladi (CLI ogohlantiradi) | Yopilgan — A: parol tiklanadi, akkaunt faolsizligicha qoladi |
 | OQ-18 | Savdo storno'sida bir mahsulot bir necha qatorda bo'lsa, o'rtacha tannarx qatorma-qator hisoblanadimi yoki mahsulot bo'yicha bir marta? | Mahsulot bo'yicha bir marta (xarid §5.2 kabi) | Yopilgan — A: mahsulot bo'yicha bir marta |
 | OQ-19 | Nasiya savdo/xaridda izoh (qarz izohi) majburiymi? | Ha — `paidCredit > 0` bo'lsa hujjat izohi majburiy (`NOTE_REQUIRED`), qarzga o'sha izoh yoziladi | Yopilgan — A: izoh majburiy, `debts.open` ham tekshiradi |
+| OQ-20 | Omborda qoldig'i bor mahsulotni arxivlash mumkinmi? | Ha — ruxsat, tasdiqlash oynasida qolgan miqdor va "sotib bo'lmaydi" ogohlantirishi; arxivdan istalgan payt chiqariladi | Ochiq — tavsiya bo'yicha qilingan (T-303) |
 
 ---
 
@@ -102,3 +103,9 @@ BR-10: kontragent ro'yxati yo'q, qarz **izoh** bilan yuritiladi; kassa orqali qa
 - **A (tavsiya):** `paidCredit > 0` bo'lsa hujjatni bajarishda izoh majburiy (`NOTE_REQUIRED`); `debt.note` = hujjat izohi. Tekshiruv T-405 / T-503 da.
 - **B:** izoh ixtiyoriy qoladi; ro'yxatda izoh o'rniga hujjat raqami ko'rsatiladi.
 T-403 da `debts.open` `SALE`/`PURCHASE` qarzda bo'sh izohni qabul qilardi — Prompt 36 da bu ham `NOTE_REQUIRED` ga o'zgartirildi.
+
+### OQ-20 — Qoldig'i bor mahsulotni arxivlash
+FR-1.2 mahsulotni o'chirish o'rniga arxivlashni aytadi, lekin qoldiq haqida hech narsa demaydi. Ombor/sub-ombor uchun esa bo'sh bo'lmaganini arxivlash taqiqlangan (FR-2.2, `ENTITY_NOT_EMPTY`). Arxivlangan mahsulot yangi hujjatlarda tanlanmaydi (database §6.1), ya'ni qoldig'i bo'lsa — uni sotib bo'lmaydi, qoldiq hisobotida esa ko'rinib turadi.
+- **A (tavsiya, T-303 da shunday):** ruxsat beriladi. Tasdiqlash oynasi qolgan miqdorni ko'rsatadi ("Omborda hali 3 blok 2 dona bor — arxivlangan mahsulotni sotib bo'lmaydi"). Arxivdan chiqarish — bitta tugma, ma'lumot buzilmaydi.
+- **B:** omborlar kabi — qoldiq > 0 bo'lsa `ENTITY_NOT_EMPTY`; avval sotish yoki inventarizatsiya bilan 0 ga tushirish kerak. Qat'iyroq, lekin singan/yaroqsiz 2 donani hisobdan chiqarish uchun ham avval inventarizatsiya o'tkazish kerak bo'ladi.
+B ga o'tish — `products.archive` da `getProductTotals` bilan bitta tekshiruv (+ test).

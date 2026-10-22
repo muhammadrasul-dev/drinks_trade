@@ -801,8 +801,10 @@ CREATE INDEX product_name_trgm ON product USING gin (lower(name) gin_trgm_ops);
 ### 6.1 `product`
 - `sale_price` — **1 dona** narxi. Blok narxi = `sale_price × units_per_block` (optom farqi yo'q, BR-2).
 - `units_per_block` ni Egasi ham, Xodim ham o'zgartira oladi (OQ-06). UI ogohlantirish oynasi chiqaradi, o'zgarish audit'ga yoziladi. Qoldiq donada saqlangani uchun tarix buzilmaydi, faqat blok ko'rinishi qayta hisoblanadi. Bajarilgan hujjat qatorlari (`qty` donada) o'zgarmaydi. Blokda kiritilgan **qoralama** qatorlari bajarishda tekshiriladi ([business-logic.md §4.2](business-logic.md)).
-- `sku`, `barcode` ixtiyoriy, lekin to'ldirilsa — tashkilot bo'yicha yagona.
-- Arxivlangan mahsulot yangi hujjatlarda tanlanmaydi, eski hujjat/hisobotlarda ko'rinadi.
+- `sku`, `barcode` ixtiyoriy, lekin to'ldirilsa — tashkilot bo'yicha yagona. DB `UNIQUE (organization_id, sku|barcode)` (katta-kichik harfga sezgir; NULL takrorlanadi) + servis katta-kichik harfga **sezgirsiz** tekshiradi, arxivlangan mahsulotlar ham kodni band qiladi → `DUPLICATE_VALUE { entity: 'product', field, archived }` (T-303). Bo'sh qiymat `NULL` sifatida saqlanadi.
+- Arxivlangan mahsulot yangi hujjatlarda tanlanmaydi, eski hujjat/hisobotlarda ko'rinadi. Qoldig'i bor mahsulotni ham arxivlash mumkin (OQ-20).
+- `image_path` — `StorageAdapter` kaliti: `products/<product_id>/<uuid>.webp` (architecture §9). Har yangi rasm — yangi kalit (eski fayl commit'dan keyin o'chiriladi), kalitdagi `<uuid>` DTO'da `imageVersion` sifatida keshni yangilash uchun ishlatiladi.
+- `expiry_date` (`@db.Date`) — faqat ma'lumot; DTO'da `YYYY-MM-DD` satr.
 
 ### 6.1a `category` va `brand` (T-302)
 - Nom tashkilot bo'yicha yagona: DB `UNIQUE (organization_id, name)` (katta-kichik harfga sezgir) + servis katta-kichik harfga **sezgirsiz** tekshiradi (`Suv` va `suv` — takror). Arxivlangan qator ham nomni band qiladi → `DUPLICATE_VALUE { archived: true }` (UI "arxivdan chiqaring" deydi).
