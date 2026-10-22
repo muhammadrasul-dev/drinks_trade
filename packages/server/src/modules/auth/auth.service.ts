@@ -1,18 +1,12 @@
 // Own session auth (ADR-006, architecture §11–12, business-logic §11):
 // argon2id passwords, DB sessions keyed by the token's SHA-256, 30-day sliding
 // expiry, and a lock after 5 failed attempts per (username, IP) for 15 minutes.
-import {
-  DomainError,
-  ErrorCode,
-  type FieldErrors,
-  type Locale,
-  type UserRole,
-} from '@drinks/shared';
+import { DomainError, ErrorCode, type Locale, type UserRole } from '@drinks/shared';
 import { loginInputSchema } from '@drinks/shared/schemas';
-import { z } from 'zod';
 
 import type { ServiceContext } from '../../core/context';
 import { type Tx, withTransaction } from '../../core/tx';
+import { validationError } from '../../core/validation';
 import { audit } from '../audit';
 
 import { getDummyHash, verifyPassword } from './password';
@@ -101,14 +95,6 @@ function toAuthSession(user: SelectedUser, expiresAt: Date): AuthSession {
 
 function ipKey(meta: RequestMeta): string {
   return meta.ip ?? 'unknown';
-}
-
-function validationError(error: z.ZodError): DomainError {
-  const fieldErrors: FieldErrors = {};
-  for (const [field, messages] of Object.entries(z.flattenError(error).fieldErrors)) {
-    if (Array.isArray(messages)) fieldErrors[field] = messages;
-  }
-  return new DomainError(ErrorCode.VALIDATION_FAILED, undefined, fieldErrors);
 }
 
 type FailureReason =
