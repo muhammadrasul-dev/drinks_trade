@@ -70,6 +70,13 @@ Aniq versiyalar loyiha `init` qilinganda `package.json` da qotiriladi (pin) va s
 | Node.js | 24 | `.nvmrc`, root `engines` |
 | pnpm | 10.34.7 | root `packageManager` (corepack) |
 | Turborepo | 2.11.10 | root `devDependencies` |
+| TypeScript | 6.0.3 | root `devDependencies` (7.x hali typescript-eslint bilan mos emas: `<6.1.0`) |
+| ESLint | 10.13.0 | root `devDependencies` |
+| @eslint/js | 10.0.1 | `packages/config` |
+| typescript-eslint | 8.72.0 | `packages/config` |
+| eslint-config-prettier | 10.1.8 | `packages/config` |
+| globals | 17.13.0 | `packages/config` |
+| Prettier | 3.9.10 | root `devDependencies` |
 
 ## 3. Monorepo tuzilmasi
 
@@ -178,6 +185,8 @@ apps/web ──► packages/server ──► packages/db
 | `web` | — | `server`, `shared`, `ui` |
 
 - `apps/web` **to'g'ridan-to'g'ri Prisma'ni chaqirmaydi** — faqat `packages/server` servislarini. Bu qoida ESLint (`no-restricted-imports`) bilan majburlanadi.
+- ESLint chegaralari `packages/config/eslint/index.js` da (`webBoundaries`, `sharedBoundaries`): `apps/web` → `@prisma/*`, `prisma`, `@drinks/db`, `**/packages/db` taqiqlangan; `packages/shared` → shularga qo'shimcha Node built-in modullari (`node:*`, `fs`, `path` …) taqiqlangan.
+- ESLint **bitta root `eslint.config.js`** bilan butun repo bo'ylab ishga tushadi (`pnpm lint`), chegaralar fayl yo'li bo'yicha qo'llanadi — yangi paket o'z lint sozlamasini unutsa ham chegarani chetlab o'ta olmaydi. Paketlarda alohida `lint` skript yo'q; `typecheck`/`test` esa turbo orqali paket bo'yicha.
 - `packages/server` `import 'server-only'` bilan belgilanadi — client bundle'ga tushib qolmaydi.
 - Qoida: **"ikki tomonda kerak bo'lsa → `shared`"**. Masalan, blok/dona konvertatsiyasi formada ham (oldindan ko'rish), serverda ham (saqlash) kerak → `shared/units.ts`.
 
@@ -314,7 +323,9 @@ SEED_OWNER_PASSWORD=change-me
 | `pnpm db:studio` | Prisma Studio |
 | `pnpm dev` | Next.js dev |
 | `pnpm test` / `test:int` / `test:e2e` | testlar |
-| `pnpm lint` / `typecheck` / `build` | turbo orqali |
+| `pnpm lint` | root `eslint .` (butun repo, bitta config) |
+| `pnpm format` / `format:check` | Prettier (yozish / tekshirish) |
+| `pnpm typecheck` / `build` | turbo orqali |
 
 ### 8.4 Production (keyingi bosqich — SRS 8: "texnologiya, joylashtirish keyin")
 `compose.prod.yml`: `web` (Next.js `output: 'standalone'`, `web.Dockerfile` multi-stage), `postgres`, bir martalik `migrate` servisi (`prisma migrate deploy`), kunlik `pg_dump` backup. Joylashtirish platformasi ochiq savol (OQ-12).

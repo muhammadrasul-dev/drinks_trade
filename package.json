@@ -1,6 +1,7 @@
 {
   "name": "drinks-trade",
   "private": true,
+  "type": "module",
   "packageManager": "pnpm@10.34.7",
   "engines": {
     "node": ">=24"
@@ -8,11 +9,17 @@
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
-    "lint": "turbo run lint",
+    "lint": "eslint . --max-warnings=0",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test"
   },
   "devDependencies": {
-    "turbo": "2.11.10"
+    "@drinks/config": "workspace:*",
+    "eslint": "10.13.0",
+    "prettier": "3.9.10",
+    "turbo": "2.11.10",
+    "typescript": "6.0.3"
   }
 }
