@@ -268,3 +268,11 @@ T-005 start on new session
 ```
 do commit
 ```
+
+---
+
+## Prompt 20 — T-006 ni yangi sessiyada boshlash (2026-10-22)
+
+```
+T-006 start on new session
+```
