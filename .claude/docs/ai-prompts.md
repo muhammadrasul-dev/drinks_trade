@@ -437,3 +437,11 @@ yes keep both as is, merge all three when T-303 done
 ```
 keep OQ-20 and OQ-21 as recommended, start T-404
 ```
+
+---
+
+## Prompt 41 — OQ-23 tavsiya bo'yicha, T-404 ni merge qilish, T-405 va mos keladigan vazifalarni alohida sessiyalarda boshlash (2026-10-23)
+
+```
+keep OQ-23 as recommended, merge it and start T-405 and other theese  does not interfere tasks in seperate sessions
+```

@@ -61,11 +61,11 @@ Xodim menyusida unga yopiq bo'limlar ko'rinmaydi. Bunday bo'lim manzilini qo'lda
 5. Boshlang'ich qoldiqni kiritish uchun — **Xarid** hujjati orqali (alohida import yo'q).
 
 ## 6. Xarid (tovar kirimi)
-1. **Xaridlar** → "Yangi xarid".
-2. Sana (default — bugun; o'tgan sanani tanlash mumkin, kelajak sanani — yo'q).
-3. Qator qo'shish: mahsulot → **qaysi sub-omborga** → soni (dona yoki blok) → narx (tanlangan birlik uchun).
-4. Pastda to'lov: **Naqd + Karta + Nasiya** — yig'indi jami summaga teng bo'lishi kerak.
-5. **Saqlash** — qoralama. **Bajarish** — tovar omborga kiradi, kassadan pul chiqadi, nasiya qismi "Mendan qarz"ga tushadi.
+1. **Xarid** → "Yangi xarid".
+2. Sana (default — bugun; o'tgan sanani tanlash mumkin, kelajak sanani — yo'q). Izohga yetkazib beruvchini yozing — nasiya bo'lsa izoh majburiy.
+3. Qator qo'shish: mahsulot (nomi, SKU yoki shtrix-kod bilan qidiring; skaner bilan ham bo'ladi) → **qaysi sub-omborga** → birlik (dona yoki blok) → soni → narx (tanlangan birlik uchun). Blokda kiritilsa ostida "= N dona" chiqadi. Bonus (tekin) tovarni alohida qatorda 0 narx bilan kiriting.
+4. Pastda to'lov: **Naqd + Karta + Nasiya** — yig'indi jami summaga teng bo'lishi kerak. Forma farqni ko'rsatadi; "Qolganini naqdga" tugmasi qolgan summani naqdga yozadi.
+5. **Saqlash** — qoralama (raqam beriladi, masalan `P-000012`; ro'yxatdan qayta ochib tahrirlash yoki **O'chirish** mumkin). Ikki kishi bir qoralamani bir vaqtda tahrirlasa, ikkinchisiga "Hujjat boshqa foydalanuvchi tomonidan o'zgartirilgan" chiqadi — sahifani yangilang. **Bajarish** — tovar omborga kiradi, kassadan pul chiqadi, nasiya qismi "Mendan qarz"ga tushadi.
 
 Kassada pul yetmasa bajarilmaydi ("Kassada mablag' yetarli emas").
 

@@ -382,5 +382,83 @@
       "drafts": "Строки черновиков, введённые в блоках, будут перепроверены при проведении.",
       "confirm": "Изменить"
     }
+  },
+  "purchases": {
+    "title": "Закупки",
+    "add": "Новая закупка",
+    "newTitle": "Новая закупка",
+    "docTitle": "Закупка {number}",
+    "docDescription": "{date} · {author}",
+    "empty": "Закупки не найдены.",
+    "filters": {
+      "label": "Фильтры",
+      "number": "Номер",
+      "status": "Статус",
+      "allStatuses": "Все статусы",
+      "from": "с",
+      "to": "по"
+    },
+    "columns": {
+      "number": "Номер",
+      "date": "Дата",
+      "status": "Статус",
+      "total": "Сумма",
+      "payment": "Оплата",
+      "lines": "Строк",
+      "author": "Автор"
+    },
+    "payment": {
+      "cash": "Наличные",
+      "card": "Карта",
+      "credit": "В долг"
+    },
+    "pagination": {
+      "label": "Страницы",
+      "range": "{from}–{to} из {total}",
+      "prev": "Назад",
+      "next": "Вперёд"
+    },
+    "view": {
+      "postedAt": "Проведена",
+      "reversedAt": "Сторнирована"
+    },
+    "form": {
+      "date": "Дата",
+      "note": "Комментарий",
+      "notePlaceholder": "Например, название поставщика",
+      "lines": "Строки",
+      "product": "Товар",
+      "subWarehouse": "На подсклад",
+      "unit": "Единица",
+      "qty": "Кол-во",
+      "price": "Цена (за единицу)",
+      "lineTotal": "Сумма",
+      "productSearch": "Название, SKU или штрихкод",
+      "noProducts": "Товар не найден",
+      "pickSubWarehouse": "Выберите",
+      "pieces": "= {count} шт.",
+      "removeLine": "Удалить строку {n}",
+      "addLine": "Добавить строку",
+      "noLines": "Добавьте хотя бы одну строку.",
+      "payment": "Оплата",
+      "total": "Итого",
+      "paidCash": "Наличные",
+      "paidCard": "Карта",
+      "paidCredit": "В долг",
+      "splitOk": "Сумма оплат равна итогу.",
+      "splitUnder": "Не хватает оплаты:",
+      "splitOver": "Переплата:",
+      "restToCash": "Остаток наличными",
+      "creditNote": "Есть долг — перед проведением укажите в комментарии, у кого куплено.",
+      "reload": "Обновить страницу",
+      "back": "К списку",
+      "delete": "Удалить",
+      "deleteTitle": "Удалить черновик {number}?",
+      "deleteDescription": "Черновик удаляется полностью, номер повторно не используется.",
+      "created": "Черновик {number} сохранён",
+      "deleted": "{number} удалён",
+      "archivedOption": "{name} (архив)",
+      "archivedItem": "«{name}» в архиве — измените строку."
+    }
   }
 }

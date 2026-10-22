@@ -12,6 +12,8 @@ SRS'dagi biznes savollar yopilgan. Bu yerda — arxitektura va DB loyihalashda c
 
 **2026-10-23 (Prompt 40):** OQ-20 va OQ-21 yopildi — ikkalasi ham tavsiya bo'yicha (A). **Ochiq savol qolmadi** (OQ-12 — deploy, keyingi bosqich).
 
+**2026-10-23 (Prompt 41):** OQ-23 yopildi — tavsiya bo'yicha (A). **Ochiq savol qolmadi.**
+
 | # | Savol | Tavsiya | Holat |
 |---|---|---|---|
 | OQ-01 | Storno qilingan savdo P&L'da qaysi sanada aks etadi? | Asl hujjat sanasida (hujjat davr hisobidan butunlay chiqadi) | Yopilgan — asl sanada (A) |
@@ -35,6 +37,7 @@ SRS'dagi biznes savollar yopilgan. Bu yerda — arxitektura va DB loyihalashda c
 | OQ-19 | Nasiya savdo/xaridda izoh (qarz izohi) majburiymi? | Ha — `paidCredit > 0` bo'lsa hujjat izohi majburiy (`NOTE_REQUIRED`), qarzga o'sha izoh yoziladi | Yopilgan — A: izoh majburiy, `debts.open` ham tekshiradi |
 | OQ-21 | Ochiq (DRAFT) inventarizatsiyasi bor bo'sh ombor/sub-omborni arxivlash mumkinmi? | Yo'q — `WAREHOUSE_IN_STOCK_COUNT`; avval sanoqni bajaring yoki bekor qiling | Yopilgan — A: arxivlash rad etiladi (`WAREHOUSE_IN_STOCK_COUNT`) |
 | OQ-22 | Egasi o'z login/parolini o'zgartirsa, shu o'zgarishni qilgan (joriy) sessiya ham o'chadimi? | Yo'q — joriy sessiya qoladi, boshqa barcha sessiyalari o'chiriladi | Yopilgan — A: joriy sessiya qoladi |
+| OQ-23 | Xarid qatorida narx 0 bo'lishi mumkinmi (bonus/aksiya tovari)? | Ha — `inputPrice ≥ 0`; tannarx 0 bilan kiradi va o'rtacha tannarxni pasaytiradi | Yopilgan — A: 0 narx ruxsat |
 | OQ-20 | Omborda qoldig'i bor mahsulotni arxivlash mumkinmi? | Ha — ruxsat, tasdiqlash oynasida qolgan miqdor va "sotib bo'lmaydi" ogohlantirishi; arxivdan istalgan payt chiqariladi | Yopilgan — A: ruxsat, ogohlantirish bilan |
 
 ---
@@ -129,3 +132,10 @@ FR-1.2 mahsulotni o'chirish o'rniga arxivlashni aytadi, lekin qoldiq haqida hech
 - **A (tavsiya, T-303 da shunday):** ruxsat beriladi. Tasdiqlash oynasi qolgan miqdorni ko'rsatadi ("Omborda hali 3 blok 2 dona bor — arxivlangan mahsulotni sotib bo'lmaydi"). Arxivdan chiqarish — bitta tugma, ma'lumot buzilmaydi.
 - **B:** omborlar kabi — qoldiq > 0 bo'lsa `ENTITY_NOT_EMPTY`; avval sotish yoki inventarizatsiya bilan 0 ga tushirish kerak. Qat'iyroq, lekin singan/yaroqsiz 2 donani hisobdan chiqarish uchun ham avval inventarizatsiya o'tkazish kerak bo'ladi.
 B ga o'tish — `products.archive` da `getProductTotals` bilan bitta tekshiruv (+ test).
+
+### OQ-23 — Xarid qatorida 0 narx
+**Javob (2026-10-23, Prompt 41): A** — T-404 dagi amalga oshirish o'zgarmaydi.
+FR-4.1 xarid narxini so'raydi, lekin 0 ga ruxsat bor-yo'qligini aytmaydi. Ichimliklar savdosida yetkazib beruvchi ko'pincha "bonus" tovar beradi (masalan, 10 blokka 1 blok tekin).
+- **A (tavsiya, T-404 da shunday):** `inputPrice ≥ 0`. Bonus tovar alohida qatorda 0 narx bilan kiritiladi: qoldiq oshadi, `unitCost = 0`, bajarishda (T-405) o'rtacha tannarx pasayadi — bu iqtisodiy jihatdan to'g'ri (tovar tekin kelgan).
+- **B:** `inputPrice > 0` majburiy; bonus tovar narxi foydalanuvchi tomonidan boshqa qatorlarga taqsimlanadi (qo'lda, xatoga moyil).
+B ga o'tish — `packages/shared/src/schemas/purchase.ts` da `.min(0)` → `.min(1)` (+ test).

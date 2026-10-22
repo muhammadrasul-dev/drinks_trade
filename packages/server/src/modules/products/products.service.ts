@@ -11,6 +11,7 @@ import {
   ErrorCode,
   isLowStock,
   type Product,
+  type ProductOption,
   type ProductPage,
   type ProductRef,
   validationError,
@@ -530,9 +531,21 @@ async function readImage(ctx: ServiceContext, input: ProductIdInput): Promise<Pr
   };
 }
 
+/** The product picker of document forms (purchase, sale, stock count): active products by name. */
+async function options(ctx: ServiceContext): Promise<ProductOption[]> {
+  assertCan(ctx.user, 'product.read');
+  const { prisma } = await import('@drinks/db');
+  return prisma.product.findMany({
+    where: { organizationId: ctx.organizationId, archivedAt: null },
+    select: { id: true, name: true, sku: true, barcode: true, unitsPerBlock: true },
+    orderBy: [{ name: 'asc' }, { id: 'asc' }],
+  });
+}
+
 export const products = {
   list,
   get,
+  options,
   create,
   update,
   archive,

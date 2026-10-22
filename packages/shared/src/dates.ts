@@ -33,3 +33,32 @@ export function formatDateTime(date: Date, timeZone: string = STORE_TIME_ZONE): 
   );
   return `${parts.day}.${parts.month}.${parts.year} ${parts.hour}:${parts.minute}`;
 }
+
+const dayFormatters = new Map<string, Intl.DateTimeFormat>();
+
+/** `YYYY-MM-DD` of `date` in the given zone (default: the store's) — document "days" (OQ-07). */
+export function storeDateOf(date: Date, timeZone: string = STORE_TIME_ZONE): string {
+  let formatter = dayFormatters.get(timeZone);
+  if (!formatter) {
+    // en-CA formats as YYYY-MM-DD.
+    formatter = new Intl.DateTimeFormat('en-CA', {
+      timeZone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+    dayFormatters.set(timeZone, formatter);
+  }
+  return formatter.format(date);
+}
+
+/** Today's `YYYY-MM-DD` in the store's zone: the latest date a document may have (OQ-07). */
+export function storeToday(now: Date = new Date(), timeZone: string = STORE_TIME_ZONE): string {
+  return storeDateOf(now, timeZone);
+}
+
+/** "23.10.2026" — the date part of formatDateTime. */
+export function formatDate(date: Date, timeZone: string = STORE_TIME_ZONE): string {
+  const [year, month, day] = storeDateOf(date, timeZone).split('-');
+  return `${day}.${month}.${year}`;
+}
