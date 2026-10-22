@@ -429,3 +429,11 @@ ok, start all theese 3 task in seperate sessins
 ```
 yes keep both as is, merge all three when T-303 done
 ```
+
+---
+
+## Prompt 40 — OQ-20 va OQ-21 tavsiya bo'yicha, T-404 ni boshlash (2026-10-23)
+
+```
+keep OQ-20 and OQ-21 as recommended, start T-404
+```

@@ -10,6 +10,8 @@ SRS'dagi biznes savollar yopilgan. Bu yerda — arxitektura va DB loyihalashda c
 
 **2026-10-23 (Prompt 39):** OQ-22 yopildi — tavsiya bo'yicha (A). OQ-20 (T-303) va OQ-21 (T-304) javob kutmoqda.
 
+**2026-10-23 (Prompt 40):** OQ-20 va OQ-21 yopildi — ikkalasi ham tavsiya bo'yicha (A). **Ochiq savol qolmadi** (OQ-12 — deploy, keyingi bosqich).
+
 | # | Savol | Tavsiya | Holat |
 |---|---|---|---|
 | OQ-01 | Storno qilingan savdo P&L'da qaysi sanada aks etadi? | Asl hujjat sanasida (hujjat davr hisobidan butunlay chiqadi) | Yopilgan — asl sanada (A) |
@@ -31,9 +33,9 @@ SRS'dagi biznes savollar yopilgan. Bu yerda — arxitektura va DB loyihalashda c
 | OQ-17 | `pnpm user:reset-password` faolsiz akkauntga nima qiladi? | Parol tiklanadi, akkaunt faolsizligicha qoladi (CLI ogohlantiradi) | Yopilgan — A: parol tiklanadi, akkaunt faolsizligicha qoladi |
 | OQ-18 | Savdo storno'sida bir mahsulot bir necha qatorda bo'lsa, o'rtacha tannarx qatorma-qator hisoblanadimi yoki mahsulot bo'yicha bir marta? | Mahsulot bo'yicha bir marta (xarid §5.2 kabi) | Yopilgan — A: mahsulot bo'yicha bir marta |
 | OQ-19 | Nasiya savdo/xaridda izoh (qarz izohi) majburiymi? | Ha — `paidCredit > 0` bo'lsa hujjat izohi majburiy (`NOTE_REQUIRED`), qarzga o'sha izoh yoziladi | Yopilgan — A: izoh majburiy, `debts.open` ham tekshiradi |
-| OQ-21 | Ochiq (DRAFT) inventarizatsiyasi bor bo'sh ombor/sub-omborni arxivlash mumkinmi? | Yo'q — `WAREHOUSE_IN_STOCK_COUNT`; avval sanoqni bajaring yoki bekor qiling | Ochiq — tavsiya bo'yicha qilingan (T-304) |
+| OQ-21 | Ochiq (DRAFT) inventarizatsiyasi bor bo'sh ombor/sub-omborni arxivlash mumkinmi? | Yo'q — `WAREHOUSE_IN_STOCK_COUNT`; avval sanoqni bajaring yoki bekor qiling | Yopilgan — A: arxivlash rad etiladi (`WAREHOUSE_IN_STOCK_COUNT`) |
 | OQ-22 | Egasi o'z login/parolini o'zgartirsa, shu o'zgarishni qilgan (joriy) sessiya ham o'chadimi? | Yo'q — joriy sessiya qoladi, boshqa barcha sessiyalari o'chiriladi | Yopilgan — A: joriy sessiya qoladi |
-| OQ-20 | Omborda qoldig'i bor mahsulotni arxivlash mumkinmi? | Ha — ruxsat, tasdiqlash oynasida qolgan miqdor va "sotib bo'lmaydi" ogohlantirishi; arxivdan istalgan payt chiqariladi | Ochiq — tavsiya bo'yicha qilingan (T-303) |
+| OQ-20 | Omborda qoldig'i bor mahsulotni arxivlash mumkinmi? | Ha — ruxsat, tasdiqlash oynasida qolgan miqdor va "sotib bo'lmaydi" ogohlantirishi; arxivdan istalgan payt chiqariladi | Yopilgan — A: ruxsat, ogohlantirish bilan |
 
 ---
 
@@ -109,7 +111,7 @@ BR-10: kontragent ro'yxati yo'q, qarz **izoh** bilan yuritiladi; kassa orqali qa
 T-403 da `debts.open` `SALE`/`PURCHASE` qarzda bo'sh izohni qabul qilardi — Prompt 36 da bu ham `NOTE_REQUIRED` ga o'zgartirildi.
 
 ### OQ-21 — Ochiq inventarizatsiya va ombor/sub-omborni arxivlash
-**Holat: ochiq — tavsiya (A) bo'yicha qilingan (T-304).**
+**Javob (2026-10-23, Prompt 40): A** — T-304 dagi amalga oshirish o'zgarmaydi.
 FR-2.2 faqat "bo'sh bo'lmagan ombor/sub-omborni arxivlab bo'lmaydi" deydi. Lekin ombor bo'sh bo'lsa-yu, unda ochiq (DRAFT) inventarizatsiya bo'lsa-chi? Sanoqda shu sub-ombor uchun "ortiqcha topilgan" qator bo'lishi mumkin — bajarilganda tovar arxivdagi joyga tushadi (BR-8).
 - **A (tavsiya, qilingan):** arxivlash rad etiladi — `WAREHOUSE_IN_STOCK_COUNT { warehouseName, stockCountNumber }` (ombor uchun ham, uning sub-ombori uchun ham). Foydalanuvchi avval sanoqni bajaradi yoki bekor qiladi. Mavjud xato kodi va xabari ishlatiladi.
 - **B:** arxivlashda ochiq sanoq avtomatik bekor qilinadi (`CANCEL`). Qulay, lekin foydalanuvchi kiritgan sanoq natijalari jimgina yo'qoladi.
@@ -122,6 +124,7 @@ architecture §11 va ADR-006: "login yoki parol o'zgarganda o'sha foydalanuvchin
 - **B:** hammasi, shu jumladan joriy sessiya o'chiriladi; Egasi yangi login/parol bilan qayta kiradi. Hujjat matniga so'zma-so'z mos.
 B ga o'tish — `users.changeOwnUsername` / `changeOwnPassword` ga `currentSessionToken` bermaslik (`features/users/actions.ts`) va keyin login sahifasiga yo'naltirish.
 ### OQ-20 — Qoldig'i bor mahsulotni arxivlash
+**Javob (2026-10-23, Prompt 40): A** — T-303 dagi amalga oshirish o'zgarmaydi.
 FR-1.2 mahsulotni o'chirish o'rniga arxivlashni aytadi, lekin qoldiq haqida hech narsa demaydi. Ombor/sub-ombor uchun esa bo'sh bo'lmaganini arxivlash taqiqlangan (FR-2.2, `ENTITY_NOT_EMPTY`). Arxivlangan mahsulot yangi hujjatlarda tanlanmaydi (database §6.1), ya'ni qoldig'i bo'lsa — uni sotib bo'lmaydi, qoldiq hisobotida esa ko'rinib turadi.
 - **A (tavsiya, T-303 da shunday):** ruxsat beriladi. Tasdiqlash oynasi qolgan miqdorni ko'rsatadi ("Omborda hali 3 blok 2 dona bor — arxivlangan mahsulotni sotib bo'lmaydi"). Arxivdan chiqarish — bitta tugma, ma'lumot buzilmaydi.
 - **B:** omborlar kabi — qoldiq > 0 bo'lsa `ENTITY_NOT_EMPTY`; avval sotish yoki inventarizatsiya bilan 0 ga tushirish kerak. Qat'iyroq, lekin singan/yaroqsiz 2 donani hisobdan chiqarish uchun ham avval inventarizatsiya o'tkazish kerak bo'ladi.
