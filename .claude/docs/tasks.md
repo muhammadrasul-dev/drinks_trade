@@ -55,7 +55,7 @@ Bog'liq: [01-srs.md](01-srs.md) · [architecture.md](architecture.md) · [databa
 | T-002 | Umumiy config paketi (TS, ESLint, Prettier) | T-001 | architecture §3.1, conventions §2–3 | ✅ |
 | T-003 | Docker: lokal PostgreSQL | T-001 | architecture §8 | ✅ |
 | T-004 | `apps/web` Next.js + Tailwind + `packages/ui` (shadcn) | T-002 | architecture §2, §6 | ✅ |
-| T-005 | `packages/shared` va `packages/server` skeleti + Vitest | T-002 | architecture §3, §10 | ⬜ |
+| T-005 | `packages/shared` va `packages/server` skeleti + Vitest | T-002 | architecture §3, §10 | ✅ |
 | T-006 | CI (GitHub Actions): lint, typecheck, test | T-005 | conventions §5–6 | ⬜ |
 
 **T-001 — Git va monorepo skeleti**
@@ -335,3 +335,4 @@ Tayyor bo'lishi uchun (umumiy): STAFF savdo hisobotida tannarx/foyda maydonlari 
 | 2026-10-22 | T-003 fayllari tayyor (Prompt 15): `docker/compose.dev.yml`, init SQL, `.env.example`, `db:up/down/logs`. Holat ⏸: mashinada Docker yo'q, `pnpm db:up` + `psql` tekshiruvi Docker Desktop o'rnatilgach bajariladi |
 | 2026-10-22 | T-003 runtime tekshiruvi o'tdi: `pnpm db:up` → healthy, ikkala bazaga 5433 orqali ulanildi. Docker Desktop o'rnatilgan edi, CLI (`~/.docker/bin`) faqat `~/.zprofile` da PATH'ga qo'shilgan |
 | 2026-10-22 | T-004 bajarildi (Prompt 17): Next.js 16.4.2 + Tailwind 4.3.3 + `packages/ui` (shadcn, 10 komponent), `/api/health`. Og'ishlar: (1) ESLint'ga `uiBoundaries` va `react()` preset (react-hooks + Next.js qoidalari) qo'shildi; (2) bosh sahifadagi matn vaqtincha qattiq yozilgan — `messages/*.json` T-202 da; (3) shadcn CLI `cn` aliasini noto'g'ri `"cn"` npm paketiga aylantirdi — importlar `@drinks/ui/lib/utils` ga tuzatildi, `cn` paketi olib tashlandi; `zod`/`@hookform/resolvers` `ui` ga qo'shilmadi (T-005 `shared` da); (4) `test` vazifasi hali yo'q (0 task, yashil) — Vitest T-005 da |
+| 2026-10-22 | T-005 bajarildi (Prompt 18): `@drinks/shared` (`enums.ts`, `errors.ts` — business-logic §10 dagi 25 kod, `permissions.ts` + `can()`, bo'sh `schemas/`), `@drinks/server` (`server-only`, `core/` stublari, `modules/`), Vitest 5.0.5 (root `projects` + paket configlari), 36 test. Og'ishlar: (1) `core/rbac.ts` dagi `assertCan` hozirdanoq ishlaydi (DB'siz sof funksiya, `FORBIDDEN` testi bilan); `tx`/`locks`/`numbering` — T-104 gacha bo'sh; (2) rol enumi nomi `UserRole` (database §4 Prisma nomi bilan bir xil; architecture §3 izohidagi `Role` emas); (3) turbo `test.outputs` = `[]` (coverage hali yo'q); (4) `apps/web` `@drinks/shared` dan `Locale` ni bosh sahifada ishlatadi (dev va build'da tekshirildi) |

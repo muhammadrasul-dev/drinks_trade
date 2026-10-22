@@ -10,6 +10,7 @@
     "typecheck": "next typegen && tsc --noEmit"
   },
   "dependencies": {
+    "@drinks/shared": "workspace:*",
     "@drinks/ui": "workspace:*",
     "next": "16.4.2",
     "react": "19.3.1",

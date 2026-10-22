@@ -96,6 +96,9 @@ Aniq versiyalar loyiha `init` qilinganda `package.json` da qotiriladi (pin) va s
 | react-hook-form | 7.90.0 | `packages/ui` (`form` komponenti) |
 | @next/eslint-plugin-next | 16.4.2 | `packages/config` |
 | eslint-plugin-react-hooks | 7.1.1 | `packages/config` |
+| Vitest | 5.0.5 | root, `packages/shared`, `packages/server` (`devDependencies`) |
+| Vite | 8.3.4 | Vitest'ning majburiy peer'i; Vitest bilan bir joyda |
+| server-only | 0.0.1 | `packages/server` |
 
 ## 3. Monorepo tuzilmasi
 
@@ -168,7 +171,7 @@ drinks_trade/
 │   │   └── src/
 │   │       ├── schemas/            # zod: productInput, saleInput, ...
 │   │       ├── types/              # DTO tiplari
-│   │       ├── enums.ts            # Role, DocStatus, CashTxType ... (Prisma'dan mustaqil)
+│   │       ├── enums.ts            # UserRole, DocStatus, CashTxType ... (Prisma'dan mustaqil)
 │   │       ├── permissions.ts      # rol → ruxsatlar matritsasi
 │   │       ├── errors.ts           # ErrorCode ro'yxati + DomainError
 │   │       ├── units.ts            # dona ↔ blok (BR-1)
@@ -207,7 +210,8 @@ apps/web ──► packages/server ──► packages/db
 - ESLint chegaralari `packages/config/eslint/index.js` da (`webBoundaries`, `sharedBoundaries`, `uiBoundaries`): `apps/web` → `@prisma/*`, `prisma`, `@drinks/db`, `**/packages/db` taqiqlangan; `packages/shared` → shularga qo'shimcha Node built-in modullari (`node:*`, `fs`, `path` …) taqiqlangan; `packages/ui` → Prisma, `db`, `server`, `apps/web` va Node built-in modullari taqiqlangan (faqat `shared` mumkin). `apps/web` va `packages/ui` ga `react-hooks`, `apps/web` ga Next.js (`core-web-vitals`) qoidalari qo'llanadi (`react()` preset).
 - `packages/ui` build qilinmaydi: TS manbasi `exports` (`@drinks/ui/components/*`, `@drinks/ui/lib/*`, `@drinks/ui/globals.css`, `@drinks/ui/postcss.config`) orqali beriladi, `apps/web` uni `transpilePackages` bilan kompilyatsiya qiladi. Tailwind tema tokenlari va `@source` (ilovalar + ui) — `packages/ui/src/styles/globals.css`. Yangi shadcn komponent: `packages/ui` ichida `pnpm dlx shadcn@4.22.1 add <nom>` (keyin versiyani qotirish va `cn` importini tekshirish).
 - ESLint **bitta root `eslint.config.js`** bilan butun repo bo'ylab ishga tushadi (`pnpm lint`), chegaralar fayl yo'li bo'yicha qo'llanadi — yangi paket o'z lint sozlamasini unutsa ham chegarani chetlab o'ta olmaydi. Paketlarda alohida `lint` skript yo'q; `typecheck`/`test` esa turbo orqali paket bo'yicha.
-- `packages/server` `import 'server-only'` bilan belgilanadi — client bundle'ga tushib qolmaydi.
+- `packages/server` `import 'server-only'` bilan belgilanadi (`src/index.ts`) — client bundle'ga tushib qolmaydi. Vitest'da `server-only` `packages/server/test/server-only.ts` bo'sh moduliga alias qilinadi (`packages/server/vitest.config.ts`), shuning uchun testlar server modullarini import qila oladi.
+- `packages/shared` va `packages/server` ham build qilinmaydi: TS manbasi `exports` orqali (`@drinks/shared`, `@drinks/shared/schemas`, `@drinks/server`); `apps/web` ularni `transpilePackages` bilan kompilyatsiya qiladi. Enumlar Prisma'ga o'xshash shaklda: `const` obyekt + bir xil nomli union tip (`UserRole.OWNER` / `UserRole`).
 - Qoida: **"ikki tomonda kerak bo'lsa → `shared`"**. Masalan, blok/dona konvertatsiyasi formada ham (oldindan ko'rish), serverda ham (saqlash) kerak → `shared/units.ts`.
 
 ## 4. So'rov oqimi
@@ -254,7 +258,7 @@ Modullar bir-birining **repo**siga kirmaydi, faqat **servis** orqali (masalan, `
 ### 5.2 ServiceContext
 ```ts
 interface ServiceContext {
-  user: { id: string; role: Role; locale: Locale };
+  user: { id: string; role: UserRole; locale: Locale };
   storeId: string;        // v1 da yagona do'kon; kelajakda filial tanlovi
   organizationId: string;
   requestId: string;      // log va audit uchun
@@ -363,6 +367,8 @@ Mahsulot rasmi (FR-1.1) — v1 da server diskidagi `UPLOAD_DIR` (Docker volume).
 | Unit | `shared`: birliklar, tannarx formulasi, P&L formulasi, zod sxemalar | Vitest |
 | Integratsiya | `server` servislari haqiqiy Postgres'da (`drinks_trade_test`): savdo/xarid/storno/inventarizatsiya, kassa manfiy bo'lmasligi, **parallel savdo bajarish** (BR-7) | Vitest + Docker DB |
 | E2E | Asosiy oqimlar: login → xarid → savdo → hisobot; STAFF foyda ko'rmasligi | Playwright |
+
+Vitest sozlamasi: har paketda `vitest.config.ts` (`defineProject`, testlar `src/**/*.test.ts`, paket ichida `test` skripti `vitest run`); `pnpm test` turbo orqali paketlar bo'yicha ishlaydi. Root `vitest.config.ts` barcha paketlarni `projects` sifatida bitta jarayonda ishga tushiradi (`pnpm exec vitest`).
 
 Biznes qoidalar uchun har bir BR-xx ga kamida bitta integratsiya testi bo'lishi shart; test nomida BR raqami yoziladi (`it('BR-7: qoldiq yetmasa savdo bajarilmaydi')`).
 

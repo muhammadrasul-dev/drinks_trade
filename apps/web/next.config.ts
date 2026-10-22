@@ -8,7 +8,7 @@ const nextConfig: NextConfig = {
   // Trace files from the monorepo root so workspace packages land in the standalone output.
   outputFileTracingRoot: path.join(import.meta.dirname, '../..'),
   // Workspace packages ship TypeScript source, not built JS.
-  transpilePackages: ['@drinks/ui'],
+  transpilePackages: ['@drinks/shared', '@drinks/ui'],
 };
 
 export default nextConfig;
