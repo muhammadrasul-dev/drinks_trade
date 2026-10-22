@@ -252,3 +252,11 @@ pnpm db:up
 ```
 T-004 start on new session
 ```
+
+---
+
+## Prompt 18 — T-005 ni yangi sessiyada boshlash (2026-10-22)
+
+```
+T-005 start on new session
+```
