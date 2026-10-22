@@ -1,0 +1,359 @@
+# Arxitektura
+
+Versiya: 0.1 (qoralama) · Sana: 2026-10-22 · Manba: [01-srs.md](01-srs.md) v1.0
+Bog'liq: [database.md](database.md) · [business-logic.md](business-logic.md) · [decisions.md](decisions.md) · [conventions.md](conventions.md) · [open-questions.md](open-questions.md)
+
+---
+
+## 1. Umumiy ko'rinish
+
+Tizim — bitta do'kon uchun web mini-ERP. Bitta **monorepo** ichida: frontend (UI), backend (biznes mantiq), ma'lumotlar bazasi sxemasi, umumiy (shared) kod va Docker fayllari.
+
+```
+Brauzer (uz/ru)
+   │  HTTPS
+   ▼
+┌───────────────────────────────────────────────┐
+│ apps/web  — Next.js (App Router)              │
+│  • UI: Server + Client Components, Tailwind   │
+│  • Server Actions (mutatsiyalar)              │
+│  • Route Handlers (eksport PDF/Excel, health) │
+│        │ faqat chaqiradi                       │
+│        ▼                                       │
+│ packages/server — BACKEND yadrosi             │
+│  • servislar (product, sale, purchase, ...)   │
+│  • RBAC, audit, tranzaksiya, qulflash         │
+│        │                                       │
+│        ▼                                       │
+│ packages/db — Prisma schema + client          │
+└────────┼──────────────────────────────────────┘
+         ▼
+   PostgreSQL (Docker)
+
+packages/shared — UI ham, server ham ishlatadigan kod
+(zod sxemalar, tiplar, enumlar, birlik/pul funksiyalari, ruxsatlar matritsasi, xato kodlari)
+```
+
+**Asosiy g'oya:** Next.js — faqat "transport" va UI qatlami. Barcha biznes qoidalar (BR-1…BR-13) `packages/server` da, framework'dan mustaqil, test qilinadigan servislar ko'rinishida yashaydi. Ertaga mobil ilova yoki REST API kerak bo'lsa, xuddi shu servislar qayta ishlatiladi (qarang ADR-002).
+
+## 2. Texnologiyalar steki
+
+| Qatlam | Tanlov | Izoh |
+|---|---|---|
+| Runtime | Node.js 24 LTS | |
+| Paket menejer | pnpm (workspaces) | monorepo uchun tez va qat'iy |
+| Monorepo orkestr | Turborepo | build/lint/test keshlash, vazifalar grafigi |
+| Til | TypeScript (`strict: true`) | hamma joyda |
+| Fullstack framework | Next.js (App Router, joriy barqaror major) | RSC + Server Actions |
+| UI | Tailwind CSS v4 + shadcn/ui (Radix asosida) | komponentlar repoga ko'chiriladi, AI uchun qulay |
+| Ikonkalar | lucide-react | |
+| Formalar | react-hook-form + zod | sxema `packages/shared` da, client va server bir xil validatsiya |
+| Jadvallar | TanStack Table | saralash, filtr, sahifalash |
+| i18n | next-intl | `uz` (lotin, default) va `ru` |
+| ORM | Prisma | sxema, migratsiyalar, tiplar |
+| DB | PostgreSQL 17 | Docker'da lokal |
+| Auth | O'zimizning sessiya-auth (argon2 + `session` jadvali + httpOnly cookie) | ADR-006 |
+| PDF eksport | @react-pdf/renderer (kirill shrift ro'yxatdan o'tkaziladi) | ADR-010 |
+| Excel eksport | exceljs | |
+| Sana/vaqt | date-fns + `@date-fns/tz` | vaqt zonasi `Asia/Tashkent` |
+| Logging | pino | |
+| Testlar | Vitest (unit + integratsiya), Playwright (e2e) | |
+| Lint/format | ESLint (flat config) + Prettier | |
+| Konteyner | Docker + Docker Compose | lokal DB; keyin prod |
+
+Aniq versiyalar loyiha `init` qilinganda `package.json` da qotiriladi (pin) va shu faylga yoziladi.
+
+**Qotirilgan versiyalar** (T-001 dan boshlab to'ldiriladi):
+
+| Vosita | Versiya | Qayerda |
+|---|---|---|
+| Node.js | 24 | `.nvmrc`, root `engines` |
+| pnpm | 10.34.7 | root `packageManager` (corepack) |
+| Turborepo | 2.11.10 | root `devDependencies` |
+
+## 3. Monorepo tuzilmasi
+
+```
+drinks_trade/
+├── CLAUDE.md                       # AI uchun kirish nuqtasi (qoidalar + hujjatlarga havola)
+├── .claude/
+│   └── docs/                       # Barcha hujjatlar: SRS (01-srs.md), texnik hujjatlar, vazifalar
+├── apps/
+│   └── web/                        # Next.js ilova (UI + server actions + route handlers)
+│       ├── src/
+│       │   ├── app/
+│       │   │   ├── [locale]/
+│       │   │   │   ├── (auth)/login/
+│       │   │   │   └── (app)/              # himoyalangan zona, layout + sidebar
+│       │   │   │       ├── dashboard/
+│       │   │   │       ├── products/
+│       │   │   │       ├── warehouses/
+│       │   │   │       ├── sales/
+│       │   │   │       ├── purchases/
+│       │   │   │       ├── stock-counts/   # inventarizatsiya
+│       │   │   │       ├── cash/           # kassa (faqat OWNER)
+│       │   │   │       ├── debts/          # qarzlar (faqat OWNER)
+│       │   │   │       ├── reports/        # stock, sales, pnl
+│       │   │   │       ├── users/          # faqat OWNER
+│       │   │   │       └── audit/          # faqat OWNER
+│       │   │   └── api/
+│       │   │       ├── reports/[report]/export/route.ts
+│       │   │       └── health/route.ts
+│       │   ├── features/<modul>/   # modulga xos UI: components/, actions.ts, columns.tsx
+│       │   ├── components/         # ilova darajasidagi umumiy UI (layout, sidebar)
+│       │   ├── lib/                # session o'qish, action-wrapper, format helperlar
+│       │   ├── i18n/               # next-intl config, routing
+│       │   └── middleware.ts       # locale + auth redirect
+│       ├── messages/
+│       │   ├── uz.json
+│       │   └── ru.json
+│       ├── public/fonts/           # PDF uchun kirill shriftlar
+│       └── next.config.ts
+├── packages/
+│   ├── server/                     # BACKEND yadrosi (faqat serverda ishlaydi: `server-only`)
+│   │   └── src/
+│   │       ├── modules/
+│   │       │   ├── auth/           # login, logout, session, parol hash
+│   │       │   ├── users/
+│   │       │   ├── products/       # product, category, brand
+│   │       │   ├── warehouses/     # warehouse, sub-warehouse
+│   │       │   ├── inventory/      # stock balance, movements, avg cost (ichki)
+│   │       │   ├── sales/
+│   │       │   ├── purchases/
+│   │       │   ├── stock-counts/
+│   │       │   ├── cash/
+│   │       │   ├── debts/
+│   │       │   ├── reports/        # stock, sales, pnl + eksport
+│   │       │   └── audit/
+│   │       ├── core/
+│   │       │   ├── context.ts      # ServiceContext { user, storeId, tx }
+│   │       │   ├── tx.ts           # withTransaction, qulf helperlari
+│   │       │   ├── locks.ts        # FOR UPDATE so'rovlari (tartib qat'iy)
+│   │       │   ├── rbac.ts         # assertCan(user, permission)
+│   │       │   └── numbering.ts    # hujjat raqamlari (S-000001)
+│   │       └── index.ts
+│   ├── db/                         # Prisma
+│   │   ├── prisma/
+│   │   │   ├── schema.prisma
+│   │   │   ├── migrations/         # + qo'lda SQL (CHECK, partial index, trigger)
+│   │   │   └── seed.ts             # OWNER foydalanuvchi, 2 kassa, do'kon
+│   │   └── src/client.ts           # PrismaClient singleton
+│   ├── shared/                     # FRONT + BACK umumiy (brauzerda ham ishlay oladi)
+│   │   └── src/
+│   │       ├── schemas/            # zod: productInput, saleInput, ...
+│   │       ├── types/              # DTO tiplari
+│   │       ├── enums.ts            # Role, DocStatus, CashTxType ... (Prisma'dan mustaqil)
+│   │       ├── permissions.ts      # rol → ruxsatlar matritsasi
+│   │       ├── errors.ts           # ErrorCode ro'yxati + DomainError
+│   │       ├── units.ts            # dona ↔ blok (BR-1)
+│   │       ├── money.ts            # so'm formatlash, yaxlitlash
+│   │       └── costing.ts          # o'rtacha tannarx formulasi (BR-6) — sof funksiya
+│   ├── ui/                         # shadcn/ui komponentlari + umumiy UI primitivlar
+│   └── config/                     # tsconfig base, eslint config, prettier
+├── docker/
+│   ├── compose.dev.yml             # PostgreSQL (+ ixtiyoriy Adminer)
+│   ├── compose.prod.yml            # web + postgres + migrate (keyinroq)
+│   └── web.Dockerfile              # Next.js standalone build
+├── .env.example
+├── package.json                    # root skriptlar
+├── pnpm-workspace.yaml
+└── turbo.json
+```
+
+### 3.1 Paketlar orasidagi bog'liqlik qoidalari
+
+```
+apps/web ──► packages/server ──► packages/db
+   │               │
+   ├──► packages/ui │
+   └──► packages/shared ◄──┘
+```
+
+| Paket | Kim import qila oladi | Nimani import qila oladi |
+|---|---|---|
+| `shared` | hamma | hech narsani (faqat zod, date-fns kabi kutubxonalar). **Prisma import qilinmaydi**, Node API ishlatilmaydi |
+| `ui` | `web` | `shared` |
+| `db` | faqat `server` | — |
+| `server` | faqat `web` (server tomonda) | `db`, `shared` |
+| `web` | — | `server`, `shared`, `ui` |
+
+- `apps/web` **to'g'ridan-to'g'ri Prisma'ni chaqirmaydi** — faqat `packages/server` servislarini. Bu qoida ESLint (`no-restricted-imports`) bilan majburlanadi.
+- `packages/server` `import 'server-only'` bilan belgilanadi — client bundle'ga tushib qolmaydi.
+- Qoida: **"ikki tomonda kerak bo'lsa → `shared`"**. Masalan, blok/dona konvertatsiyasi formada ham (oldindan ko'rish), serverda ham (saqlash) kerak → `shared/units.ts`.
+
+## 4. So'rov oqimi
+
+### 4.1 O'qish (sahifa ochish)
+1. `middleware.ts`: locale aniqlanadi; session cookie yo'q bo'lsa `/login` ga.
+2. Server Component `getSession()` → `ServiceContext` yaratadi.
+3. Servis chaqiriladi (`productsService.list(ctx, filters)`), servis RBAC tekshiradi, DTO qaytaradi.
+4. DTO — rolga qarab **filtrlangan**: STAFF uchun `costTotal`, `grossProfit` kabi maydonlar **serverda** olib tashlanadi (UI'da yashirish yetarli emas).
+
+### 4.2 Yozish (mutatsiya)
+1. Client forma `react-hook-form` + `shared` zod sxema bilan validatsiya qiladi.
+2. Server Action (`features/sales/actions.ts`) → `action()` wrapper: session, zod qayta validatsiya, servis chaqiruvi, xatoni `ActionResult` ga o'giradi.
+3. Servis: `withTransaction` ichida qulflar → biznes tekshiruvlar → yozuvlar → audit → commit.
+4. `revalidatePath` / `revalidateTag` bilan kesh yangilanadi.
+
+```ts
+// shared
+type ActionResult<T> =
+  | { ok: true; data: T }
+  | { ok: false; error: { code: ErrorCode; params?: Record<string, unknown>; fieldErrors?: Record<string, string[]> } };
+```
+
+Xato matnlari serverda emas, **UI'da `code` bo'yicha tarjima qilinadi** (`messages/uz.json` → `errors.INSUFFICIENT_STOCK`). Shu tufayli bitta xato ikki tilda to'g'ri chiqadi.
+
+### 4.3 Eksport
+`GET /api/reports/{stock|sales|pnl}/export?format=pdf|xlsx&from=&to=` → session + RBAC → `reportsService` → fayl stream. STAFF uchun savdo hisobotida tannarx/foyda ustunlari umuman generatsiya qilinmaydi; P&L uchun 403.
+
+## 5. Backend dizayni (`packages/server`)
+
+### 5.1 Modul tuzilmasi
+Har modul bir xil shaklda:
+```
+modules/sales/
+├── sales.service.ts     # public API: create, update, remove, post, reverse, get, list
+├── sales.repo.ts        # Prisma so'rovlari (faqat shu modul jadvallari)
+├── sales.mapper.ts      # DB → DTO (rolga qarab filtr)
+├── sales.post.ts        # bajarish algoritmi (murakkab bo'lgani uchun alohida)
+└── sales.test.ts        # integratsiya testlari (haqiqiy Postgres)
+```
+
+Modullar bir-birining **repo**siga kirmaydi, faqat **servis** orqali (masalan, `sales.post` → `inventoryService.issue(tx, ...)`, `cashService.record(tx, ...)`, `debtsService.open(tx, ...)`). Ichki servis funksiyalari `tx` qabul qiladi, shunda hammasi bitta tranzaksiyada.
+
+### 5.2 ServiceContext
+```ts
+interface ServiceContext {
+  user: { id: string; role: Role; locale: Locale };
+  storeId: string;        // v1 da yagona do'kon; kelajakda filial tanlovi
+  organizationId: string;
+  requestId: string;      // log va audit uchun
+}
+```
+Har bir so'rov `storeId` bilan filtrlanadi — filiallar qo'shilganda kod o'zgarmaydi (qarang [database.md §2](database.md)).
+
+### 5.3 Tranzaksiya va bir vaqtdalik (BR-7, NFR "Yaxlitlik")
+- Barcha "bajarish" va "storno" amallari **bitta Postgres tranzaksiyasi** (Prisma interactive transaction, `READ COMMITTED`) ichida.
+- Qoldiq va tannarx qatorlari `SELECT ... FOR UPDATE` bilan qulflanadi; qulflar **doim bir xil tartibda** olinadi (deadlock oldini olish) — tartib [business-logic.md §2](business-logic.md) da.
+- Oxirgi himoya chizig'i — DB darajasida `CHECK (qty >= 0)`, `CHECK (balance >= 0)`. Kod xato qilsa ham ma'lumot buzilmaydi.
+- Qoralamalarni tahrirlashda optimistik qulf: `version` ustuni (ikki kishi bir qoralamani bir vaqtda tahrirlasa, ikkinchisi "hujjat o'zgargan, yangilang" xatosini oladi).
+
+### 5.4 Audit (BR-12)
+- Har bir yozuvchi servis funksiyasi o'sha tranzaksiya ichida `audit.log(tx, {...})` chaqiradi (yashirin Prisma middleware emas — aniq, ko'rinadigan chaqiruv).
+- `audit_log` jadvalida `UPDATE`/`DELETE` DB trigger bilan taqiqlangan.
+- O'tgan sana bilan kiritilgan hujjatlar `meta.backdated = true` bilan belgilanadi (BR-13).
+
+### 5.5 RBAC
+Ruxsatlar `shared/permissions.ts` da yagona joyda:
+
+| Ruxsat | OWNER | STAFF |
+|---|:-:|:-:|
+| `product.read`, `product.write` (blokdagi dona sonini o'zgartirish ham — OQ-06) | ✅ | ✅ |
+| `product.purchasePrice.read` | ✅ | ✅ |
+| `warehouse.read`, `warehouse.write` | ✅ | ✅ |
+| `sale.write`, `sale.post` | ✅ | ✅ |
+| `purchase.write`, `purchase.post` | ✅ | ✅ |
+| `stockCount.write`, `stockCount.post` | ✅ | ✅ |
+| `document.reverse` (storno, shu jumladan qo'lda kassa yozuvlari) | ✅ | ❌ (OQ-03) |
+| `document.paymentSplit.write` (o'z hujjatida Naqd/Karta/Nasiya kiritish) | ✅ | ✅ (OQ-02) |
+| `report.stock`, `report.sales` | ✅ | ✅ |
+| `report.sales.cost` (tannarx/foyda ustunlari) | ✅ | ❌ |
+| `report.pnl` | ✅ | ❌ |
+| `cash.read`, `cash.write` | ✅ | ❌ |
+| `debt.read`, `debt.write` | ✅ | ❌ |
+| `stockCount.amount.read` (kamomad summasi) | ✅ | ❌ |
+| `user.manage` (xodim akkauntlarini yaratish/tahrirlash, login va parolni o'zgartirish, faolsizlantirish) | ✅ | ❌ |
+| `document.draft.editAny` (boshqa foydalanuvchi qoralamasini tahrirlash — OQ-14) | ✅ | ✅ |
+| `audit.read` | ✅ | ❌ |
+
+Tekshiruv **3 joyda**: (1) servis (`assertCan`) — majburiy; (2) mapper — maxfiy maydonlarni olib tashlash; (3) UI — menyu/tugmalarni yashirish (faqat qulaylik uchun).
+
+## 6. Frontend dizayni (`apps/web`)
+
+- **Default — Server Components.** Client Component faqat interaktivlik kerak bo'lganda (formalar, jadval filtrlari, dialoglar).
+- Ma'lumot o'qish — Server Component ichida servis chaqiruvi. Alohida client fetch kutubxonasi (TanStack Query) v1 da kerak emas.
+- Layout: chap sidebar (rolga qarab menyu), yuqorida til almashtirgich (uz/ru), foydalanuvchi menyusi; **ochiq inventarizatsiya banneri** — ombor inventarizatsiyada bo'lsa barcha sahifalarda sariq ogohlantirish (BR-8).
+- Hujjat formalari (savdo/xarid): qatorlar jadvali, har qatorda mahsulot (qidiruv/shtrix-kod), sub-ombor, miqdor (dona/blok almashtirgich), narx, summa; pastda to'lov qismlari (Naqd/Karta/Nasiya) va "Qoldiq: N blok M dona" ko'rsatkichi. Tugmalar: **Saqlash (qoralama)** · **Bajarish** · **O'chirish** (faqat qoralama) · **Storno** (faqat bajarilgan).
+- Savdo qatorida qoldiq yetmasa — qator qizil, xabar, "Bajarish" o'chiq (FR-3.3). Bajarishda server yana tekshiradi (BR-7).
+- Raqamlar: so'm `1 250 000 so'm` formatida (bo'shliq bilan), miqdor `3 blok 2 dona`.
+- Responsiv: asosan desktop/planshet; telefon ekranida ham ishlashi kerak (kassada telefon bilan ishlatilishi mumkin).
+
+## 7. i18n
+- `next-intl`, URL prefiks: `/uz/...`, `/ru/...`; default `uz`.
+- Foydalanuvchi tanlagan til `user.locale` da saqlanadi, login'dan keyin shu tilga yo'naltiriladi.
+- Tarjima kalitlari modul bo'yicha: `products.title`, `errors.INSUFFICIENT_STOCK`, `enums.CashTxType.TRAVEL_EXPENSE`.
+- Foydalanuvchi kiritgan ma'lumot (mahsulot nomi, izohlar) tarjima qilinmaydi.
+- PDF/Excel eksport ham joriy til bo'yicha.
+
+## 8. Docker va muhitlar
+
+### 8.1 Lokal ishlab chiqish
+- Faqat **PostgreSQL** Docker'da; Next.js host'da `pnpm dev` bilan (tez HMR).
+- `docker/compose.dev.yml`:
+  - `postgres` — `postgres:17-alpine`, port `5433:5432` (hostdagi boshqa Postgres bilan to'qnashmasligi uchun), named volume `pgdata`, healthcheck `pg_isready`, init skript ikkita DB yaratadi: `drinks_trade` va `drinks_trade_test`.
+  - `adminer` — ixtiyoriy (`profiles: [tools]`), port `8080`.
+
+### 8.2 Muhit o'zgaruvchilari (`.env.example`)
+```
+DATABASE_URL=postgresql://drinks:drinks@localhost:5433/drinks_trade
+DATABASE_URL_TEST=postgresql://drinks:drinks@localhost:5433/drinks_trade_test
+SESSION_SECRET=change-me
+APP_TIMEZONE=Asia/Tashkent
+UPLOAD_DIR=./storage/uploads
+SEED_OWNER_USERNAME=owner
+SEED_OWNER_PASSWORD=change-me
+```
+
+### 8.3 Root skriptlar (reja)
+| Skript | Vazifa |
+|---|---|
+| `pnpm db:up` / `db:down` | Docker Postgres'ni yoqish/o'chirish |
+| `pnpm db:migrate` | `prisma migrate dev` |
+| `pnpm db:seed` | boshlang'ich ma'lumot (OWNER, do'kon, 2 kassa) |
+| `pnpm db:studio` | Prisma Studio |
+| `pnpm dev` | Next.js dev |
+| `pnpm test` / `test:int` / `test:e2e` | testlar |
+| `pnpm lint` / `typecheck` / `build` | turbo orqali |
+
+### 8.4 Production (keyingi bosqich — SRS 8: "texnologiya, joylashtirish keyin")
+`compose.prod.yml`: `web` (Next.js `output: 'standalone'`, `web.Dockerfile` multi-stage), `postgres`, bir martalik `migrate` servisi (`prisma migrate deploy`), kunlik `pg_dump` backup. Joylashtirish platformasi ochiq savol (OQ-12).
+
+## 9. Fayl saqlash
+Mahsulot rasmi (FR-1.1) — v1 da server diskidagi `UPLOAD_DIR` (Docker volume). Kod `StorageAdapter` interfeysi orqali yozadi, keyin S3/MinIO ga o'tish oson. Rasm hajmi ≤ 2 MB, formatlar: jpg/png/webp; serverda 512px gacha kichraytiriladi (sharp).
+
+## 10. Test strategiyasi
+
+| Daraja | Nima | Vosita |
+|---|---|---|
+| Unit | `shared`: birliklar, tannarx formulasi, P&L formulasi, zod sxemalar | Vitest |
+| Integratsiya | `server` servislari haqiqiy Postgres'da (`drinks_trade_test`): savdo/xarid/storno/inventarizatsiya, kassa manfiy bo'lmasligi, **parallel savdo bajarish** (BR-7) | Vitest + Docker DB |
+| E2E | Asosiy oqimlar: login → xarid → savdo → hisobot; STAFF foyda ko'rmasligi | Playwright |
+
+Biznes qoidalar uchun har bir BR-xx ga kamida bitta integratsiya testi bo'lishi shart; test nomida BR raqami yoziladi (`it('BR-7: qoldiq yetmasa savdo bajarilmaydi')`).
+
+## 11. Foydalanuvchilar va akkauntlar (OQ-10)
+- Har foydalanuvchining o'z **logini va paroli** bor. Umumiy akkaunt ishlatilmaydi, aks holda audit "kim qildi"ni ko'rsata olmaydi.
+- **Egasi (OWNER)** — tizimda bitta. U seed orqali yaratiladi (`SEED_OWNER_*` env).
+- **Xodimlar (STAFF)** — cheklanmagan son. Ularni faqat Egasi **Foydalanuvchilar** bo'limida boshqaradi:
+  - yaratish: F.I.O, login, parol;
+  - tahrirlash: F.I.O, login, parol (yangi parol o'rnatish), interfeys tili;
+  - faolsizlantirish/qayta faollashtirish (`is_active`). Akkaunt **o'chirilmaydi**, chunki hujjat va auditda unga havola bor.
+- Egasi o'z login va parolini ham shu yerdan o'zgartiradi (joriy parolni kiritish sharti bilan). Xodim o'z parolini o'zgartira olmaydi, buni Egasi qiladi.
+- Login yoki parol o'zgarganda yoki akkaunt faolsizlantirilganda o'sha foydalanuvchining **barcha sessiyalari darhol o'chiriladi**: u qayta kirishi kerak bo'ladi.
+- Egasi parolini unutsa, uni serverda CLI orqali tiklaydi: `pnpm user:reset-password <login>`.
+- Login: 3–32 belgi, `a-z 0-9 . _ -`, katta-kichik harf farqlanmaydi (kichik harfda saqlanadi), yagona bo'ladi. Parol: kamida 8 belgi.
+- Barcha amallar auditga yoziladi: `USER_CREATE`, `USER_UPDATE`, `PASSWORD_RESET`, `USER_DEACTIVATE`. Parolning o'zi ham, hashi ham auditga yozilmaydi.
+
+## 12. Kuzatuv va xavfsizlik
+- pino JSON log, har so'rovda `requestId`.
+- Parollar argon2id; login urinishlari cheklanadi (5 ta xato → 15 daqiqa blok, IP+username bo'yicha).
+- Cookie: `httpOnly`, `secure` (prod), `sameSite=lax`; Server Actions CSRF himoyasi Next.js'da o'rnatilgan (Origin tekshiruvi).
+- Barcha kiritmalar zod bilan serverda qayta tekshiriladi.
+- `/api/health` — DB ulanishini tekshiradi (Docker healthcheck uchun).
+
+## 13. Kengayish (filiallar) — tayyorgarlik
+- Ma'lumotlar `organization → store` ierarxiyasida; har bir operatsion jadvalda `store_id` bor ([database.md §2](database.md)).
+- Ma'lumotnoma (mahsulot, toifa, brend) — `organization` darajasida (filiallar uchun umumiy katalog).
+- Tannarx `(store_id, product_id)` bo'yicha — har filial o'z o'rtacha tannarxiga ega.
+- v1 da UI'da do'kon tanlovi yo'q; `storeId` sessiyadan (yagona do'kon) olinadi.
