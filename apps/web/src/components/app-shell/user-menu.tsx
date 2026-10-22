@@ -10,11 +10,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@drinks/ui/components/dropdown-menu';
-import { CircleUserIcon, LogOutIcon } from 'lucide-react';
+import { CircleUserIcon, LogOutIcon, UserCogIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useTransition } from 'react';
 
 import { logoutAction } from '@/features/auth/actions';
+import { Link } from '@/i18n/navigation';
 
 interface UserMenuProps {
   fullName: string;
@@ -42,6 +43,13 @@ export function UserMenu({ fullName, username, role }: UserMenuProps) {
           </span>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        {/* "My account" (T-204): every role; only the OWNER can change things there. */}
+        <DropdownMenuItem asChild>
+          <Link href="/account">
+            <UserCogIcon />
+            {t('userMenu.account')}
+          </Link>
+        </DropdownMenuItem>
         <DropdownMenuItem
           disabled={isPending}
           onSelect={() => startTransition(() => logoutAction())}

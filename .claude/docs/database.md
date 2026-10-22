@@ -840,7 +840,7 @@ CREATE INDEX product_name_trgm ON product USING gin (lower(name) gin_trgm_ops);
 - Bitta `OWNER` (seed), `STAFF` — cheklanmagan son. Egasi xodimlarni yaratadi va tahrirlaydi (OQ-10).
 - Bitta OWNER bo'lishi DB'da partial unique index bilan kafolatlanadi (§5).
 - Faolsizlantirilgan foydalanuvchi tizimga kira olmaydi, lekin uning hujjatlari va audit yozuvlari saqlanib qoladi.
-- Parol yoki login o'zgarsa — `session` jadvalidan shu foydalanuvchining barcha qatorlari o'chiriladi.
+- Parol yoki login o'zgarsa yoki akkaunt faolsizlantirilsa — `session` jadvalidan shu foydalanuvchining barcha qatorlari o'chiriladi (Egasi o'z login/parolini o'zgartirsa — joriy sessiyasidan tashqari, OQ-22). Parol yoki login o'zgarganda eski (va yangi) login bo'yicha `login_attempt` qatorlari ham o'chiriladi — blok yangi akkauntga "meros" bo'lib o'tmaydi (T-204).
 - `session.id` — cookie tokenining SHA-256 (hex); tokenning o'zi DB'da yo'q. `expires_at` sirpanadi: har so'rovda o'qiladi, kuniga ko'pi bilan bir marta `now + 30 kun` ga suriladi; muddati o'tgan yoki faolsiz foydalanuvchining sessiyasi o'qilganda o'chiriladi (T-201).
 - `login_attempt` (T-201) — (login, IP) juftligi bo'yicha ketma-ket xatolar: 5-xatoda `locked_until = now + 15 daqiqa`; oldingi xato 15 daqiqadan eski bo'lsa yoki blok tugagan bo'lsa hisob 1 dan boshlanadi; muvaffaqiyatli kirishda qator o'chiriladi. Faqat noto'g'ri parol (yoki mavjud bo'lmagan login) sanaladi.
 

@@ -15,6 +15,7 @@ Kim uchun: do'kon **Egasi** va **Xodim**.
 2. Login va parolni kiriting. (Login/parolni Egasi beradi.)
 3. Yuqori o'ng burchakda til: **O'zbekcha / Русский**. Tanlov eslab qolinadi.
 4. Chiqish: foydalanuvchi menyusi → **Chiqish**.
+5. **Mening akkauntim** (foydalanuvchi menyusi) — F.I.O, login va rolingiz. Xodim bu yerda faqat ko'radi; Egasi o'zgartiradi (12-bo'lim).
 
 Parolni unutsangiz — Egasiga murojaat qiling, u yangi parol o'rnatadi.
 
@@ -108,12 +109,13 @@ Tushum
 Xarid summasi, qarzlar, "boshqa chiqim" va o'tkazmalar foydaga kirmaydi.
 
 ## 12. Foydalanuvchilar (faqat Egasi)
-- **Xodim qo'shish** — F.I.O, login (lotin kichik harflar, raqamlar, `. _ -`; 3–32 belgi), parol (kamida 8 belgi).
-- **Tahrirlash** — F.I.O, login, til.
-- **Parolni o'zgartirish** — xodim parolni unutsa, Egasi yangisini o'rnatadi. Xodim o'z parolini o'zi o'zgartira olmaydi.
-- **Faolsizlantirish** — ishdan ketgan xodim tizimga kira olmaydi, lekin uning hujjatlari saqlanib qoladi. Akkaunt o'chirilmaydi, keyin qayta faollashtirish mumkin.
-- Login yoki parol o'zgarganda xodim tizimdan avtomatik chiqariladi va qayta kirishi kerak bo'ladi.
-- **O'z akkauntim** — Egasi o'z login va parolini joriy parolni kiritib o'zgartiradi. Egasi parolini unutsa, tizimni o'rnatgan dasturchi uni serverda tiklaydi.
+Menyu → **Boshqaruv → Foydalanuvchilar**. Ro'yxatda F.I.O, login, rol, til, holat (Faol/Faolsiz) va oxirgi kirish vaqti. Egasining o'z qatorida faqat **Mening akkauntim** havolasi bor.
+- **Xodim qo'shish** — F.I.O, login (lotin kichik harflar, raqamlar, `. _ -`; 3–32 belgi; katta harf bilan yozilsa ham kichik harfda saqlanadi), parol (kamida 8 belgi, ikki marta), interfeys tili. Yangi akkaunt doim **Xodim** rolida — Egasi tizimda bitta.
+- **Tahrirlash** (qalam) — F.I.O, login, til. Login band bo'lsa — "Bu login band" (faolsiz akkauntlarning logini ham band).
+- **Parol o'rnatish** (kalit) — xodim parolni unutsa, Egasi yangisini o'rnatadi. Xodim o'z parolini o'zi o'zgartira olmaydi.
+- **Faolsizlantirish** — ishdan ketgan xodim darhol tizimdan chiqariladi va kira olmaydi ("Akkaunt faolsizlantirilgan"), lekin uning hujjatlari saqlanib qoladi. Akkaunt o'chirilmaydi; **Faollashtirish** bilan qaytariladi (xodim eski paroli bilan kiradi). Egasi o'zini faolsizlantira olmaydi.
+- Xodimning logini yoki paroli o'zgarganda u barcha qurilmalarda tizimdan chiqariladi va qayta kirishi kerak bo'ladi.
+- **Mening akkauntim** (foydalanuvchi menyusi) — Egasi o'z F.I.O sini, loginini va parolini o'zgartiradi. Login va parol uchun **joriy parol** kiritiladi; boshqa qurilmalardagi sessiyalar yopiladi, shu qurilmada tizimda qolasiz. Egasi parolini unutsa, tizimni o'rnatgan dasturchi uni serverda tiklaydi.
 
 ## 13. Audit jurnali (faqat Egasi)
 Kim, qachon, nimani o'zgartirgani (eski va yangi qiymat). O'tgan sana bilan kiritilgan hujjatlar alohida belgilanadi. Jurnal o'zgartirilmaydi va o'chirilmaydi.
@@ -132,3 +134,5 @@ Kim, qachon, nimani o'zgartirgani (eski va yangi qiymat). O'tgan sana bilan kiri
 | "Kelajak sana tanlab bo'lmaydi" | Hujjat sanasi faqat bugun yoki o'tgan kun bo'lishi mumkin |
 | "Blokdagi dona soni o'zgargan" | Mahsulot kartochkasi o'zgargan, qoralamani qayta saqlang |
 | "Login yoki parol noto'g'ri" | Qayta urinib ko'ring. 5 ta xatodan keyin 15 daqiqa kutish kerak |
+| "Akkaunt faolsizlantirilgan" | Egasi akkauntingizni faolsizlantirgan — unga murojaat qiling |
+| "Joriy parol noto'g'ri" | Mening akkauntim sahifasida hozirgi parolingizni to'g'ri kiriting |
