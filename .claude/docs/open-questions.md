@@ -29,6 +29,7 @@ SRS'dagi biznes savollar yopilgan. Bu yerda — arxitektura va DB loyihalashda c
 | OQ-17 | `pnpm user:reset-password` faolsiz akkauntga nima qiladi? | Parol tiklanadi, akkaunt faolsizligicha qoladi (CLI ogohlantiradi) | Yopilgan — A: parol tiklanadi, akkaunt faolsizligicha qoladi |
 | OQ-18 | Savdo storno'sida bir mahsulot bir necha qatorda bo'lsa, o'rtacha tannarx qatorma-qator hisoblanadimi yoki mahsulot bo'yicha bir marta? | Mahsulot bo'yicha bir marta (xarid §5.2 kabi) | Yopilgan — A: mahsulot bo'yicha bir marta |
 | OQ-19 | Nasiya savdo/xaridda izoh (qarz izohi) majburiymi? | Ha — `paidCredit > 0` bo'lsa hujjat izohi majburiy (`NOTE_REQUIRED`), qarzga o'sha izoh yoziladi | Yopilgan — A: izoh majburiy, `debts.open` ham tekshiradi |
+| OQ-22 | Egasi o'z login/parolini o'zgartirsa, shu o'zgarishni qilgan (joriy) sessiya ham o'chadimi? | Yo'q — joriy sessiya qoladi, boshqa barcha sessiyalari o'chiriladi | Ochiq — tavsiya bo'yicha qilingan (T-204) |
 
 ---
 
@@ -102,3 +103,9 @@ BR-10: kontragent ro'yxati yo'q, qarz **izoh** bilan yuritiladi; kassa orqali qa
 - **A (tavsiya):** `paidCredit > 0` bo'lsa hujjatni bajarishda izoh majburiy (`NOTE_REQUIRED`); `debt.note` = hujjat izohi. Tekshiruv T-405 / T-503 da.
 - **B:** izoh ixtiyoriy qoladi; ro'yxatda izoh o'rniga hujjat raqami ko'rsatiladi.
 T-403 da `debts.open` `SALE`/`PURCHASE` qarzda bo'sh izohni qabul qilardi — Prompt 36 da bu ham `NOTE_REQUIRED` ga o'zgartirildi.
+
+### OQ-22 — O'z login/parolini o'zgartirganda joriy sessiya
+architecture §11 va ADR-006: "login yoki parol o'zgarganda o'sha foydalanuvchining **barcha** sessiyalari darhol o'chiriladi". Bu xodim uchun (Egasi o'zgartiradi) aniq, lekin Egasi "Mening akkauntim"da **o'zinikini** o'zgartirganda joriy sessiya ham o'chsa, u darhol login sahifasiga tushadi.
+- **A (tavsiya, T-204 da shunday):** joriy sessiya qoladi (u joriy parolni kiritib o'zini tasdiqladi), boshqa barcha qurilmalardagi sessiyalar o'chiriladi — o'g'irlangan sessiya bo'lsa, u yopiladi. Odatiy amaliyot.
+- **B:** hammasi, shu jumladan joriy sessiya o'chiriladi; Egasi yangi login/parol bilan qayta kiradi. Hujjat matniga so'zma-so'z mos.
+B ga o'tish — `users.changeOwnUsername` / `changeOwnPassword` ga `currentSessionToken` bermaslik (`features/users/actions.ts`) va keyin login sahifasiga yo'naltirish.

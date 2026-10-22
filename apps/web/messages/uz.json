@@ -49,7 +49,8 @@
     }
   },
   "userMenu": {
-    "label": "Foydalanuvchi menyusi"
+    "label": "Foydalanuvchi menyusi",
+    "account": "Mening akkauntim"
   },
   "forbidden": {
     "title": "Ruxsat yoʻq",
@@ -101,6 +102,64 @@
       "empty": "Hali brend yoʻq.",
       "emptyArchived": "Arxivda brend yoʻq."
     }
+  },
+  "users": {
+    "title": "Foydalanuvchilar",
+    "description": "Xodimlar akkauntlari: qoʻshish, tahrirlash, parol oʻrnatish va faolsizlantirish.",
+    "add": "Xodim qoʻshish",
+    "createTitle": "Yangi xodim",
+    "editTitle": "Xodimni tahrirlash",
+    "created": "Xodim qoʻshildi",
+    "updated": "Saqlandi",
+    "fullName": "F.I.O.",
+    "username": "Login",
+    "usernameHint": "3–32 belgi: a–z, 0–9, nuqta, _ va -. Katta-kichik harf farqlanmaydi.",
+    "usernameChangeWarning": "Login oʻzgarsa, xodim barcha qurilmalarda tizimdan chiqariladi.",
+    "password": "Parol",
+    "newPassword": "Yangi parol",
+    "confirmPassword": "Parolni takrorlang",
+    "locale": "Interfeys tili",
+    "role": "Rol",
+    "status": "Holat",
+    "active": "Faol",
+    "inactive": "Faolsiz",
+    "lastLogin": "Oxirgi kirish",
+    "never": "Hali kirmagan",
+    "you": "siz",
+    "actions": "Amallar",
+    "edit": "Tahrirlash",
+    "setPassword": "Parol oʻrnatish",
+    "setPasswordTitle": "{name} uchun yangi parol",
+    "setPasswordDescription": "Xodim barcha qurilmalarda tizimdan chiqariladi va yangi parol bilan kiradi.",
+    "passwordSet": "Parol oʻrnatildi",
+    "deactivate": "Faolsizlantirish",
+    "deactivateTitle": "{name} akkauntini faolsizlantirasizmi?",
+    "deactivateDescription": "Xodim darhol tizimdan chiqariladi va kira olmaydi. Uning hujjatlari va audit yozuvlari saqlanib qoladi.",
+    "deactivated": "Akkaunt faolsizlantirildi",
+    "activate": "Faollashtirish",
+    "activateTitle": "{name} akkauntini faollashtirasizmi?",
+    "activateDescription": "Xodim oʻz paroli bilan yana tizimga kira oladi.",
+    "activated": "Akkaunt faollashtirildi",
+    "empty": "Hali foydalanuvchi yoʻq.",
+    "errors": {
+      "usernameFormat": "Login 3–32 belgi boʻlsin: lotin harflari, raqamlar, nuqta, _ va -.",
+      "usernameTaken": "Bu login band.",
+      "passwordTooShort": "Parol kamida 8 belgidan iborat boʻlsin.",
+      "passwordMismatch": "Parollar mos kelmadi."
+    }
+  },
+  "account": {
+    "title": "Mening akkauntim",
+    "profile": "Profil",
+    "profileSaved": "Profil saqlandi",
+    "staffNote": "Login yoki parolni oʻzgartirish uchun doʻkon egasiga murojaat qiling.",
+    "changeUsername": "Loginni oʻzgartirish",
+    "newUsername": "Yangi login",
+    "currentPassword": "Joriy parol",
+    "changePassword": "Parolni oʻzgartirish",
+    "otherSessionsNote": "Joriy parol talab qilinadi. Boshqa qurilmalardagi sessiyalar yopiladi, shu qurilmada tizimda qolasiz.",
+    "usernameChanged": "Login oʻzgartirildi",
+    "passwordChanged": "Parol oʻzgartirildi"
   },
   "errors": {
     "UNAUTHORIZED": "Tizimga kiring.",

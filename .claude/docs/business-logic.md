@@ -38,6 +38,7 @@ newAvg = (Q * avg + inCost) / (Q + q)      // inCost — kirim summasi (so'm), q
 - **Pul** — butun so'm `number` (ADR-008); `formatSom` DB'dan kelgan `bigint` ni ham qabul qiladi.
 - `units.ts`: `toPieces(blocks, pieces, unitsPerBlock)`, `splitPieces(qty, unitsPerBlock)` (`qty ≥ 0`), `formatQty(qty, unitsPerBlock, labels?)` → `"3 blok 2 dona"`; bo'sh qism tushiriladi (`"3 blok"`, `"2 dona"`, `0` → `"0 dona"`), manfiy (inventarizatsiya farqi) → `"-3 blok 2 dona"`.
 - `money.ts`: `formatSom(amount, unit?)` → `"1 250 000 soʻm"` (raqam guruhlari va birlik oldidan **no-break space** U+00A0 — jadvalda qatorga bo'linmaydi); `roundHalfUp(value: string)` → butun so'm, noldan uzoqqa (`"2.5"` → 3, `"-2.5"` → −3).
+- `dates.ts` (T-204): `formatDateTime(date, timeZone = STORE_TIME_ZONE)` → `"23.10.2026 14:05"` (`DD.MM.YYYY HH:mm`, `Asia/Tashkent`) — UI'da sana-vaqt shu bilan chiqadi (locale'li `Intl` formati Node va brauzerda farq qiladi).
 - Birlik so'zlari (`blok`/`dona`/`soʻm`) — standart o'zbekcha; UI tarjima qilingan so'zlarni parametr sifatida beradi (`enums.QtyUnit.*`, `common.som`; `MoneyText` / `QtyText` — T-203).
 - `costing.ts`: `costAmount(qty, unitCost)` = `roundHalfUp(qty × unitCost)` (§1.2, qty ishorali bo'lishi mumkin); `unitCostOf(lineTotal, qty)` (§5.1); `avgOnReceipt({ totalQty, avgCost, inQty, inCost })` (§1.3 — xarid va savdo storno'si); `avgOnPurchaseReversal({ totalQty, avgCost, outQty, outCost })` (§5.3: `Q − q = 0` → 0, manfiy → 0; `q > Q` → `RangeError`, chunki BR-3 tekshiruvi avval to'xtatishi kerak).
 
@@ -330,8 +331,9 @@ Filtr: kun / oy / yil / ixtiyoriy oraliq (Toshkent vaqti).
 | Xodim yaratish | OWNER | F.I.O, login (yagona, `a-z0-9._-`, 3–32), parol (≥ 8), til. Rol doim `STAFF` |
 | Xodimni tahrirlash | OWNER | F.I.O, login, til. Login o'zgarsa, xodimning sessiyalari o'chiriladi |
 | Xodim parolini o'rnatish | OWNER | Yangi parol kiritiladi, xodimning barcha sessiyalari o'chiriladi |
-| Faolsizlantirish / faollashtirish | OWNER | O'zini faolsizlantira olmaydi. Faolsizlantirilganda sessiyalar o'chiriladi |
-| O'z login/parolini o'zgartirish | OWNER | Joriy parol talab qilinadi |
+| Faolsizlantirish / faollashtirish | OWNER | O'zini faolsizlantira olmaydi (`FORBIDDEN`). Faolsizlantirilganda sessiyalar o'chiriladi |
+| O'z login/parolini o'zgartirish | OWNER | Joriy parol talab qilinadi (`CURRENT_PASSWORD_INVALID`). Boshqa sessiyalar o'chiriladi, joriysi qoladi (OQ-22) |
+| O'z akkauntini ko'rish | Hamma | "Mening akkauntim": Xodim faqat ko'radi (F.I.O, login, rol) |
 | Parolni tiklash (Egasi unutsa) | Server admini | `pnpm user:reset-password <login>` (CLI) |
 | Akkauntni o'chirish | — | Yo'q, faqat faolsizlantirish |
 
@@ -345,5 +347,18 @@ Amalda (T-201, `packages/server/src/modules/auth`):
 5. Muvaffaqiyat: hisoblagich o'chiriladi, sessiya, `last_login_at`, audit `LOGIN` — bitta tranzaksiyada.
 
 Parolni tiklash CLI (T-205): `pnpm user:reset-password <login>` → `packages/server/scripts/reset-password.ts` (faqat I/O: parol ikki marta, ekranga chiqmaydi; TTY bo'lmasa stdin'ning dastlabki ikki qatori) → `users.resetPassword` (`packages/server/src/modules/users`). Bitta tranzaksiyada: kiritma `resetPasswordInputSchema` (login kichik harfga, parol 8–128) → `VALIDATION_FAILED`; login topilmasa → `NOT_FOUND` (`params.entity = 'user'`); yangi argon2id hash va `password_changed_at`, foydalanuvchining **barcha** sessiyalari va uning loginidagi barcha `login_attempt` qatorlari (blok ham) o'chiriladi, audit `PASSWORD_RESET` (`user_id = null`, `meta = { username, source: 'cli', sessionsRevoked, attemptsCleared }`). Har qanday rolga ishlaydi; faolsiz akkaunt faolsizligicha qoladi (OQ-17, yopilgan — A).
+
+Foydalanuvchilarni boshqarish (T-204, `packages/server/src/modules/users`, kiritmalar — `@drinks/shared/schemas` `users.ts`):
+- Barcha funksiyalar birinchi qatorda `assertCan(ctx.user, 'user.manage')` — Xodim → `FORBIDDEN { permission }`, hech narsa yozilmaydi.
+- Login sxemasi `usernameSchema`: trim → kichik harf → `^[a-z0-9._-]{3,32}$` (DB `user_username_format` CHECK bilan bir xil). Login global yagona; kichik harfda saqlangani uchun solishtirish katta-kichik harfga sezgirsiz, faolsiz akkauntlar logini ham band → `DUPLICATE_VALUE { entity: 'user', field: 'username' }`; parallel so'rovdagi P2002 ham shunga aylanadi. F.I.O — trim, 1–100. Parol — `passwordSchema` (8–128).
+- `list(ctx)` — tashkilot akkauntlari (`UserAccount` DTO, hashsiz): avval OWNER, keyin faollar, faolsizlar, F.I.O bo'yicha.
+- `create(ctx, { fullName, username, password, locale })` — rol doim `STAFF` (kiritmada rol yo'q; yagona OWNER — `user_single_owner`), `created_by_id = ctx.user.id`; shu login bo'yicha `login_attempt` qatorlari tozalanadi. Audit `USER_CREATE` (`after = { username, fullName, role, locale, isActive }`).
+- `update(ctx, { id, fullName, username, locale })` — faqat o'zgargan maydonlar yoziladi (o'zgarish yo'q → no-op, auditsiz). Login o'zgarsa — barcha sessiyalar va eski/yangi login bo'yicha `login_attempt` o'chiriladi. Audit `USER_UPDATE` (`before`/`after` — faqat o'zgargan maydonlar; login o'zgarsa `meta = { sessionsRevoked, attemptsCleared }`).
+- `setPassword(ctx, { id, password })` — yangi hash + `password_changed_at`, barcha sessiyalar va login bo'yicha `login_attempt` o'chiriladi; faolsiz akkaunt faolsizligicha qoladi. Audit `PASSWORD_RESET` (`meta = { username, source: 'owner', sessionsRevoked, attemptsCleared }`).
+- `deactivate` / `activate(ctx, { id })` — `is_active`; faolsizlantirishda barcha sessiyalar o'chiriladi. Qayta bosish — no-op. Audit `USER_DEACTIVATE` (`meta.sessionsRevoked`) / `USER_ACTIVATE`, `before/after.isActive`.
+- Nishon tekshiruvi (`update`, `setPassword`, `deactivate`, `activate`): boshqa tashkilotniki → `NOT_FOUND { entity: 'user' }`; o'zi → `FORBIDDEN { reason: 'self' }` (shu jumladan o'zini faolsizlantirish); OWNER akkaunti → `FORBIDDEN { reason: 'owner' }`. Egasi o'zinikini faqat "Mening akkauntim" orqali o'zgartiradi.
+- "Mening akkauntim" (OWNER): `updateOwnProfile(ctx, { fullName })` (parolsiz, audit `USER_UPDATE`); `changeOwnUsername(ctx, { currentPassword, username }, currentSessionToken)` va `changeOwnPassword(ctx, { currentPassword, newPassword }, currentSessionToken)` — joriy parol argon2 bilan tekshiriladi (noto'g'ri → `CURRENT_PASSWORD_INVALID`), so'ng bitta tranzaksiyada o'zgartirish, **joriy sessiyadan tashqari** barcha sessiyalar (OQ-22) va login bo'yicha `login_attempt` o'chiriladi. Audit: `USER_UPDATE` (`before/after.username`, `meta = { source: 'self', sessionsRevoked, attemptsCleared }`) / `PASSWORD_RESET` (`meta = { username, source: 'self', … }`). `currentSessionToken` — cookie qiymati (Server Action o'qiydi), servis uning SHA-256 ini saqlab qoladi.
+- Xodim o'z login/parolini o'zgartira olmaydi (architecture §11) — `/account` sahifasida unga faqat ma'lumot va "Egasiga murojaat qiling" ko'rsatiladi. Til — header'dagi almashtirgich (`updateOwnLocale`, hamma rol).
+- Audit yozuvlarida parol ham, hash ham yo'q (integratsiya testi tekshiradi).
 
 Audit: `LOGIN_FAILED` — `user_id = null`, `entity_id` = foydalanuvchi id yoki (mavjud bo'lmasa) kiritilgan login, `meta = { username, ip, userAgent, reason, failedCount?, lockedUntil? }`; `LOGIN` — `meta = { ip, userAgent }`. Parol, hash va token hech qachon yozilmaydi. Chiqish (`logout`) sessiya qatorini o'chiradi, auditga yozilmaydi.
