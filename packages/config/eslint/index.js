@@ -22,6 +22,8 @@ export const IGNORES = [
   '**/storage/**',
   '**/next-env.d.ts',
   '**/src/generated/**',
+  // Agent worktrees are full repo copies on other branches.
+  '.claude/worktrees/**',
 ];
 
 const PRISMA_PATTERNS = [

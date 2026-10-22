@@ -8,5 +8,6 @@ out/
 coverage/
 storage/
 **/src/generated/
+.claude/worktrees/
 # Docs are hand-written in Uzbek; Prettier does not touch them.
 *.md
