@@ -32,6 +32,15 @@ newAvg = (Q * avg + inCost) / (Q + q)      // inCost — kirim summasi (so'm), q
 - `Q` — `product_cost.total_qty` (do'kon bo'yicha barcha omborlar).
 - Hisob **bajarish tartibida** (BR-6): qaysi hujjat avval bajarilsa, o'sha avval ta'sir qiladi; `doc_date` ahamiyatsiz.
 
+### 1.4 Amalga oshirilishi (T-301)
+`@drinks/shared` — sof funksiyalar, brauzerda ham ishlaydi (Node API'siz). Noto'g'ri kiritma (kasr dona, manfiy narx, xavfsiz butun sondan katta natija) → `RangeError` (dasturchi xatosi, `DomainError` emas — tekshiruv servisda oldinroq bo'ladi).
+- **Tannarx** `Decimal(20,4)` qiymati — satr (`CostString`, ADR-008), natija doim 4 xonali (`"6000.0000"`); ichkarida `bigint × 10⁴` bilan aniq hisoblanadi, float ishlatilmaydi. Har bo'lish 4 xonaga **ROUND HALF UP** (noldan uzoqqa — Postgres `NUMERIC` va Prisma Decimal bilan bir xil). `COST_SCALE = 4`.
+- **Pul** — butun so'm `number` (ADR-008); `formatSom` DB'dan kelgan `bigint` ni ham qabul qiladi.
+- `units.ts`: `toPieces(blocks, pieces, unitsPerBlock)`, `splitPieces(qty, unitsPerBlock)` (`qty ≥ 0`), `formatQty(qty, unitsPerBlock, labels?)` → `"3 blok 2 dona"`; bo'sh qism tushiriladi (`"3 blok"`, `"2 dona"`, `0` → `"0 dona"`), manfiy (inventarizatsiya farqi) → `"-3 blok 2 dona"`.
+- `money.ts`: `formatSom(amount, unit?)` → `"1 250 000 soʻm"` (raqam guruhlari va birlik oldidan **no-break space** U+00A0 — jadvalda qatorga bo'linmaydi); `roundHalfUp(value: string)` → butun so'm, noldan uzoqqa (`"2.5"` → 3, `"-2.5"` → −3).
+- Birlik so'zlari (`blok`/`dona`/`soʻm`) — standart o'zbekcha; UI tarjima qilingan so'zlarni parametr sifatida beradi (`enums.InputUnit.*`).
+- `costing.ts`: `costAmount(qty, unitCost)` = `roundHalfUp(qty × unitCost)` (§1.2, qty ishorali bo'lishi mumkin); `unitCostOf(lineTotal, qty)` (§5.1); `avgOnReceipt({ totalQty, avgCost, inQty, inCost })` (§1.3 — xarid va savdo storno'si); `avgOnPurchaseReversal({ totalQty, avgCost, outQty, outCost })` (§5.3: `Q − q = 0` → 0, manfiy → 0; `q > Q` → `RangeError`, chunki BR-3 tekshiruvi avval to'xtatishi kerak).
+
 ## 2. Qulflash tartibi (deadlock'ning oldini olish)
 
 Har bir bajarish/storno tranzaksiyasi qulflarni **shu tartibda** oladi (kerak bo'lmaganini o'tkazib yuboradi):
