@@ -285,3 +285,11 @@ T-006 start on new session
 https://github.com/muhammadrasul-dev/drinks_trade.git
 this is remote link
 ```
+
+---
+
+## Prompt 22 — T-101 ni yangi sessiyada boshlash (2026-10-22)
+
+```
+T-101 start on new session
+```
