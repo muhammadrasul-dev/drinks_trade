@@ -11,7 +11,7 @@
   "home": {
     "title": "drinks_trade",
     "description": "Ichimliklar doʻkoni uchun hisob tizimi",
-    "goToLogin": "Kirish sahifasiga oʻtish"
+    "greeting": "Xush kelibsiz, {name} ({role})."
   },
   "auth": {
     "login": {
@@ -20,8 +20,10 @@
       "username": "Login",
       "password": "Parol",
       "submit": "Kirish",
-      "notReady": "Kirish hali ishlamaydi — T-201 da qoʻshiladi."
-    }
+      "required": "Toʻldirish majburiy.",
+      "tooLong": "Juda uzun."
+    },
+    "logout": "Chiqish"
   },
   "errors": {
     "UNAUTHORIZED": "Tizimga kiring.",

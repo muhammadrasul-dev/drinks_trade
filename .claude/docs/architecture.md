@@ -133,7 +133,7 @@ drinks_trade/
 │       │   │       └── health/route.ts
 │       │   ├── features/<modul>/   # modulga xos UI: components/, actions.ts, columns.tsx
 │       │   ├── components/         # ilova darajasidagi umumiy UI (layout, sidebar, locale-switcher)
-│       │   ├── lib/                # session o'qish, action-wrapper, format helperlar
+│       │   ├── lib/                # session o'qish (session.ts, session-cookie.ts), action-wrapper, format helperlar
 │       │   ├── i18n/               # next-intl: routing.ts, navigation.ts, request.ts
 │       │   └── proxy.ts            # locale + auth redirect (Next.js 16: middleware.ts → proxy.ts)
 │       ├── messages/
@@ -326,7 +326,7 @@ Tekshiruv **3 joyda**: (1) servis (`assertCan`) — majburiy; (2) mapper — max
 - `next-intl`, URL prefiks: `/uz/...`, `/ru/...` (`localePrefix: 'always'`); default `uz`. Barcha sahifalar `app/[locale]/` ostida, root layout — `app/[locale]/layout.tsx` (`<html lang>` locale'dan; `generateStaticParams` + `setRequestLocale` — statik render).
 - Fayllar: `src/i18n/routing.ts` (locale ro'yxati `@drinks/shared` `Locale` enumidan), `src/i18n/navigation.ts` (`Link`, `useRouter`, `usePathname`, `redirect` — `next/link`/`next/navigation` o'rniga shularni ishlating), `src/i18n/request.ts` (xabarlarni yuklash), `src/proxy.ts` (prefikssiz yo'l → locale'ga redirect; `api`, `_next` va fayllar chiqarib tashlangan). Kalitlar tiplangan: `src/global.d.ts` (`AppConfig.Messages` = `uz.json` shakli) — mavjud bo'lmagan kalit `typecheck` da xato.
 - Prefikssiz yo'l (`/`) uchun til: `NEXT_LOCALE` cookie → brauzer `Accept-Language` → `uz` (next-intl standarti; OQ-16).
-- Til almashtirgich (`src/components/locale-switcher.tsx`) URL prefiksini almashtiradi, cookie'ni next-intl yozadi. Foydalanuvchi tanlagan til `user.locale` da saqlanadi (`features/i18n/actions.ts` → `saveUserLocale`, hozircha T-201/T-104 gacha bo'sh — `HOOK` izohi), login'dan keyin shu tilga yo'naltiriladi (T-201).
+- Til almashtirgich (`src/components/locale-switcher.tsx`) URL prefiksini almashtiradi, cookie'ni next-intl yozadi. Foydalanuvchi tanlagan til `user.locale` da saqlanadi (`features/i18n/actions.ts` → `saveUserLocale` → `users.updateOwnLocale`, audit `USER_UPDATE`; sessiyasiz — faqat URL/cookie), login'dan keyin shu tilga yo'naltiriladi (T-201).
 - Tarjima kalitlari modul bo'yicha: `products.title`, `errors.INSUFFICIENT_STOCK`, `enums.CashTxType.TRAVEL_EXPENSE`. `apps/web/test/messages.test.ts` tekshiradi: `uz.json` va `ru.json` kalitlari bir xil, bo'sh qiymat yo'q, `errors.*` = `ErrorCode` ro'yxati, `enums.*` = `shared/enums.ts` a'zolari. Yangi xato kodi yoki enum qo'shilsa — ikkala faylga tarjima qo'shilmaguncha test qizil.
 - O'zbekcha matnlarda `oʻ`/`gʻ` uchun U+02BB (ʻ), tutuq belgisi uchun U+02BC (ʼ) ishlatiladi — oddiy `'` ICU formatida maxsus belgi.
 - Foydalanuvchi kiritgan ma'lumot (mahsulot nomi, izohlar) tarjima qilinmaydi.
@@ -412,7 +412,9 @@ Biznes qoidalar uchun har bir BR-xx ga kamida bitta integratsiya testi bo'lishi 
 ## 12. Kuzatuv va xavfsizlik
 - pino JSON log, har so'rovda `requestId`.
 - Parollar argon2id; login urinishlari cheklanadi (5 ta xato → 15 daqiqa blok, IP+username bo'yicha).
-- Cookie: `httpOnly`, `secure` (prod), `sameSite=lax`; Server Actions CSRF himoyasi Next.js'da o'rnatilgan (Origin tekshiruvi).
+  Amalda (T-201): `packages/server/src/modules/auth` — `@node-rs/argon2` (argon2id, PHC satr), hisoblagich `login_attempt` jadvalida ([database.md §6.6](database.md)); blok paytida (6-urinish) parol to'g'ri bo'lsa ham `TOO_MANY_ATTEMPTS` (`params.lockedUntil`). IP — `X-Forwarded-For` ning birinchi qiymati, bo'lmasa `X-Real-IP` (`apps/web/src/lib/session.ts`); ilova bitta reverse proxy ortida turadi deb hisoblanadi (OQ-12) — proxy'siz bu sarlavhani mijoz soxtalashtira oladi.
+- Cookie: `dt_session`, `httpOnly`, `secure` (prod), `sameSite=lax`, `path=/`, `maxAge` 30 kun (`apps/web/src/lib/session-cookie.ts`); Server Actions CSRF himoyasi Next.js'da o'rnatilgan (Origin tekshiruvi).
+- Sessiya oqimi (T-201): `proxy.ts` faqat cookie bor-yo'qligini tekshiradi (DB'siz) va cookie muddatini suradi; haqiqiy tekshiruv — `lib/session.ts` `getCurrentSession()` (`auth.getSession`, so'rov uchun `React.cache`) va `requireSession(locale)` (sessiya yo'q → `/[locale]/login`). Login/logout — `features/auth/actions.ts` Server Action'lari; muvaffaqiyatli login `user.locale` tilidagi bosh sahifaga yo'naltiradi.
 - Barcha kiritmalar zod bilan serverda qayta tekshiriladi.
 - `/api/health` — DB ulanishini tekshiradi (Docker healthcheck uchun).
 

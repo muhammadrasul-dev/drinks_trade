@@ -25,7 +25,7 @@ Bog'liq: [architecture.md](architecture.md) · [business-logic.md](business-logi
 | Domen | Jadvallar |
 |---|---|
 | Tashkilot | `organization`, `store` |
-| Foydalanuvchi | `user`, `session` |
+| Foydalanuvchi | `user`, `session`, `login_attempt` |
 | Katalog | `category`, `brand`, `product` |
 | Joylashuv | `warehouse`, `sub_warehouse` |
 | Zaxira | `stock_balance`, `product_cost`, `stock_movement` |
@@ -259,6 +259,17 @@ model Session {
 
   @@index([userId])
   @@map("session")
+}
+
+model LoginAttempt {                                  // T-201: login urinishlari cheklovi (architecture §12)
+  username     String                                 // kiritilgan login, kichik harfda; FK yo'q — mavjud bo'lmagan login ham sanaladi
+  ip           String                                 // mijoz IP ('unknown' — aniqlanmasa)
+  failedCount  Int       @map("failed_count")
+  lastFailedAt DateTime  @map("last_failed_at") @db.Timestamptz
+  lockedUntil  DateTime? @map("locked_until") @db.Timestamptz
+
+  @@id([username, ip])
+  @@map("login_attempt")
 }
 
 // ───────────────────────── Katalog ─────────────────────────
@@ -819,6 +830,8 @@ CREATE INDEX product_name_trgm ON product USING gin (lower(name) gin_trgm_ops);
 - Bitta OWNER bo'lishi DB'da partial unique index bilan kafolatlanadi (§5).
 - Faolsizlantirilgan foydalanuvchi tizimga kira olmaydi, lekin uning hujjatlari va audit yozuvlari saqlanib qoladi.
 - Parol yoki login o'zgarsa — `session` jadvalidan shu foydalanuvchining barcha qatorlari o'chiriladi.
+- `session.id` — cookie tokenining SHA-256 (hex); tokenning o'zi DB'da yo'q. `expires_at` sirpanadi: har so'rovda o'qiladi, kuniga ko'pi bilan bir marta `now + 30 kun` ga suriladi; muddati o'tgan yoki faolsiz foydalanuvchining sessiyasi o'qilganda o'chiriladi (T-201).
+- `login_attempt` (T-201) — (login, IP) juftligi bo'yicha ketma-ket xatolar: 5-xatoda `locked_until = now + 15 daqiqa`; oldingi xato 15 daqiqadan eski bo'lsa yoki blok tugagan bo'lsa hisob 1 dan boshlanadi; muvaffaqiyatli kirishda qator o'chiriladi. Faqat noto'g'ri parol (yoki mavjud bo'lmagan login) sanaladi.
 
 ### 6.7 `audit_log`
 - `before`/`after` — o'zgargan obyektning JSON ko'rinishi (pul `string` sifatida, BigInt muammosiz).
