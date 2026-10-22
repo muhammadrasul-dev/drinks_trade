@@ -357,3 +357,11 @@ yes clear theese worktrees
 ```
 start both in seperate sessions
 ```
+
+---
+
+## Prompt 31 — T-105/T-201 worktree'larini o'chirish, .env.example ni qaytarish (2026-10-22)
+
+```
+remove T-105 va T-201 worktrees and do not commit .env.example, you can return before situation.
+```
