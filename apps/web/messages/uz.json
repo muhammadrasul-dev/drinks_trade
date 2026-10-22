@@ -1,0 +1,126 @@
+{
+  "meta": {
+    "title": "drinks_trade",
+    "description": "Ichimliklar doʻkoni uchun hisob tizimi"
+  },
+  "localeSwitcher": {
+    "label": "Til",
+    "uz": "Oʻzbekcha",
+    "ru": "Русский"
+  },
+  "home": {
+    "title": "drinks_trade",
+    "description": "Ichimliklar doʻkoni uchun hisob tizimi",
+    "goToLogin": "Kirish sahifasiga oʻtish"
+  },
+  "auth": {
+    "login": {
+      "title": "Tizimga kirish",
+      "description": "Login va parolingizni kiriting",
+      "username": "Login",
+      "password": "Parol",
+      "submit": "Kirish",
+      "notReady": "Kirish hali ishlamaydi — T-201 da qoʻshiladi."
+    }
+  },
+  "errors": {
+    "UNAUTHORIZED": "Tizimga kiring.",
+    "FORBIDDEN": "Bu amal uchun ruxsatingiz yoʻq.",
+    "VALIDATION_FAILED": "Maʼlumotlar notoʻgʻri kiritilgan.",
+    "NOT_FOUND": "Maʼlumot topilmadi.",
+    "DOCUMENT_CHANGED": "Hujjat boshqa foydalanuvchi tomonidan oʻzgartirilgan. Sahifani yangilang.",
+    "DOCUMENT_NOT_DRAFT": "Faqat qoralama hujjatni oʻzgartirish mumkin.",
+    "DOCUMENT_NOT_POSTED": "Faqat bajarilgan hujjatni storno qilish mumkin.",
+    "INSUFFICIENT_STOCK": "Omborda mahsulot yetarli emas.",
+    "PURCHASE_REVERSAL_INSUFFICIENT_STOCK": "Xaridni storno qilib boʻlmaydi: mahsulotning bir qismi allaqachon sotilgan.",
+    "WAREHOUSE_IN_STOCK_COUNT": "Omborda inventarizatsiya ketmoqda. Tugaguncha harakatlar bloklangan.",
+    "STOCK_COUNT_ALREADY_OPEN": "Bu ombor uchun ochiq inventarizatsiya allaqachon bor.",
+    "PAYMENT_SPLIT_MISMATCH": "Toʻlov qismlari yigʻindisi hujjat summasiga teng emas.",
+    "CASHBOX_INSUFFICIENT": "Kassada mablagʻ yetarli emas.",
+    "DEBT_HAS_REPAYMENTS": "Qarz boʻyicha qaytarishlar bor. Avval ularni bekor qiling.",
+    "DEBT_OVERPAYMENT": "Qaytarish summasi qarz qoldigʻidan katta.",
+    "NOTE_REQUIRED": "Izoh kiritish majburiy.",
+    "ENTITY_NOT_EMPTY": "Boʻsh boʻlmagan obyektni arxivlab boʻlmaydi.",
+    "ENTITY_ARCHIVED": "Arxivlangan obyektni tanlab boʻlmaydi.",
+    "DUPLICATE_VALUE": "Bunday qiymat allaqachon mavjud.",
+    "DOC_DATE_IN_FUTURE": "Sana kelajakda boʻlishi mumkin emas.",
+    "UNITS_PER_BLOCK_CHANGED": "Mahsulotning blokdagi dona soni oʻzgargan. Miqdorlarni tekshirib, qayta saqlang.",
+    "INVALID_CREDENTIALS": "Login yoki parol notoʻgʻri.",
+    "USER_INACTIVE": "Akkaunt faolsizlantirilgan.",
+    "TOO_MANY_ATTEMPTS": "Juda koʻp urinish. 15 daqiqadan keyin qayta urining.",
+    "CURRENT_PASSWORD_INVALID": "Joriy parol notoʻgʻri."
+  },
+  "enums": {
+    "UserRole": {
+      "OWNER": "Egasi",
+      "STAFF": "Xodim"
+    },
+    "Locale": {
+      "uz": "Oʻzbek tili",
+      "ru": "Rus tili"
+    },
+    "DocStatus": {
+      "DRAFT": "Qoralama",
+      "POSTED": "Bajarilgan",
+      "REVERSED": "Storno qilingan"
+    },
+    "StockCountStatus": {
+      "DRAFT": "Qoralama",
+      "POSTED": "Bajarilgan",
+      "CANCELLED": "Bekor qilingan"
+    },
+    "QtyUnit": {
+      "PIECE": "dona",
+      "BLOCK": "blok"
+    },
+    "MovementType": {
+      "PURCHASE": "Xarid",
+      "PURCHASE_REVERSAL": "Xarid stornosi",
+      "SALE": "Savdo",
+      "SALE_REVERSAL": "Savdo stornosi",
+      "COUNT_ADJUSTMENT": "Inventarizatsiya tuzatishi"
+    },
+    "CashboxType": {
+      "CASH": "Naqd",
+      "CARD": "Karta"
+    },
+    "CashDirection": {
+      "IN": "Kirim",
+      "OUT": "Chiqim"
+    },
+    "CashTxType": {
+      "SALE_RECEIPT": "Savdodan tushum",
+      "SALE_REFUND": "Savdo boʻyicha qaytarish",
+      "PURCHASE_PAYMENT": "Xarid uchun toʻlov",
+      "PURCHASE_REFUND": "Xarid boʻyicha qaytarish",
+      "DEBT_TAKEN": "Qarz olindi",
+      "DEBT_GIVEN": "Qarz berildi",
+      "DEBT_REPAID_BY_ME": "Qarzimizni qaytardik",
+      "DEBT_REPAID_TO_ME": "Bizga qarz qaytarildi",
+      "TRAVEL_EXPENSE": "Yoʻl kira",
+      "OTHER_EXPENSE": "Boshqa chiqim",
+      "TRANSFER_OUT": "Kassadan oʻtkazma",
+      "TRANSFER_IN": "Kassaga oʻtkazma",
+      "MANUAL_REVERSAL": "Storno"
+    },
+    "DebtDirection": {
+      "RECEIVABLE": "Bizga qarzdor",
+      "PAYABLE": "Bizning qarzimiz"
+    },
+    "DebtSource": {
+      "MANUAL": "Qoʻlda",
+      "SALE": "Savdo",
+      "PURCHASE": "Xarid"
+    },
+    "DebtStatus": {
+      "OPEN": "Ochiq",
+      "CLOSED": "Yopilgan",
+      "CANCELLED": "Bekor qilingan"
+    },
+    "DocType": {
+      "SALE": "Savdo",
+      "PURCHASE": "Xarid",
+      "STOCK_COUNT": "Inventarizatsiya"
+    }
+  }
+}
