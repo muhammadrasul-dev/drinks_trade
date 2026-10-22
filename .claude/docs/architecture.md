@@ -167,7 +167,8 @@ drinks_trade/
 │   │   ├── prisma/
 │   │   │   ├── schema.prisma
 │   │   │   ├── migrations/         # + qo'lda SQL (CHECK, partial index, trigger)
-│   │   │   └── seed.ts             # OWNER foydalanuvchi, 2 kassa, do'kon
+│   │   │   ├── seed.ts             # OWNER foydalanuvchi, 2 kassa, do'kon (idempotent)
+│   │   │   └── seed.dev.ts         # faqat lokal: omborlar, mahsulotlar, 2 xodim
 │   │   ├── prisma.config.ts        # Prisma 7 CLI config: sxema/migratsiya yo'li, DATABASE_URL
 │   │   └── src/
 │   │       ├── client.ts           # PrismaClient singleton (adapter-pg, globalThis)
@@ -355,7 +356,9 @@ SEED_OWNER_PASSWORD=change-me
 | `pnpm db:logs` | Postgres loglarini kuzatish |
 | `pnpm db:migrate` | `prisma migrate dev` (`@drinks/db` orqali; yangi migratsiya: `pnpm db:migrate --name <nom>`) |
 | `pnpm db:generate` | `prisma generate` (`pnpm install` da `@drinks/db` `postinstall` i ham bajaradi; DB kerak emas) |
-| `pnpm db:seed` | boshlang'ich ma'lumot (OWNER, do'kon, 2 kassa) |
+| `pnpm db:reset` | `prisma migrate reset --force` — dev bazani o'chirib, migratsiyalarni qayta qo'llaydi (Prisma 7 seed'ni avtomatik ishlatmaydi) |
+| `pnpm db:seed` | boshlang'ich ma'lumot (OWNER, do'kon, 2 kassa) — `prisma db seed` → `prisma.config.ts` `migrations.seed` (`tsx prisma/seed.ts`); idempotent |
+| `pnpm db:seed:dev` | `db:seed` + namunaviy ma'lumot (`seed.dev.ts`, `NODE_ENV=production` da ishlamaydi); idempotent |
 | `pnpm db:studio` | Prisma Studio |
 | `pnpm dev` | Next.js dev |
 | `pnpm test` / `test:int` / `test:e2e` | testlar (`test` — DB'siz unit; `test:int` — `@drinks/db` va `@drinks/server` integratsiya testlari `DATABASE_URL_TEST` bazasida, `*.int.test.ts`) |

@@ -333,3 +333,11 @@ bro start unrelated tasks in separate sessions
 ```
 yes merge them, but do simply refactor theese tasks before merge
 ```
+
+---
+
+## Prompt 28 — T-103 sessiyasida: dev bazani reset qilishga rozilik (2026-10-22)
+
+```
+Ha, dev bazani reset qil
+```
