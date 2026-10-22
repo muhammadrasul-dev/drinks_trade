@@ -130,6 +130,7 @@ drinks_trade/
 │       │   │   │       ├── users/          # faqat OWNER
 │       │   │   │       └── audit/          # faqat OWNER
 │       │   │   └── api/
+│       │   │       ├── products/[id]/image/route.ts   # mahsulot rasmi, sessiya bilan (T-303)
 │       │   │       ├── reports/[report]/export/route.ts
 │       │   │       └── health/route.ts
 │       │   ├── features/<modul>/   # modulga xos UI: components/, actions.ts, columns.tsx
@@ -164,7 +165,8 @@ drinks_trade/
 │   │       │   ├── tx.ts           # withTransaction, qulf helperlari
 │   │       │   ├── locks.ts        # FOR UPDATE so'rovlari (tartib qat'iy)
 │   │       │   ├── rbac.ts         # assertCan(user, permission)
-│   │       │   └── numbering.ts    # hujjat raqamlari (S-000001)
+│   │       │   ├── numbering.ts    # hujjat raqamlari (S-000001)
+│   │       │   └── storage.ts      # StorageAdapter + LocalDiskStorage (§9, T-303)
 │   │       └── index.ts
 │   ├── db/                         # Prisma
 │   │   ├── prisma/
@@ -330,6 +332,7 @@ Tekshiruv **3 joyda**: (1) servis (`assertCan`) — majburiy; (2) mapper — max
   - Foydalanuvchilar (T-204): `/users` — `features/users` (`UsersTable`, `CreateUserDialog` / `EditUserDialog` / `SetPasswordDialog`); `/account` — "Mening akkauntim" (har rol, foydalanuvchi menyusida havola; formalar faqat Egasiga). Sana-vaqt UI'da `formatDateTime` (`@drinks/shared`, `DD.MM.YYYY HH:mm`, do'kon vaqt zonasi) bilan — `Intl` ning `uz` formati Node va brauzerda farq qilib, hydration xatosi beradi.
   - Toifa va brend (T-302): `/products/categories`, `/products/brands` (`products` bo'limi ruxsati) — `features/catalog` (`CatalogPage` server, `CatalogTable` + `CatalogItemDialog` client, `actions.ts`; `?archived=1` — arxiv ro'yxati).
   - Omborlar (T-304): `/warehouses` (`warehouses` bo'limi ruxsati) — `features/warehouses` (`WarehousesPage` server; har ombor — `WarehouseCard` client: sub-omborlar `DataTable` da, "Qoldiq bor/Bo'sh" holati, arxivdagi sub-ombor belgisi; `WarehouseNameDialog` — ikkala daraja uchun qo'shish/nomlash; `actions.ts`; `?archived=1` — arxivdagi omborlar). Hujjat formalari ombor tanlovini `warehouses.options(ctx)` dan oladi.
+  - Mahsulotlar (T-303): `/products` (ro'yxat; filtrlar URL'da — `?q=&category=&brand=&archived=1&page=`, `features/products/list-params.ts` noto'g'ri qiymatlarni tashlab yuboradi), `/products/new`, `/products/[id]` (tahrirlash + arxivlash/tiklash). `features/products`: `ProductFilters` (qidiruv 300 ms debounce bilan `router.replace`), `ProductTable`, `ProductForm` (react-hook-form + `productCreateInputSchema`, blok narxi jonli, blokdagi dona soni o'zgarsa AlertDialog — OQ-06, rasm saqlashdan keyin alohida yuboriladi), `ProductArchiveDialog`/`ProductArchiveButton`, `ProductThumb`; `actions.ts`. Formada faol toifa/brendlar + mahsulotning o'z arxivlangan qiymati ("(arxiv)").
   - Umumiy UI: `packages/ui` — `DataTable` (TanStack Table v9, `dataTableColumnHelper<T>()`; ustunlar render funksiyasi bo'lgani uchun Client Component modulida e'lon qilinadi; filtr/sahifalash serverda), `PageHeader`, shadcn `alert-dialog`, `sheet`, `separator`. `apps/web/src/components` (tarjima kerak bo'lganlar) — `MoneyText` (`formatSom` + `common.som`), `QtyText` (`formatQty` + `enums.QtyUnit.*`), `ConfirmDialog` (bajarish/storno/o'chirishdan oldin; `onConfirm` tugaguncha ochiq turadi).
 - Hujjat formalari (savdo/xarid): qatorlar jadvali, har qatorda mahsulot (qidiruv/shtrix-kod), sub-ombor, miqdor (dona/blok almashtirgich), narx, summa; pastda to'lov qismlari (Naqd/Karta/Nasiya) va "Qoldiq: N blok M dona" ko'rsatkichi. Tugmalar: **Saqlash (qoralama)** · **Bajarish** · **O'chirish** (faqat qoralama) · **Storno** (faqat bajarilgan).
 - Savdo qatorida qoldiq yetmasa — qator qizil, xabar, "Bajarish" o'chiq (FR-3.3). Bajarishda server yana tekshiradi (BR-7).
@@ -390,6 +393,12 @@ SEED_OWNER_PASSWORD=change-me
 
 ## 9. Fayl saqlash
 Mahsulot rasmi (FR-1.1) — v1 da server diskidagi `UPLOAD_DIR` (Docker volume). Kod `StorageAdapter` interfeysi orqali yozadi, keyin S3/MinIO ga o'tish oson. Rasm hajmi ≤ 2 MB, formatlar: jpg/png/webp; serverda 512px gacha kichraytiriladi (sharp).
+
+Amalda (T-303):
+- `packages/server/src/core/storage.ts` — `StorageAdapter { put(key, data), get(key) → bytes | null, delete(key) }`, `LocalDiskStorage(root)` (vaqtinchalik fayl + `rename` — yarim yozilgan fayl ko'rinmaydi; kalit `^[a-z0-9-]+(/[a-z0-9-]+)*\.[a-z0-9]+$` — `..` va absolyut yo'l yo'q), `getStorage()` — har chaqiruvda `UPLOAD_DIR` ni o'qiydi (default `./storage/uploads`, nisbiy yo'l **jarayon cwd** siga nisbatan: `pnpm dev` da `apps/web/storage/uploads`; `storage/` gitignore'da). Production'da `UPLOAD_DIR` absolyut yo'l (volume) bo'lishi kerak.
+- `sharp` 0.35.5 (`@drinks/server` dependency, versiya qotirilgan; Next.js ham shu versiyani ishlatadi, prebuilt binary — install skript kerak emas). Next.js uni `serverExternalPackages` ro'yxati bo'yicha bundle qilmaydi, `standalone` chiqishiga trace qilinadi. Rasm doim **WebP** sifatida saqlanadi (`products/<id>/<uuid>.webp`).
+- Yuklash: client `FormData { id, file }` → Server Action `setProductImage` (`features/products/actions.ts`); Server Action body chegarasi `next.config.ts` da `experimental.serverActions.bodySizeLimit: '3mb'` (default 1 MB). Client oldindan hajm/turni tekshiradi, server baribir baytlarni tekshiradi.
+- Ko'rsatish: `GET /api/products/[id]/image?v=<imageVersion>` (Route Handler) — sessiya talab qilinadi (`public/` emas), `products.readImage`; versiya URL'da bo'lgani uchun `Cache-Control: private, max-age=31536000, immutable`. `<img>` ishlatiladi (`next/image` optimizatsiyasi bu yerda foyda bermaydi).
 
 ## 10. Test strategiyasi
 

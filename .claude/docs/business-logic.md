@@ -51,7 +51,7 @@ newAvg = (Q * avg + inCost) / (Q + q)      // inCost — kirim summasi (so'm), q
 - `adjust(tx, ctx, { docDate, stockCountId?, lines: [{ subWarehouseId, productId, countedQty }] })` — `systemQty` qulf ostida o'qiladi; `delta ≠ 0` → `balance = countedQty`, `stock_movement(COUNT_ADJUSTMENT, delta, avg, costAmount(delta, avg))`; natija `products[]` = bitta `stock_count_result` (`systemQty`, `countedQty`, `qtyDelta`, `avgCost`, `amount = costAmount(Σ delta, avg)`), `product_cost.total_qty += Σ delta`, avg o'zgarmaydi.
 - Natija — har qator uchun yozilgan `stock_movement` (ishorali: `qtyDelta`, `costAmount`; tannarxlar 4 xonali satr). Xatolarda qoldiq miqdorlari bor (maxfiy emas), summa yo'q. Xato chaqiruvchi tranzaksiyasini rollback qiladi.
 - Audit yo'q: `stock_movement` o'zi jurnal (`created_by_id`), hujjat `POST` / `REVERSE` auditini chaqiruvchi yozadi.
-- So'rovlar (qulfsiz): `getAvailable(db, ctx, keys)` — kalitlar tartibida qoldiq (yo'q yoki boshqa do'kon → 0; qoralama ogohlantirishi FR-3.3, inventarizatsiya formasi); `getProductTotals(db, ctx, productIds)` — do'kon bo'yicha `totalQty`, `avgCost` faqat `report.sales.cost` egasiga (CLAUDE.md 6-qoida); `getStockedSubWarehouses(db, ctx, subWarehouseIds?)` — qoldig'i bor (`qty > 0`) sub-omborlar to'plami (T-304: omborlar sahifasidagi belgi va arxivlash tekshiruvi — u 2-qadam qulfi ostida chaqiriladi, §9b).
+- So'rovlar (qulfsiz): `getAvailable(db, ctx, keys)` — kalitlar tartibida qoldiq (yo'q yoki boshqa do'kon → 0; qoralama ogohlantirishi FR-3.3, inventarizatsiya formasi); `getProductTotals(db, ctx, productIds)` — do'kon bo'yicha `totalQty`, `avgCost` faqat `report.sales.cost` egasiga (CLAUDE.md 6-qoida); `getStockedSubWarehouses(db, ctx, subWarehouseIds?)` — qoldig'i bor (`qty > 0`) sub-omborlar to'plami (T-304: omborlar sahifasidagi belgi va arxivlash tekshiruvi — u 2-qadam qulfi ostida chaqiriladi, §9c).
 
 ## 2. Qulflash tartibi (deadlock'ning oldini olish)
 
@@ -84,7 +84,7 @@ agar EXISTS stock_count WHERE warehouse_id IN warehouseIds AND status='DRAFT'
 ```
 Inventarizatsiya yaratish omborni `FOR UPDATE` bilan qulflaydi → u bajarilayotgan savdo tugashini kutadi, savdo esa yangi ochilgan inventarizatsiyani ko'radi. Poyga holati yo'q.
 
-Shu qulfdan keyin arxiv tekshiruvi ham bajariladi: `warehouses.resolveActive(tx, ctx, subWarehouseIds)` → ombor yoki sub-ombor arxivda bo'lsa `ENTITY_ARCHIVED` (§9b). Ombor/sub-omborni arxivlash shu ombor qatorini `FOR UPDATE` qiladi, shuning uchun arxivlangan joyga tovar kira olmaydi va qoldiqli joy arxivlanmaydi. Inventarizatsiya ochishda (T-601) ham arxivdagi ombor rad etiladi.
+Shu qulfdan keyin arxiv tekshiruvi ham bajariladi: `warehouses.resolveActive(tx, ctx, subWarehouseIds)` → ombor yoki sub-ombor arxivda bo'lsa `ENTITY_ARCHIVED` (§9c). Ombor/sub-omborni arxivlash shu ombor qatorini `FOR UPDATE` qiladi, shuning uchun arxivlangan joyga tovar kira olmaydi va qoldiqli joy arxivlanmaydi. Inventarizatsiya ochishda (T-601) ham arxivdagi ombor rad etiladi.
 
 Qoralama yaratish/tahrirlash bloklanmaydi (BR-8).
 
@@ -288,6 +288,7 @@ Filtr: kun / oy / yil / ixtiyoriy oraliq (Toshkent vaqti).
 
 ## 9. Kam qoldiq ogohlantirishi (FR-1.3)
 `Σ stock_balance.qty (do'kon bo'yicha) < product.minStock` (va `minStock > 0`) → mahsulotlar ro'yxatida belgi + dashboard'da "Kam qolgan mahsulotlar" bloki. Push/SMS yo'q.
+Amalda (T-303): `isLowStock(stockQty, minStock)` (`@drinks/shared`); `stockQty` = `product_cost.total_qty` (invariant bo'yicha `Σ stock_balance.qty` ga teng) — `inventory.getProductTotals` orqali; DTO'da `stockQty`, `lowStock`.
 
 ## 9a. Toifa va brend (T-302, FR-1.1)
 `packages/server/src/modules/products/catalog.service.ts` — `categories` va `brands` (bir xil API, jadval adapteri orqali):
@@ -297,7 +298,19 @@ Filtr: kun / oy / yil / ixtiyoriy oraliq (Toshkent vaqti).
 - Boshqa tashkilotniki → `NOT_FOUND { entity }`. O'zgarishsiz nom / qayta arxivlash / qayta tiklash — no-op (yozuv va audit yo'q).
 - Audit: `CREATE` (`after.name`), `UPDATE` (`before/after.name`), `ARCHIVE` / `RESTORE` (`archivedAt`); `entityType` = `category` | `brand`.
 
-## 9b. Omborlar va sub-omborlar (T-304, FR-2.1–2.2)
+## 9b. Mahsulotlar (T-303, FR-1.1–1.3)
+`packages/server/src/modules/products/products.service.ts` — `products`:
+- `list(ctx, { q?, categoryId?, brandId?, archived?, page? })` — `product.read`; `q` nom, SKU yoki shtrix-kod ichida (katta-kichik harfga sezgirsiz) qidiradi; default faqat faol, `archived: true` — faqat arxiv; nom bo'yicha, `PRODUCT_PAGE_SIZE` (50) tadan → `ProductPage { items, total, page, pageSize }`. `get(ctx, { id })` — arxivlangan ham.
+- DTO `Product` (`@drinks/shared`): kartochka maydonlari, `blockPrice = salePrice × unitsPerBlock` (OQ-15, `blockPrice()`), `category`/`brand` (`{ id, name, archived }` — arxivlangani ham ko'rinadi), `imageVersion`, `stockQty`, `lowStock` (§9). **Maxfiy maydon yo'q** (tannarx/foyda) — bir xil DTO Egasi va Xodimga; tannarx kerak bo'lsa `getProductTotals` qoidasi (faqat `report.sales.cost`) qo'llanadi.
+- `create(ctx, input)`, `update(ctx, { id, ...input })` — `product.write` (Egasi ham, Xodim ham); kiritma `productCreateInputSchema` / `productUpdateInputSchema` (`@drinks/shared/schemas`): nom 1–200, `unitsPerBlock` 1–10 000, `salePrice` 0–10¹¹ butun so'm (1 dona), `minStock` ≥ 0 (dona), SKU/shtrix-kod ≤ 64 belgi bo'sh joysiz (bo'sh → `null`), `expiryDate` `YYYY-MM-DD` yoki bo'sh. `update` — barcha maydonlarni almashtiradi; o'zgarish bo'lmasa yozuv va audit yo'q.
+- Takroriy SKU/shtrix-kod → `DUPLICATE_VALUE { entity: 'product', field: 'sku' | 'barcode', archived }` (database §6.1); parallel so'rovda P2002 ham shunga aylanadi (`field` index nomidan).
+- Toifa/brend: yangi tanlov tashkilotniki va faol bo'lishi shart — boshqa tashkilotniki → `NOT_FOUND { entity }`, arxivlangan → `ENTITY_ARCHIVED { entity }`; mahsulotda allaqachon turgan (keyin arxivlangan) qiymat o'zgarmasa — qabul qilinadi.
+- **Blokdagi dona soni** (OQ-06): ikkala rol o'zgartiradi, servis cheklamaydi — UI avval ogohlantirish oynasi chiqaradi (eski → yangi, joriy qoldiqning blok ko'rinishi oldin/keyin, qoralamalar bajarishda tekshirilishi). Qoldiq donada — o'zgarmaydi. Bajarishdagi `UNITS_PER_BLOCK_CHANGED` tekshiruvi — T-405 / T-502.
+- `archive` / `restore` — no-op takrorda; qoldiq bo'lsa ham ruxsat (OQ-20, UI qolgan miqdorni ko'rsatadi). Arxivlangan mahsulotni tahrirlash mumkin.
+- Rasm: `setImage(ctx, { id, data })` — ≤ 2 MB (`PRODUCT_IMAGE_MAX_BYTES`), format **baytlardan** (sharp) aniqlanadi: jpeg/png/webp, aks holda `VALIDATION_FAILED { fieldErrors: { image: ['tooBig' | 'invalidType'] } }`; EXIF bo'yicha aylantiriladi, 512×512 ichiga kichraytiriladi (kattalashtirilmaydi), WebP (q=85). Fayl avval yoziladi, tranzaksiya xato bersa o'chiriladi; almashtirilgan eski fayl commit'dan keyin o'chiriladi. `removeImage(ctx, { id })`, `readImage(ctx, { id })` (`product.read`, yo'q bo'lsa `NOT_FOUND { entity: 'productImage' }`).
+- Audit (`entityType: 'product'`): `CREATE` (`after` — barcha maydonlar, pul `number`), `UPDATE` (`before`/`after` — **faqat o'zgargan** maydonlar; rasm — `imagePath`), `ARCHIVE` / `RESTORE` (`archivedAt`).
+
+## 9c. Omborlar va sub-omborlar (T-304, FR-2.1–2.2)
 `packages/server/src/modules/warehouses/warehouses.service.ts` — do'kon darajasida (`store_id`, katalogdan farqli — ADR-011), daraxt **aniq 2 daraja**: `warehouse` → `sub_warehouse`; sub-omborning bolasi yo'q (sxemada ota ustuni yo'q).
 - `warehouses.list(ctx, { archived? })` — `warehouse.read`; default faol omborlar, `archived: true` — arxivdagilar; har omborda **barcha** sub-omborlari (arxivdagilar ham, `archived` belgisi bilan), `hasStock` (biror mahsulot `qty > 0`) belgisi. DTO — `WarehouseItem` / `SubWarehouseItem` (`@drinks/shared`).
 - `warehouses.options(ctx)` — hujjat formalari (xarid, savdo, inventarizatsiya) uchun: faqat faol omborlar va ularning faol sub-omborlari; faol sub-ombori yo'q ombor tushiriladi (`WarehouseOption`).
@@ -341,8 +354,8 @@ Filtr: kun / oy / yil / ixtiyoriy oraliq (Toshkent vaqti).
 | `DEBT_CANCELLED` | qarz allaqachon bekor qilingan (masalan, ikki marta storno) |
 | `DEBT_OVERPAYMENT` | qaytarish > qarz qoldig'i |
 | `NOTE_REQUIRED` | boshqa chiqim / qarz izohsiz; nasiya qismli savdo/xarid izohsiz (OQ-19) |
-| `ENTITY_NOT_EMPTY` | bo'sh bo'lmagan ombor/sub-omborni arxivlash (FR-2.2; `{ entity, name, subWarehouses? }`, §9b) |
-| `ENTITY_ARCHIVED` | arxivlangan mahsulot/omborni hujjatda tanlash; arxivdagi omborga sub-ombor qo'shish yoki uning sub-omborini tiklash (§9b) |
+| `ENTITY_NOT_EMPTY` | bo'sh bo'lmagan ombor/sub-omborni arxivlash (FR-2.2; `{ entity, name, subWarehouses? }`, §9c) |
+| `ENTITY_ARCHIVED` | arxivlangan mahsulot/omborni hujjatda tanlash; arxivdagi omborga sub-ombor qo'shish yoki uning sub-omborini tiklash (§9c) |
 | `DUPLICATE_VALUE` | SKU / shtrix-kod / nom / login takrorlangan |
 | `DOC_DATE_IN_FUTURE` | hujjat yoki kassa sanasi kelajakda (OQ-07) |
 | `UNITS_PER_BLOCK_CHANGED` | qoralama saqlangandan keyin blokdagi dona soni o'zgargan (OQ-06) |

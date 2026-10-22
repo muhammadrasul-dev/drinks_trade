@@ -8,6 +8,8 @@ SRS'dagi biznes savollar yopilgan. Bu yerda — arxitektura va DB loyihalashda c
 
 **2026-10-22 (Prompt 36):** OQ-18 va OQ-19 yopildi — ikkalasi ham tavsiya bo'yicha (A).
 
+**2026-10-23 (Prompt 39):** OQ-22 yopildi — tavsiya bo'yicha (A). OQ-20 (T-303) va OQ-21 (T-304) javob kutmoqda.
+
 | # | Savol | Tavsiya | Holat |
 |---|---|---|---|
 | OQ-01 | Storno qilingan savdo P&L'da qaysi sanada aks etadi? | Asl hujjat sanasida (hujjat davr hisobidan butunlay chiqadi) | Yopilgan — asl sanada (A) |
@@ -30,7 +32,8 @@ SRS'dagi biznes savollar yopilgan. Bu yerda — arxitektura va DB loyihalashda c
 | OQ-18 | Savdo storno'sida bir mahsulot bir necha qatorda bo'lsa, o'rtacha tannarx qatorma-qator hisoblanadimi yoki mahsulot bo'yicha bir marta? | Mahsulot bo'yicha bir marta (xarid §5.2 kabi) | Yopilgan — A: mahsulot bo'yicha bir marta |
 | OQ-19 | Nasiya savdo/xaridda izoh (qarz izohi) majburiymi? | Ha — `paidCredit > 0` bo'lsa hujjat izohi majburiy (`NOTE_REQUIRED`), qarzga o'sha izoh yoziladi | Yopilgan — A: izoh majburiy, `debts.open` ham tekshiradi |
 | OQ-21 | Ochiq (DRAFT) inventarizatsiyasi bor bo'sh ombor/sub-omborni arxivlash mumkinmi? | Yo'q — `WAREHOUSE_IN_STOCK_COUNT`; avval sanoqni bajaring yoki bekor qiling | Ochiq — tavsiya bo'yicha qilingan (T-304) |
-| OQ-22 | Egasi o'z login/parolini o'zgartirsa, shu o'zgarishni qilgan (joriy) sessiya ham o'chadimi? | Yo'q — joriy sessiya qoladi, boshqa barcha sessiyalari o'chiriladi | Ochiq — tavsiya bo'yicha qilingan (T-204) |
+| OQ-22 | Egasi o'z login/parolini o'zgartirsa, shu o'zgarishni qilgan (joriy) sessiya ham o'chadimi? | Yo'q — joriy sessiya qoladi, boshqa barcha sessiyalari o'chiriladi | Yopilgan — A: joriy sessiya qoladi |
+| OQ-20 | Omborda qoldig'i bor mahsulotni arxivlash mumkinmi? | Ha — ruxsat, tasdiqlash oynasida qolgan miqdor va "sotib bo'lmaydi" ogohlantirishi; arxivdan istalgan payt chiqariladi | Ochiq — tavsiya bo'yicha qilingan (T-303) |
 
 ---
 
@@ -113,7 +116,13 @@ FR-2.2 faqat "bo'sh bo'lmagan ombor/sub-omborni arxivlab bo'lmaydi" deydi. Lekin
 - **C:** ruxsat beriladi, sanoqni bajarishda arxivdagi sub-ombor qatorlari rad etiladi (T-602 murakkablashadi).
 B yoki C ga o'tish — `warehouses.service.ts` dagi `assertNoOpenStockCount`.
 ### OQ-22 — O'z login/parolini o'zgartirganda joriy sessiya
+**Javob (2026-10-23, Prompt 39): A** — T-204 dagi amalga oshirish o'zgarmaydi. Xodim "Mening akkauntim" da o'z ma'lumotini o'zgartira olmasligi (architecture §11) ham tasdiqlandi.
 architecture §11 va ADR-006: "login yoki parol o'zgarganda o'sha foydalanuvchining **barcha** sessiyalari darhol o'chiriladi". Bu xodim uchun (Egasi o'zgartiradi) aniq, lekin Egasi "Mening akkauntim"da **o'zinikini** o'zgartirganda joriy sessiya ham o'chsa, u darhol login sahifasiga tushadi.
 - **A (tavsiya, T-204 da shunday):** joriy sessiya qoladi (u joriy parolni kiritib o'zini tasdiqladi), boshqa barcha qurilmalardagi sessiyalar o'chiriladi — o'g'irlangan sessiya bo'lsa, u yopiladi. Odatiy amaliyot.
 - **B:** hammasi, shu jumladan joriy sessiya o'chiriladi; Egasi yangi login/parol bilan qayta kiradi. Hujjat matniga so'zma-so'z mos.
 B ga o'tish — `users.changeOwnUsername` / `changeOwnPassword` ga `currentSessionToken` bermaslik (`features/users/actions.ts`) va keyin login sahifasiga yo'naltirish.
+### OQ-20 — Qoldig'i bor mahsulotni arxivlash
+FR-1.2 mahsulotni o'chirish o'rniga arxivlashni aytadi, lekin qoldiq haqida hech narsa demaydi. Ombor/sub-ombor uchun esa bo'sh bo'lmaganini arxivlash taqiqlangan (FR-2.2, `ENTITY_NOT_EMPTY`). Arxivlangan mahsulot yangi hujjatlarda tanlanmaydi (database §6.1), ya'ni qoldig'i bo'lsa — uni sotib bo'lmaydi, qoldiq hisobotida esa ko'rinib turadi.
+- **A (tavsiya, T-303 da shunday):** ruxsat beriladi. Tasdiqlash oynasi qolgan miqdorni ko'rsatadi ("Omborda hali 3 blok 2 dona bor — arxivlangan mahsulotni sotib bo'lmaydi"). Arxivdan chiqarish — bitta tugma, ma'lumot buzilmaydi.
+- **B:** omborlar kabi — qoldiq > 0 bo'lsa `ENTITY_NOT_EMPTY`; avval sotish yoki inventarizatsiya bilan 0 ga tushirish kerak. Qat'iyroq, lekin singan/yaroqsiz 2 donani hisobdan chiqarish uchun ham avval inventarizatsiya o'tkazish kerak bo'ladi.
+B ga o'tish — `products.archive` da `getProductTotals` bilan bitta tekshiruv (+ test).

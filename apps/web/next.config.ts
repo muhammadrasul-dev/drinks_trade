@@ -20,8 +20,13 @@ const nextConfig: NextConfig = {
   transpilePackages: ['@drinks/shared', '@drinks/ui', '@drinks/server', '@drinks/db'],
   // Dev logs print Server Action arguments verbatim — loginAction would leak passwords.
   logging: { serverFunctions: false },
-  // forbidden() + app/[locale]/(app)/forbidden.tsx: a real 403 for pages the role may not open.
-  experimental: { authInterrupts: true },
+  experimental: {
+    // forbidden() + app/[locale]/(app)/forbidden.tsx: a real 403 for pages the role may not open.
+    authInterrupts: true,
+    // Product images (≤ 2 MB, architecture §9) travel through a Server Action; the
+    // default 1 MB body limit would reject them before the service sees them.
+    serverActions: { bodySizeLimit: '3mb' },
+  },
 };
 
 export default withNextIntl(nextConfig);

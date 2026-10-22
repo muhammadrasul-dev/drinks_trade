@@ -19,7 +19,8 @@
     "save": "Saqlash",
     "saved": "Saqlandi",
     "required": "Toʻldirish majburiy.",
-    "tooLong": "Juda uzun."
+    "tooLong": "Juda uzun.",
+    "invalid": "Notoʻgʻri qiymat."
   },
   "nav": {
     "label": "Asosiy menyu",
@@ -302,6 +303,84 @@
       "SALE": "Savdo",
       "PURCHASE": "Xarid",
       "STOCK_COUNT": "Inventarizatsiya"
+    }
+  },
+  "products": {
+    "title": "Mahsulotlar",
+    "add": "Mahsulot qoʻshish",
+    "newTitle": "Yangi mahsulot",
+    "editTitle": "Mahsulotni tahrirlash",
+    "back": "Roʻyxatga qaytish",
+    "filters": {
+      "label": "Filtrlar",
+      "search": "Nom, SKU yoki shtrix-kod",
+      "allCategories": "Barcha toifalar",
+      "allBrands": "Barcha brendlar",
+      "active": "Faol",
+      "archive": "Arxiv"
+    },
+    "columns": {
+      "image": "Rasm",
+      "name": "Nomi",
+      "category": "Toifa",
+      "brand": "Brend",
+      "price": "Narxi (1 dona)",
+      "stock": "Qoldiq",
+      "actions": "Amallar"
+    },
+    "archivedTag": "arxiv",
+    "lowStock": "Kam qoldi",
+    "lowStockTitle": "Minimal qoldiq: {min}",
+    "empty": "Mahsulot topilmadi.",
+    "emptyArchived": "Arxivda mahsulot yoʻq.",
+    "pagination": {
+      "label": "Sahifalar",
+      "range": "{from}–{to} / {total}",
+      "prev": "Oldingi",
+      "next": "Keyingi"
+    },
+    "edit": "Tahrirlash",
+    "archive": "Arxivlash",
+    "restore": "Arxivdan chiqarish",
+    "archived": "Arxivlandi",
+    "restored": "Arxivdan chiqarildi",
+    "archiveTitle": "«{name}» mahsulotini arxivlaysizmi?",
+    "archiveDescription": "Yangi hujjatlarda tanlanmaydi. Eski hujjatlar va hisobotlarda koʻrinib turadi.",
+    "archiveWithStock": "Omborda hali {qty} bor — arxivlangan mahsulotni sotib boʻlmaydi.",
+    "restoreTitle": "«{name}» mahsulotini arxivdan chiqarasizmi?",
+    "restoreDescription": "Yangi hujjatlarda yana tanlanadigan boʻladi.",
+    "archivedBanner": "Bu mahsulot arxivda — yangi hujjatlarda tanlanmaydi.",
+    "form": {
+      "name": "Nomi",
+      "unitsPerBlock": "Blokdagi dona soni",
+      "salePrice": "Sotuv narxi (1 dona, soʻm)",
+      "blockPrice": "Blok narxi",
+      "category": "Toifa",
+      "brand": "Brend",
+      "none": "— Tanlanmagan —",
+      "sku": "SKU",
+      "barcode": "Shtrix-kod",
+      "minStock": "Minimal qoldiq (dona)",
+      "minStockHint": "0 — ogohlantirishsiz",
+      "expiryDate": "Yaroqlilik muddati",
+      "expiryDateHint": "Faqat maʼlumot uchun, hisobda ishtirok etmaydi.",
+      "image": "Rasm",
+      "imageHint": "JPG, PNG yoki WEBP, 2 MB gacha. 512 px gacha kichraytiriladi.",
+      "chooseImage": "Rasm tanlash",
+      "removeImage": "Rasmni olib tashlash",
+      "archivedOption": "{name} (arxiv)",
+      "duplicate": "Bu qiymat boshqa mahsulotda bor.",
+      "duplicateArchived": "Bu qiymat arxivlangan mahsulotda bor.",
+      "imageTooBig": "Rasm 2 MB dan katta.",
+      "imageInvalidType": "Faqat JPG, PNG yoki WEBP rasm.",
+      "imageUploadFailed": "Mahsulot saqlandi, lekin rasm yuklanmadi. Qayta urinib koʻring."
+    },
+    "unitsChange": {
+      "title": "Blokdagi dona soni oʻzgaradi",
+      "description": "{from} → {to}. Qoldiq donada saqlanadi, shuning uchun miqdor oʻzgarmaydi — faqat blok koʻrinishi qayta hisoblanadi.",
+      "stock": "Joriy qoldiq: {before} → {after}",
+      "drafts": "Blokda kiritilgan qoralama qatorlari bajarishda qayta tekshiriladi.",
+      "confirm": "Oʻzgartirish"
     }
   }
 }

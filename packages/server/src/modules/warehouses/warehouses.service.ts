@@ -4,7 +4,7 @@
 // (database.md §1 rule 5): a node is archived, and only when it holds no
 // stock (ENTITY_NOT_EMPTY).
 //
-// Locking (business-logic.md §2, §9b): archiving takes the warehouse row
+// Locking (business-logic.md §2, §9c): archiving takes the warehouse row
 // FOR UPDATE (step 2) before reading stock. Every posting/reversal takes the
 // same row FOR SHARE (step 2) before it touches stock_balance (step 7) and
 // rejects an archived warehouse/sub-warehouse after that lock, so no stock

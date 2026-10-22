@@ -47,7 +47,16 @@ Xodim menyusida unga yopiq bo'limlar ko'rinmaydi. Bunday bo'lim manzilini qo'lda
 ## 5. Birinchi sozlash (Egasi)
 1. **Omborlar** → "Ombor qo'shish" → nom. Ombor kartochkasida → "Sub-ombor qo'shish" (faqat 2 daraja: sub-ombor ichida yana sub-ombor bo'lmaydi). Ombor nomi takrorlanmaydi; sub-ombor nomi bitta ombor ichida takrorlanmaydi (katta-kichik harf farq qilmaydi). Kerak bo'lmay qolgan ombor/sub-omborni **arxivlang** — faqat u **bo'sh** bo'lsa (qoldiq 0) va omborda ochiq inventarizatsiya bo'lmasa. Arxivdagi ombor/sub-ombor hujjatlarda tanlanmaydi; "Arxiv" ro'yxatidan qaytarish mumkin (arxivdagi ombor ichidagi sub-omborni qaytarish uchun avval omborni qaytaring).
 2. **Mahsulotlar** → **Toifalar** / **Brendlar** → "Toifa qo'shish" / "Brend qo'shish" (nom takrorlanmaydi, katta-kichik harf farq qilmaydi). Kerak bo'lmay qolganini **arxivlang** — u yangi mahsulotlarda tanlanmaydi, mavjud mahsulotlarda saqlanib qoladi; "Arxiv" ro'yxatidan qaytarish mumkin.
-3. **Mahsulotlar** → "Mahsulot qo'shish": nom, blokdagi dona soni, sotuv narxi (1 dona), toifa, brend, SKU, shtrix-kod, rasm, minimal qoldiq, yaroqlilik muddati (ixtiyoriy, faqat ma'lumot).
+3. **Mahsulotlar** → "Mahsulot qo'shish": nom, blokdagi dona soni, sotuv narxi (1 dona), toifa, brend, SKU, shtrix-kod, rasm, minimal qoldiq, yaroqlilik muddati (ixtiyoriy, faqat ma'lumot). Batafsil — 5.1-bo'lim.
+
+### 5.1. Mahsulotlar (Egasi ham, Xodim ham)
+- **Ro'yxat:** qidiruv maydoni nom, SKU yoki shtrix-kod bo'yicha qidiradi; yonida toifa va brend filtri; **Faol / Arxiv** almashtirgichi. Har qatorda rasm, nom (ostida SKU · shtrix-kod), toifa, brend, 1 dona narxi va blok narxi, qoldiq (blok + dona). Qoldiq minimaldan kam bo'lsa — qizil **"Kam qoldi"** belgisi (sichqonchani olib borsangiz minimal qoldiq ko'rinadi). Ro'yxat 50 tadan sahifalanadi.
+- **Narx** doim **1 dona** uchun kiritiladi; blok narxi (narx × blokdagi dona soni) formada avtomatik ko'rsatiladi.
+- **SKU va shtrix-kod** ixtiyoriy, lekin takrorlanmaydi (katta-kichik harf farq qilmaydi, arxivdagi mahsulotniki ham band) — "Bu qiymat boshqa mahsulotda bor".
+- **Minimal qoldiq** donada; 0 — ogohlantirishsiz. Kiritganda blok ko'rinishi ostida chiqadi (masalan, "= 1 blok 4 dona").
+- **Rasm:** JPG, PNG yoki WEBP, 2 MB gacha; tizim uni 512 px gacha kichraytiradi. "Rasmni olib tashlash" — rasmni o'chiradi. Rasm **Saqlash** bosilganda yuklanadi.
+- **Blokdagi dona sonini o'zgartirish:** saqlashda ogohlantirish oynasi chiqadi — qoldiq donada saqlangani uchun miqdor o'zgarmaydi, faqat blok ko'rinishi qayta hisoblanadi (masalan, 20 dona: "3 blok 2 dona" → "1 blok 8 dona"). Blokda kiritilgan qoralamalar bajarishda qayta tekshiriladi.
+- **Arxivlash** (o'chirish yo'q): mahsulot yangi hujjatlarda tanlanmaydi, eski hujjat va hisobotlarda qoladi. Omborda qoldig'i bo'lsa ham arxivlash mumkin — oynada qolgan miqdor ko'rsatiladi, arxivdagi mahsulotni sotib bo'lmaydi. **Arxiv** ro'yxatidan "Arxivdan chiqarish" bilan qaytariladi. Arxivlangan toifa/brend mahsulotda "(arxiv)" belgisi bilan ko'rinib turadi.
 4. **Foydalanuvchilar** → "Xodim qo'shish": F.I.O, login, parol. Xodimlar soni cheklanmagan, har biriga alohida login bering (umumiy akkaunt ishlatmang, aks holda audit kim nima qilganini ko'rsata olmaydi).
 5. Boshlang'ich qoldiqni kiritish uchun — **Xarid** hujjati orqali (alohida import yo'q).
 
