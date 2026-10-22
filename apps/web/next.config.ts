@@ -18,6 +18,8 @@ const nextConfig: NextConfig = {
   // Workspace packages ship TypeScript source, not built JS. @drinks/db is reached
   // only through @drinks/server (apps/web never imports it, ESLint enforces that).
   transpilePackages: ['@drinks/shared', '@drinks/ui', '@drinks/server', '@drinks/db'],
+  // Dev logs print Server Action arguments verbatim — loginAction would leak passwords.
+  logging: { serverFunctions: false },
 };
 
 export default withNextIntl(nextConfig);
