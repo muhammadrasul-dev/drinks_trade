@@ -12,7 +12,8 @@
     "migrate": "prisma migrate dev",
     "studio": "prisma studio",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:int": "vitest run --config vitest.int.config.ts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "7.10.1",
@@ -22,7 +23,9 @@
     "@drinks/config": "workspace:*",
     "@drinks/shared": "workspace:*",
     "@types/node": "24.19.2",
+    "@types/pg": "8.23.1",
     "dotenv": "18.0.8",
+    "pg": "8.23.1",
     "prisma": "7.10.1",
     "typescript": "6.0.3",
     "vite": "8.3.4",

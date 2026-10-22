@@ -76,4 +76,4 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
       # T-105: apply migrations and run the integration suite here, e.g.
-      # pnpm db:migrate:deploy && pnpm test:integration
+      # pnpm test:int (its Vitest globalSetup runs `prisma migrate deploy` on DATABASE_URL_TEST)

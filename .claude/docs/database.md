@@ -707,6 +707,12 @@ model DocSequence {
 
 Prisma'da ifodalab bo'lmaydi; birinchi migratsiyadan keyin `migrations/<ts>_constraints/migration.sql` sifatida qo'shiladi.
 
+> **T-102 dan beri haqiqiy manba — `packages/db/prisma/migrations/20261022121351_constraints/migration.sql`.** Quyidagi blokdan farqlari:
+> - Kelajak sana qo'pol himoyasi (OQ-07, §6.3) `sale`/`purchase` dan tashqari `stock_count.doc_date`, `cash_transaction.tx_date`, `debt.debt_date`, `debt_repayment.repaid_at` ga ham qo'yilgan (bir xil `now() + 1 kun` zaxira). `now()` — `timestamptz`, vaqt zonasiga bog'liq emas; aniq qoida (Toshkent bo'yicha `≤ hozir`) servisda.
+> - Prisma 7.10 da `postgresqlExtensions` va `partialIndexes` hali preview — shuning uchun `pg_trgm`, partial/ifodali indekslar faqat SQL'da, `schema.prisma` ga yozilmagan. Prisma ularni diff'da e'tiborsiz qoldiradi: `prisma migrate dev` drift ko'rmaydi ("Already in sync").
+> - Append-only triggerlar qator darajasida: `TRUNCATE` bloklanmaydi (test tozalash helper'i, T-105, shunga tayanadi).
+> - Har cheklov uchun integratsiya testi: `packages/db/test/int/constraints.int.test.ts` (`pnpm test:int`).
+
 ```sql
 -- Miqdor va pul invariantlari
 ALTER TABLE stock_balance   ADD CONSTRAINT stock_balance_qty_nonneg   CHECK (qty >= 0);
@@ -768,6 +774,11 @@ ALTER TABLE "user" ADD CONSTRAINT user_username_format CHECK (username ~ '^[a-z0
 -- DB'da faqat qo'pol himoya (1 kun zaxira bilan):
 ALTER TABLE sale     ADD CONSTRAINT sale_doc_date_not_future     CHECK (doc_date <= now() + interval '1 day');
 ALTER TABLE purchase ADD CONSTRAINT purchase_doc_date_not_future CHECK (doc_date <= now() + interval '1 day');
+-- T-102: §6.3 dagi boshqa sanalarga ham (stock_count, cash_transaction, debt, debt_repayment)
+ALTER TABLE stock_count      ADD CONSTRAINT stock_count_doc_date_not_future CHECK (doc_date  <= now() + interval '1 day');
+ALTER TABLE cash_transaction ADD CONSTRAINT cash_tx_tx_date_not_future      CHECK (tx_date   <= now() + interval '1 day');
+ALTER TABLE debt             ADD CONSTRAINT debt_debt_date_not_future       CHECK (debt_date <= now() + interval '1 day');
+ALTER TABLE debt_repayment   ADD CONSTRAINT debt_repayment_date_not_future  CHECK (repaid_at <= now() + interval '1 day');
 
 -- Mahsulot qidiruvi (nom bo'yicha, katta-kichik harfsiz)
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
