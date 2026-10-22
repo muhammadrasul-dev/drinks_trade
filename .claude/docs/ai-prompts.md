@@ -293,3 +293,19 @@ this is remote link
 ```
 T-101 start on new session
 ```
+
+---
+
+## Prompt 23 — T-101 ni push qilish (2026-10-22)
+
+```
+git push origin main
+```
+
+---
+
+## Prompt 24 — T-102 ni yangi sessiyada boshlash (2026-10-22)
+
+```
+T-102 start on new session
+```
