@@ -286,6 +286,14 @@ Filtr: kun / oy / yil / ixtiyoriy oraliq (Toshkent vaqti).
 ## 9. Kam qoldiq ogohlantirishi (FR-1.3)
 `Σ stock_balance.qty (do'kon bo'yicha) < product.minStock` (va `minStock > 0`) → mahsulotlar ro'yxatida belgi + dashboard'da "Kam qolgan mahsulotlar" bloki. Push/SMS yo'q.
 
+## 9a. Toifa va brend (T-302, FR-1.1)
+`packages/server/src/modules/products/catalog.service.ts` — `categories` va `brands` (bir xil API, jadval adapteri orqali):
+- `list(ctx, { archived? })` — `product.read`; default faqat faol (mahsulot formasidagi tanlov uchun), `archived: true` — faqat arxiv; nom bo'yicha saralangan, har qatorda `productCount` (arxivlangan mahsulotlar ham). DTO — `CatalogItem` (`@drinks/shared`).
+- `create(ctx, { name })`, `rename(ctx, { id, name })`, `archive(ctx, { id })`, `restore(ctx, { id })` — `product.write` (Egasi ham, Xodim ham), kiritma `@drinks/shared/schemas` (`catalog*InputSchema`: nom trim, 1–100) bilan qayta tekshiriladi.
+- Nom takrori (katta-kichik harfga sezgirsiz, arxivdagilar ham) → `DUPLICATE_VALUE { entity, field: 'name', archived }`; parallel so'rovda DB unique xatosi (P2002) ham `DUPLICATE_VALUE` ga aylanadi.
+- Boshqa tashkilotniki → `NOT_FOUND { entity }`. O'zgarishsiz nom / qayta arxivlash / qayta tiklash — no-op (yozuv va audit yo'q).
+- Audit: `CREATE` (`after.name`), `UPDATE` (`before/after.name`), `ARCHIVE` / `RESTORE` (`archivedAt`); `entityType` = `category` | `brand`.
+
 ## 10. Xato kodlari (`shared/errors.ts`)
 
 | Kod | Qachon |

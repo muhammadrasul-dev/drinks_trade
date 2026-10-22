@@ -15,7 +15,11 @@
     "cancel": "Bekor qilish",
     "confirm": "Tasdiqlash",
     "comingSoon": "Bu boʻlim keyingi bosqichlarda qoʻshiladi.",
-    "som": "soʻm"
+    "som": "soʻm",
+    "save": "Saqlash",
+    "saved": "Saqlandi",
+    "required": "Toʻldirish majburiy.",
+    "tooLong": "Juda uzun."
   },
   "nav": {
     "label": "Asosiy menyu",
@@ -63,6 +67,40 @@
       "tooLong": "Juda uzun."
     },
     "logout": "Chiqish"
+  },
+  "catalog": {
+    "name": "Nomi",
+    "productCount": "Mahsulotlar",
+    "actions": "Amallar",
+    "filter": "Roʻyxat",
+    "active": "Faol",
+    "archiveList": "Arxiv",
+    "edit": "Tahrirlash",
+    "archive": "Arxivlash",
+    "restore": "Arxivdan chiqarish",
+    "archived": "Arxivlandi",
+    "restored": "Arxivdan chiqarildi",
+    "archiveDescription": "Yangi mahsulotlarda tanlanmaydi. Mavjud mahsulotlar uni saqlab qoladi.",
+    "restoreDescription": "Mahsulot formasida yana tanlanadigan boʻladi.",
+    "duplicateArchived": "Bunday nom arxivda bor — uni arxivdan chiqaring.",
+    "category": {
+      "title": "Toifalar",
+      "add": "Toifa qoʻshish",
+      "editTitle": "Toifani tahrirlash",
+      "archiveTitle": "«{name}» toifasini arxivlaysizmi?",
+      "restoreTitle": "«{name}» toifasini arxivdan chiqarasizmi?",
+      "empty": "Hali toifa yoʻq.",
+      "emptyArchived": "Arxivda toifa yoʻq."
+    },
+    "brand": {
+      "title": "Brendlar",
+      "add": "Brend qoʻshish",
+      "editTitle": "Brendni tahrirlash",
+      "archiveTitle": "«{name}» brendini arxivlaysizmi?",
+      "restoreTitle": "«{name}» brendini arxivdan chiqarasizmi?",
+      "empty": "Hali brend yoʻq.",
+      "emptyArchived": "Arxivda brend yoʻq."
+    }
   },
   "errors": {
     "UNAUTHORIZED": "Tizimga kiring.",

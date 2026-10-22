@@ -1,4 +1,4 @@
-import { auth, type AuthSession, type RequestMeta } from '@drinks/server';
+import { auth, type AuthSession, type RequestMeta, type ServiceContext } from '@drinks/server';
 import { can, type Locale, type Permission } from '@drinks/shared';
 import { cookies, headers } from 'next/headers';
 import { forbidden } from 'next/navigation';
@@ -52,4 +52,9 @@ export async function getRequestMeta(): Promise<RequestMeta> {
     userAgent: list.get('user-agent'),
     requestId: list.get('x-request-id') ?? crypto.randomUUID(),
   };
+}
+
+/** ServiceContext for service reads in Server Components (architecture §4.1). */
+export async function getServiceContext(session: AuthSession): Promise<ServiceContext> {
+  return auth.toServiceContext(session, (await getRequestMeta()).requestId);
 }
