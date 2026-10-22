@@ -365,3 +365,11 @@ start both in seperate sessions
 ```
 remove T-105 va T-201 worktrees and do not commit .env.example, you can return before situation.
 ```
+
+---
+
+## Prompt 32 — Bir vaqtda boshlash mumkin bo'lgan vazifalarni alohida sessiyalarda boshlash (2026-10-22)
+
+```
+start any tasks which can start one time and dont occures issues in seperate sessions
+```
