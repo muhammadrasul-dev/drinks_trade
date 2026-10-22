@@ -53,6 +53,7 @@ Holatlar: `Taklif` (foydalanuvchi tasdig'ini kutmoqda) · `Qabul qilingan` · `A
 **Kontekst.** 2 rol, username + parol, OAuth yo'q, bitta do'kon. Rol o'zgarsa yoki xodim o'chirilsa — darhol kuchga kirishi kerak.
 **Qaror.** argon2id hash, `session` jadvali (tokenning SHA-256 hashi), httpOnly cookie, 30 kun sirpanuvchi muddat. Har so'rovda session DB'dan o'qiladi (JWT emas).
 **Oqibat.** + Xodimni o'chirish = barcha sessiyalari darhol bekor. + ~200 qator kod, to'liq nazorat, tashqi bog'liqlik yo'q. − Parolni email orqali tiklash yo'q. OQ-10 bo'yicha har foydalanuvchining o'z logini va paroli bor. Bitta OWNER bo'ladi, STAFF soni cheklanmagan. Xodim akkauntlarini (login, parol) faqat OWNER yaratadi va tahrirlaydi. OWNER o'z parolini unutsa, CLI orqali tiklanadi. Login yoki parol o'zgarsa, sessiyalar darhol o'chiriladi.
+**Amalda (T-201).** `@node-rs/argon2` 2.2.2 (argon2id, prebuilt, Node 24); token — 32 tasodifiy bayt (base64url), DB'da SHA-256; sirpanuvchi muddat kuniga ko'pi bilan bir marta yoziladi; urinishlar cheklovi uchun `login_attempt` jadvali.
 **Rad etilgan:** Auth.js (credentials + DB sessiya noqulay), Better Auth (ishlaydi, lekin bu hajm uchun ortiqcha jadvallar va abstraksiya). Agar kelajakda OAuth/2FA kerak bo'lsa — Better Auth'ga o'tish ko'rib chiqiladi.
 
 ## ADR-007 — Qoldiq: joriy balans + jurnal

@@ -191,6 +191,20 @@ model Session {
   @@map("session")
 }
 
+/// Login urinishlari cheklovi (architecture §12): (login, IP) juftligi bo'yicha
+/// ketma-ket xatolar. 5-xatoda `locked_until` = +15 daqiqa; muvaffaqiyatli kirishda qator o'chiriladi.
+/// `username` — kiritilgan login (kichik harfda), mavjud bo'lmagan login uchun ham yoziladi, shuning uchun FK yo'q.
+model LoginAttempt {
+  username     String
+  ip           String
+  failedCount  Int       @map("failed_count")
+  lastFailedAt DateTime  @map("last_failed_at") @db.Timestamptz
+  lockedUntil  DateTime? @map("locked_until") @db.Timestamptz
+
+  @@id([username, ip])
+  @@map("login_attempt")
+}
+
 // ───────────────────────── Katalog ─────────────────────────
 
 model Category {

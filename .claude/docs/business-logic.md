@@ -294,3 +294,12 @@ Filtr: kun / oy / yil / ixtiyoriy oraliq (Toshkent vaqti).
 | Akkauntni o'chirish | — | Yo'q, faqat faolsizlantirish |
 
 Login oqimi: `username` kichik harfga o'giriladi. Foydalanuvchi topilmasa yoki faol bo'lmasa ham, argon2 tekshiruvi baribir bajariladi, shunda javob vaqtidan login mavjudligini bilib bo'lmaydi. Xato bo'lsa `INVALID_CREDENTIALS` (yoki `USER_INACTIVE`) qaytadi. Muvaffaqiyatli bo'lsa — yangi sessiya, `last_login_at` yangilanadi, audit'ga `LOGIN` yoziladi.
+
+Amalda (T-201, `packages/server/src/modules/auth`):
+1. Kiritma `loginInputSchema` (`@drinks/shared/schemas`) bilan tekshiriladi → `VALIDATION_FAILED`.
+2. (login, IP) bloklangan bo'lsa → `TOO_MANY_ATTEMPTS` (parol tekshirilmaydi), audit `LOGIN_FAILED`.
+3. argon2 tekshiruvi (login yo'q bo'lsa — soxta hash bilan). Parol noto'g'ri yoki login yo'q → hisoblagich +1 (5-xatoda 15 daqiqa blok), audit `LOGIN_FAILED`, `INVALID_CREDENTIALS`.
+4. Parol to'g'ri, lekin akkaunt faolsiz → `USER_INACTIVE` (hisoblagichga qo'shilmaydi), audit `LOGIN_FAILED`. Faolsizlik faqat to'g'ri parol bilan oshkor bo'ladi.
+5. Muvaffaqiyat: hisoblagich o'chiriladi, sessiya, `last_login_at`, audit `LOGIN` — bitta tranzaksiyada.
+
+Audit: `LOGIN_FAILED` — `user_id = null`, `entity_id` = foydalanuvchi id yoki (mavjud bo'lmasa) kiritilgan login, `meta = { username, ip, userAgent, reason, failedCount?, lockedUntil? }`; `LOGIN` — `meta = { ip, userAgent }`. Parol, hash va token hech qachon yozilmaydi. Chiqish (`logout`) sessiya qatorini o'chiradi, auditga yozilmaydi.
