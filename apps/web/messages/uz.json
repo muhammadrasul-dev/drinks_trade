@@ -422,6 +422,17 @@
       "postedAt": "Bajarilgan",
       "reversedAt": "Storno qilingan"
     },
+    "post": {
+      "button": "Bajarish",
+      "title": "{number} xaridini bajarasizmi?",
+      "description": "Tovar tanlangan sub-omborlarga kiradi va oʻrtacha tannarx qayta hisoblanadi. Naqd va karta qismi kassadan chiqadi, nasiya qismi “Mendan qarz” boʻlib yoziladi. Bajarilgan xaridni oʻzgartirib boʻlmaydi — faqat Egasi storno qila oladi.",
+      "saveFirst": "Oʻzgarishlar saqlanmagan — bajarishdan oldin saqlang.",
+      "done": "{number} bajarildi",
+      "stockCount": "«{warehouse}» omborida {number} inventarizatsiyasi ochiq — u tugaguncha xaridni bajarib boʻlmaydi.",
+      "unitsChanged": "Blokdagi dona soni oʻzgargan qatorlar: {lines}. Miqdorlarni tekshirib, qoralamani qayta saqlang.",
+      "cashbox": "{cashbox, select, CASH {Naqd kassada} CARD {Karta kassasida} other {Kassada}} mablagʻ yetarli emas.",
+      "noteRequired": "Nasiya qismi bor — izohga kimdan olinganini yozing va saqlang."
+    },
     "form": {
       "date": "Sana",
       "note": "Izoh",

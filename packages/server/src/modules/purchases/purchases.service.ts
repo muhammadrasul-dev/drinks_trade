@@ -1,8 +1,13 @@
-// Purchase drafts (T-404, FR-4.1–4.2, business-logic §5.1). A draft does not
-// touch stock or cash: posting (T-405) and reversal (T-406) do. Any user may
-// edit any draft (OQ-14); concurrent edits are caught by the `version` column.
+// Purchases (FR-4.1–4.2, business-logic §5): drafts (T-404) and posting
+// (T-405). A draft does not touch stock or cash; posting moves stock and the
+// average cost (inventory), cash (cash) and opens the credit debt (debts) in
+// one transaction. Any user may edit any draft (OQ-14); concurrent edits are
+// caught by the `version` column.
 import type { Prisma } from '@drinks/db';
 import {
+  CashboxType,
+  CashTxType,
+  DebtSource,
   DocStatus,
   DocType,
   DomainError,
@@ -11,6 +16,7 @@ import {
   type PurchaseLine,
   type PurchaseListItem,
   type PurchaseListPage,
+  MovementType,
   QtyUnit,
   storeDateOf,
   storeToday,
@@ -27,18 +33,23 @@ import {
   purchaseIdInputSchema,
   type PurchaseListQuery,
   purchaseListQuerySchema,
+  type PurchasePostInput,
+  purchasePostInputSchema,
   type PurchaseUpdateInput,
   purchaseUpdateInputSchema,
 } from '@drinks/shared/schemas';
 import type { z } from 'zod';
 
 import type { ServiceContext } from '../../core/context';
-import { lockPurchase } from '../../core/locks';
+import { lockCashboxes, lockPurchase, lockWarehouses } from '../../core/locks';
 import { decimalToString, moneyToBigInt, moneyToNumber } from '../../core/money';
 import { nextDocNumber } from '../../core/numbering';
 import { assertCan } from '../../core/rbac';
 import { type Tx, withTransaction } from '../../core/tx';
 import { audit, isBackdated } from '../audit';
+import { cash } from '../cash';
+import { debts } from '../debts';
+import { inventory } from '../inventory';
 import { warehouses } from '../warehouses';
 
 type DraftValues = z.output<typeof purchaseDraftInputSchema>;
@@ -61,6 +72,7 @@ const DETAIL_SELECT = {
   version: true,
   createdAt: true,
   postedAt: true,
+  postedBy: { select: { id: true, fullName: true } },
   reversedAt: true,
   reverseReason: true,
   lines: {
@@ -171,6 +183,7 @@ function toDetail(row: DetailRow): PurchaseDetail {
     version: row.version,
     createdAt: row.createdAt,
     postedAt: row.postedAt,
+    postedBy: row.postedBy,
     reversedAt: row.reversedAt,
     reverseReason: row.reverseReason,
     lines: row.lines.map(toLine),
@@ -454,4 +467,207 @@ async function remove(ctx: ServiceContext, input: PurchaseDeleteInput): Promise<
   });
 }
 
-export const purchases = { list, get, create, update, remove };
+// ── Posting (T-405, BR-4, business-logic §5.2) ───────────────────────────
+
+const POST_SELECT = {
+  number: true,
+  docDate: true,
+  note: true,
+  totalAmount: true,
+  paidCash: true,
+  paidCard: true,
+  paidCredit: true,
+  lines: {
+    orderBy: { lineNo: 'asc' },
+    select: {
+      id: true,
+      lineNo: true,
+      productId: true,
+      subWarehouseId: true,
+      inputUnit: true,
+      inputQty: true,
+      qty: true,
+      lineTotal: true,
+      unitCost: true,
+      product: { select: { name: true, unitsPerBlock: true, archivedAt: true } },
+    },
+  },
+} as const satisfies Prisma.PurchaseSelect;
+
+type PostRow = Prisma.PurchaseGetPayload<{ select: typeof POST_SELECT }>;
+
+/**
+ * Products must still be active, and a BLOCK line must still hold
+ * inputQty × the product's current units per block (OQ-06); otherwise the
+ * user re-saves the draft, which recomputes the pieces.
+ */
+function assertProductsUnchanged(lines: PostRow['lines']): void {
+  for (const line of lines) {
+    if (line.product.archivedAt !== null) {
+      throw new DomainError(ErrorCode.ENTITY_ARCHIVED, {
+        entity: 'product',
+        name: line.product.name,
+      });
+    }
+  }
+  const changed = lines.filter(
+    (line) =>
+      line.inputUnit === QtyUnit.BLOCK && line.qty !== line.inputQty * line.product.unitsPerBlock,
+  );
+  if (changed.length > 0) {
+    throw new DomainError(ErrorCode.UNITS_PER_BLOCK_CHANGED, {
+      lines: changed.map((line) => ({
+        lineNo: line.lineNo,
+        productId: line.productId,
+        product: line.product.name,
+        qty: line.qty,
+        unitsPerBlock: line.product.unitsPerBlock,
+      })),
+    });
+  }
+}
+
+/**
+ * Posts a draft (BR-4): goods enter the chosen sub-warehouses, the average
+ * cost is recalculated (BR-6), the cash and card parts leave their cashboxes
+ * and the credit part opens a PAYABLE debt — one transaction, locks in
+ * business-logic §2 order, audit POST. Both roles may post (OQ-02); errors
+ * carry no cashbox amounts (CLAUDE.md rule 6).
+ */
+async function post(ctx: ServiceContext, input: PurchasePostInput): Promise<PurchaseDetail> {
+  assertCan(ctx.user, 'purchase.post');
+  const { id, version } = parse(purchasePostInputSchema, input);
+
+  return withTransaction(async (tx) => {
+    // 1. The document: still the draft the user saw.
+    await lockDraft(tx, ctx, id, version);
+    const doc: PostRow = await tx.purchase.findUniqueOrThrow({
+      where: { id },
+      select: POST_SELECT,
+    });
+    const totalAmount = moneyToNumber(doc.totalAmount);
+    const paidCash = moneyToNumber(doc.paidCash);
+    const paidCard = moneyToNumber(doc.paidCard);
+    const paidCredit = moneyToNumber(doc.paidCredit);
+
+    // 3. Header rules need no further lock, so they fail first (OQ-19: before other work).
+    if (paidCash + paidCard + paidCredit !== totalAmount) {
+      throw new DomainError(ErrorCode.PAYMENT_SPLIT_MISMATCH);
+    }
+    if (paidCredit > 0 && !doc.note?.trim()) throw new DomainError(ErrorCode.NOTE_REQUIRED);
+    if (doc.docDate.getTime() > Date.now()) throw new DomainError(ErrorCode.DOC_DATE_IN_FUTURE);
+
+    // 2. Warehouses FOR SHARE, then the stock-count block (BR-8, §3) and the
+    //    archive state under that lock (§9c). A sub-warehouse never changes its
+    //    warehouse, so the first resolveActive may run before the lock.
+    const subWarehouseIds = doc.lines.map((line) => line.subWarehouseId);
+    const warehouseIds = [
+      ...new Set((await warehouses.resolveActive(tx, ctx, subWarehouseIds)).values()),
+    ];
+    await lockWarehouses(tx, ctx.storeId, warehouseIds);
+    await warehouses.assertNoOpenStockCount(tx, ctx, warehouseIds);
+    await warehouses.resolveActive(tx, ctx, subWarehouseIds);
+    assertProductsUnchanged(doc.lines);
+
+    // 4. Cashboxes of the paid parts. cash.record re-checks the balance; this
+    //    pre-check just fails before any stock moves. No amounts in the error.
+    const paid = [
+      { type: CashboxType.CASH, amount: paidCash },
+      { type: CashboxType.CARD, amount: paidCard },
+    ].filter((part) => part.amount > 0);
+    const locked = await lockCashboxes(
+      tx,
+      ctx.storeId,
+      paid.map((part) => part.type),
+    );
+    const cashboxes = new Map(locked.map((box) => [box.type, box]));
+    for (const part of paid) {
+      if (cashboxes.get(part.type)!.balance < part.amount) {
+        throw new DomainError(ErrorCode.CASHBOX_INSUFFICIENT, { cashbox: part.type });
+      }
+    }
+
+    // 5–6. Stock and average cost per product (inventory takes locks 6–7 itself).
+    const movements = await inventory.receive(tx, ctx, {
+      type: MovementType.PURCHASE,
+      docDate: doc.docDate,
+      lines: doc.lines.map((line) => ({
+        subWarehouseId: line.subWarehouseId,
+        productId: line.productId,
+        qty: line.qty,
+        unitCost: decimalToString(line.unitCost),
+        costAmount: moneyToNumber(line.lineTotal),
+        purchaseLineId: line.id,
+      })),
+    });
+
+    // 7. Cash OUT for the cash and card parts.
+    const cashTransactionIds: string[] = [];
+    for (const part of paid) {
+      const entry = await cash.record(tx, ctx, cashboxes.get(part.type)!, {
+        type: CashTxType.PURCHASE_PAYMENT,
+        amount: part.amount,
+        txDate: doc.docDate,
+        note: doc.note,
+        purchaseId: id,
+      });
+      cashTransactionIds.push(entry.id.toString());
+    }
+
+    // 8. Credit part → PAYABLE debt; its note is the document note (OQ-19).
+    const debt =
+      paidCredit > 0
+        ? await debts.open(tx, ctx, {
+            source: DebtSource.PURCHASE,
+            purchaseId: id,
+            amount: paidCredit,
+            note: doc.note ?? '',
+            debtDate: doc.docDate,
+          })
+        : null;
+
+    // 9. Status, then audit POST (costs are fine here: audit is OWNER-only).
+    const postedAt = new Date();
+    await tx.purchase.update({
+      where: { id },
+      data: {
+        status: DocStatus.POSTED,
+        postedAt,
+        postedById: ctx.user.id,
+        version: { increment: 1 },
+      },
+      select: { id: true },
+    });
+    await audit.log(tx, ctx, {
+      action: 'POST',
+      entityType: 'purchase',
+      entityId: id,
+      before: { status: DocStatus.DRAFT, version },
+      after: {
+        status: DocStatus.POSTED,
+        number: doc.number,
+        docDate: doc.docDate,
+        postedAt,
+        totalAmount,
+        paidCash,
+        paidCard,
+        paidCredit,
+        movements: movements.map((movement, index) => ({
+          lineNo: doc.lines[index]!.lineNo,
+          productId: movement.productId,
+          subWarehouseId: movement.subWarehouseId,
+          qty: movement.qtyDelta,
+          unitCost: movement.unitCost,
+          avgCostBefore: movement.avgCostBefore,
+          avgCostAfter: movement.avgCostAfter,
+        })),
+        cashTransactionIds,
+        debtId: debt?.id ?? null,
+      },
+      backdated: isBackdated(doc.docDate),
+    });
+    return toDetail(await loadDetail(tx, ctx, id));
+  });
+}
+
+export const purchases = { list, get, create, update, remove, post };

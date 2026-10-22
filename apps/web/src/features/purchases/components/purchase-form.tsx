@@ -35,7 +35,7 @@ import {
 } from '@drinks/ui/components/select';
 import { toast } from '@drinks/ui/components/sonner';
 import { cn } from '@drinks/ui/lib/utils';
-import { PlusIcon, Trash2Icon } from 'lucide-react';
+import { CheckCircle2Icon, PlusIcon, Trash2Icon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { type ChangeEvent, useMemo, useState, useTransition } from 'react';
 import { useFieldArray, useForm, useWatch } from 'react-hook-form';
@@ -44,7 +44,7 @@ import { ConfirmDialog } from '@/components/confirm-dialog';
 import { MoneyText } from '@/components/money-text';
 import { Link, useRouter } from '@/i18n/navigation';
 
-import { createPurchase, deletePurchase, updatePurchase } from '../actions';
+import { createPurchase, deletePurchase, postPurchase, updatePurchase } from '../actions';
 import { PURCHASES_HREF } from '../list-params';
 import { ProductPicker } from './product-picker';
 
@@ -118,10 +118,17 @@ function lineTotal(line: Partial<LineValues> | undefined): number {
   return Number.isFinite(qty * price) ? qty * price : 0;
 }
 
+/** UNITS_PER_BLOCK_CHANGED params: the lines whose saved pieces no longer match. */
+function changedLines(params: ActionError['params']): { lineNo: number; product: string }[] {
+  const lines = params?.lines;
+  return Array.isArray(lines) ? (lines as { lineNo: number; product: string }[]) : [];
+}
+
 /**
  * Purchase draft form (T-404, FR-4.1): date (no future days), lines with
  * product, target sub-warehouse, unit, quantity and price per unit, payment
- * split and note. Save keeps it a draft; posting comes with T-405.
+ * split and note. Save keeps it a draft. "Post" (T-405) acts on the saved
+ * draft only, so it is disabled while the form has unsaved changes.
  */
 export function PurchaseForm({ purchase, products, warehouses, today }: PurchaseFormProps) {
   const t = useTranslations('purchases');
@@ -187,14 +194,36 @@ export function PurchaseForm({ purchase, products, warehouses, today }: Purchase
     return [...seen];
   }, [purchase, warehouses]);
 
+  const { isDirty } = form.formState;
   const total = (lines ?? []).reduce((sum, line) => sum + lineTotal(line), 0);
   const paid = (paidCash ?? 0) + (paidCard ?? 0) + (paidCredit ?? 0);
   const difference = total - paid;
 
   function errorMessage(error: ActionError): string {
-    const name = typeof error.params?.name === 'string' ? error.params.name : null;
-    if (error.code === 'ENTITY_ARCHIVED' && name) return t('form.archivedItem', { name });
-    return tErrors(error.code);
+    const params = error.params ?? {};
+    const name = typeof params.name === 'string' ? params.name : null;
+    switch (error.code) {
+      case 'ENTITY_ARCHIVED':
+        return name ? t('form.archivedItem', { name }) : tErrors(error.code);
+      case 'WAREHOUSE_IN_STOCK_COUNT':
+        return t('post.stockCount', {
+          warehouse: String(params.warehouseName ?? ''),
+          number: String(params.stockCountNumber ?? ''),
+        });
+      case 'UNITS_PER_BLOCK_CHANGED': {
+        const lines = changedLines(params);
+        if (lines.length === 0) return tErrors(error.code);
+        return t('post.unitsChanged', {
+          lines: lines.map((line) => `${line.lineNo} (${line.product})`).join(', '),
+        });
+      }
+      case 'CASHBOX_INSUFFICIENT':
+        return t('post.cashbox', { cashbox: String(params.cashbox ?? '') });
+      case 'NOTE_REQUIRED':
+        return t('post.noteRequired');
+      default:
+        return tErrors(error.code);
+    }
   }
 
   function onSubmit(values: PurchaseDraftInput) {
@@ -220,6 +249,21 @@ export function PurchaseForm({ purchase, products, warehouses, today }: Purchase
       toast.success(tCommon('saved'));
       router.refresh();
     });
+  }
+
+  async function onPost(): Promise<boolean> {
+    if (!purchase) return true;
+    form.clearErrors('root');
+    const result = await postPurchase({ id: purchase.id, version });
+    if (!result.ok) {
+      const code = result.error.code;
+      if (code === 'DOCUMENT_CHANGED' || code === 'DOCUMENT_NOT_DRAFT') setStale(true);
+      form.setError('root', { message: errorMessage(result.error) });
+      return true;
+    }
+    toast.success(t('post.done', { number: purchase.number }));
+    router.refresh();
+    return true;
   }
 
   async function onDelete(): Promise<boolean> {
@@ -557,12 +601,30 @@ export function PurchaseForm({ purchase, products, warehouses, today }: Purchase
         )}
 
         <div className="flex flex-wrap items-center gap-2">
-          <Button type="submit" disabled={isPending}>
+          <Button type="submit" variant={purchase ? 'outline' : 'default'} disabled={isPending}>
             {tCommon('save')}
           </Button>
+          {purchase && (
+            <ConfirmDialog
+              trigger={
+                <Button type="button" disabled={isPending || isDirty}>
+                  <CheckCircle2Icon />
+                  {t('post.button')}
+                </Button>
+              }
+              title={t('post.title', { number: purchase.number })}
+              description={t('post.description')}
+              confirmLabel={t('post.button')}
+              destructive
+              onConfirm={onPost}
+            />
+          )}
           <Button asChild variant="outline">
             <Link href={PURCHASES_HREF}>{t('form.back')}</Link>
           </Button>
+          {purchase && isDirty && (
+            <p className="text-sm text-muted-foreground">{t('post.saveFirst')}</p>
+          )}
           {purchase && (
             <ConfirmDialog
               trigger={
