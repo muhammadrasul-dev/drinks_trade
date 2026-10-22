@@ -317,3 +317,11 @@ T-102 start on new session
 ```
 git push origin main
 ```
+
+---
+
+## Prompt 26 — Bog'liq bo'lmagan vazifalarni alohida sessiyalarda boshlash (2026-10-22)
+
+```
+bro start unrelated tasks in separate sessions
+```
