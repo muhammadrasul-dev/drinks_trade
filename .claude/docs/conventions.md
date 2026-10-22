@@ -53,6 +53,7 @@ Odam ham, AI ham shu qoidalarga amal qiladi. Qoida o'zgarsa — shu fayl va kera
 - Har BR qoidasi uchun integratsiya testi, nomida BR raqami: `it('BR-7: ...')`.
 - Integratsiya testlari `drinks_trade_test` DB'da; har test tranzaksiyada yoki `TRUNCATE` bilan izolyatsiya.
 - PR'dan oldin: `pnpm lint && pnpm typecheck && pnpm test`.
+- CI (`.github/workflows/ci.yml`, push `main` va har PR): `pnpm install --frozen-lockfile`, `lint`, `format:check`, `typecheck`, `test`, `build`. Integratsiya job'i (Postgres service) T-105 da yoqiladi.
 
 ## 6. Git
 - Asosiy branch: `main`. Ish: `feat/<qisqa-nom>`, `fix/...`, `docs/...`, `chore/...`.
