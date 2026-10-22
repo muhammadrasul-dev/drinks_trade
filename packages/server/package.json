@@ -11,6 +11,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@drinks/db": "workspace:*",
     "@drinks/shared": "workspace:*",
     "server-only": "0.0.1"
   },

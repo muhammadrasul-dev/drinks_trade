@@ -6,6 +6,7 @@
   "sideEffects": false,
   "exports": {
     ".": "./src/index.ts",
+    "./enums": "./src/enums.ts",
     "./schemas": "./src/schemas/index.ts"
   },
   "scripts": {

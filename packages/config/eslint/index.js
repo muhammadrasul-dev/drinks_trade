@@ -21,6 +21,7 @@ export const IGNORES = [
   '**/coverage/**',
   '**/storage/**',
   '**/next-env.d.ts',
+  '**/src/generated/**',
 ];
 
 const PRISMA_PATTERNS = [

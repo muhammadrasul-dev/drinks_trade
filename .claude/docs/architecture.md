@@ -99,6 +99,8 @@ Aniq versiyalar loyiha `init` qilinganda `package.json` da qotiriladi (pin) va s
 | Vitest | 5.0.5 | root, `packages/shared`, `packages/server` (`devDependencies`) |
 | Vite | 8.3.4 | Vitest'ning majburiy peer'i; Vitest bilan bir joyda |
 | server-only | 0.0.1 | `packages/server` |
+| prisma (CLI) / @prisma/client / @prisma/adapter-pg | 7.10.1 | `packages/db` (`prisma-client` generator → `src/generated/prisma`, gitignore'da; `postinstall` da generatsiya). npm `latest` tegi 8.0.0-rc — RC, shuning uchun 7.x barqaror |
+| dotenv | 18.0.8 | `packages/db` (`prisma.config.ts` root `.env` ni o'qiydi) |
 
 ## 3. Monorepo tuzilmasi
 
@@ -166,7 +168,11 @@ drinks_trade/
 │   │   │   ├── schema.prisma
 │   │   │   ├── migrations/         # + qo'lda SQL (CHECK, partial index, trigger)
 │   │   │   └── seed.ts             # OWNER foydalanuvchi, 2 kassa, do'kon
-│   │   └── src/client.ts           # PrismaClient singleton
+│   │   ├── prisma.config.ts        # Prisma 7 CLI config: sxema/migratsiya yo'li, DATABASE_URL
+│   │   └── src/
+│   │       ├── client.ts           # PrismaClient singleton (adapter-pg, globalThis)
+│   │       ├── index.ts            # prisma + generatsiya qilingan tiplar/enumlar
+│   │       └── generated/prisma/   # `prisma generate` natijasi (commit qilinmaydi)
 │   ├── shared/                     # FRONT + BACK umumiy (brauzerda ham ishlay oladi)
 │   │   └── src/
 │   │       ├── schemas/            # zod: productInput, saleInput, ...
@@ -345,7 +351,8 @@ SEED_OWNER_PASSWORD=change-me
 |---|---|
 | `pnpm db:up` / `db:down` | Docker Postgres'ni yoqish (`--wait`: `healthy` bo'lguncha kutadi) / o'chirish (volume saqlanadi) |
 | `pnpm db:logs` | Postgres loglarini kuzatish |
-| `pnpm db:migrate` | `prisma migrate dev` |
+| `pnpm db:migrate` | `prisma migrate dev` (`@drinks/db` orqali; yangi migratsiya: `pnpm db:migrate --name <nom>`) |
+| `pnpm db:generate` | `prisma generate` (`pnpm install` da `@drinks/db` `postinstall` i ham bajaradi; DB kerak emas) |
 | `pnpm db:seed` | boshlang'ich ma'lumot (OWNER, do'kon, 2 kassa) |
 | `pnpm db:studio` | Prisma Studio |
 | `pnpm dev` | Next.js dev |

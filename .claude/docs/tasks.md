@@ -32,7 +32,7 @@ Bog'liq: [01-srs.md](01-srs.md) · [architecture.md](architecture.md) · [databa
 | Bosqich | Mazmuni | Vazifalar | Holat |
 |---|---|---|---|
 | 0 | Repo poydevori | T-001 … T-006 | ✅ |
-| 1 | Ma'lumotlar bazasi va backend yadrosi | T-101 … T-105 | ⬜ |
+| 1 | Ma'lumotlar bazasi va backend yadrosi | T-101 … T-105 | 🟡 |
 | 2 | Auth, foydalanuvchilar, layout, i18n | T-201 … T-205 | ⬜ |
 | 3 | Ma'lumotnomalar: mahsulot, ombor | T-301 … T-304 | ⬜ |
 | 4 | Zaxira yadrosi va Xarid | T-401 … T-406 | ⬜ |
@@ -97,7 +97,7 @@ Bog'liq: [01-srs.md](01-srs.md) · [architecture.md](architecture.md) · [databa
 
 | ID | Vazifa | Bog'liq | Manba | Holat |
 |---|---|---|---|---|
-| T-101 | Prisma sxemasi va birinchi migratsiya | T-003, T-005 | database §4 | ⬜ |
+| T-101 | Prisma sxemasi va birinchi migratsiya | T-003, T-005 | database §4 | ✅ |
 | T-102 | Qo'lda SQL migratsiya: CHECK, indekslar, triggerlar | T-101 | database §5 | ⬜ |
 | T-103 | Seed (prod minimal + dev namunaviy) | T-102 | database §8 | ⬜ |
 | T-104 | Server yadrosi: context, tx, locks, numbering, audit | T-102 | architecture §5, business-logic §2 | ⬜ |
@@ -339,3 +339,4 @@ Tayyor bo'lishi uchun (umumiy): STAFF savdo hisobotida tannarx/foyda maydonlari 
 | 2026-10-22 | T-005 bajarildi (Prompt 18): `@drinks/shared` (`enums.ts`, `errors.ts` — business-logic §10 dagi 25 kod, `permissions.ts` + `can()`, bo'sh `schemas/`), `@drinks/server` (`server-only`, `core/` stublari, `modules/`), Vitest 5.0.5 (root `projects` + paket configlari), 36 test. Og'ishlar: (1) `core/rbac.ts` dagi `assertCan` hozirdanoq ishlaydi (DB'siz sof funksiya, `FORBIDDEN` testi bilan); `tx`/`locks`/`numbering` — T-104 gacha bo'sh; (2) rol enumi nomi `UserRole` (database §4 Prisma nomi bilan bir xil; architecture §3 izohidagi `Role` emas); (3) turbo `test.outputs` = `[]` (coverage hali yo'q); (4) `apps/web` `@drinks/shared` dan `Locale` ni bosh sahifada ishlatadi (dev va build'da tekshirildi) |
 | 2026-10-22 | T-006 fayli tayyor (Prompt 20): `.github/workflows/ci.yml` — Node `.nvmrc` dan, pnpm `packageManager` dan, pnpm kesh; `lint`, `format:check`, `typecheck`, `test`, `build` (build ~5 s, env talab qilmaydi). `integration` job (postgres:17-alpine) T-105 gacha o'chiq — `if: false` o'rniga `vars.RUN_INTEGRATION_TESTS` sharti (actionlint doimiy shartni xato deb hisoblaydi). Lokal tekshiruv: actionlint 1.7.12 toza, Node 24 da barcha buyruqlar o'tdi. Holat ⏸: GitHub repo/remote yo'q |
 | 2026-10-22 | T-006 bajarildi (Prompt 21): remote `github.com/muhammadrasul-dev/drinks_trade` (private), `main` push qilindi; CI run yashil (check job ~1 daq, integration — skipped). Node 20 ogohlantirishi sababli action'lar yangilandi: `actions/checkout@v7`, `pnpm/action-setup@v6`, `actions/setup-node@v7` — qayta run ham yashil. 0-bosqich yopildi |
+| 2026-10-22 | T-101 bajarildi (Prompt 22): `@drinks/db` — Prisma 7.10.1 (`prisma-client` generator, `@prisma/adapter-pg`, `prisma.config.ts` root `.env` dan), `src/client.ts` singleton, migratsiya `init` (25 jadval, 243 ustun, hammasi snake_case; toza bazada `pnpm db:migrate` o'tdi), `db:generate/migrate/studio`, `postinstall` da generate (CI'da DB kerak emas), enum sinxron testi (`packages/db/test/enums.test.ts`, 13 enum, ikki tomonlama). Og'ishlar: (1) Prisma 7 da `url` sxemada emas — `prisma.config.ts` da; (2) §4 dagi qisqartirilgan relation'lar to'ldirildi: `User` dan tashqari barcha `*_id` ustunlar ham FK (`store_id`, jurnal → hujjat qatori, `debt_repayment → cash_transaction` …), jurnallardagi ixtiyoriy FK'lar `onDelete: Restrict` — database §4 eslatmasida; (3) `@drinks/shared` ga `./enums` export qo'shildi (test faqat enumlarni solishtirishi uchun); (4) `src/generated/` ESLint/Prettier/git'dan chiqarildi; (5) pnpm `@prisma/engines`/`prisma` build skriptlarini bloklaydi — migrate/generate busiz ishlaydi, ruxsat berilmadi |

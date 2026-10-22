@@ -7,5 +7,6 @@ build/
 out/
 coverage/
 storage/
+**/src/generated/
 # Docs are hand-written in Uzbek; Prettier does not touch them.
 *.md

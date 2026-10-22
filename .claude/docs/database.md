@@ -93,6 +93,8 @@ erDiagram
 ## 4. Prisma sxemasi (qoralama)
 
 > Bu fayl `packages/db/prisma/schema.prisma` ning birinchi varianti. Prisma bilan ifodalab bo'lmaydigan cheklovlar (CHECK, partial unique index, trigger) §5 dagi qo'lda yoziladigan SQL migratsiyada.
+>
+> **T-101 dan beri haqiqiy manba — `packages/db/prisma/schema.prisma`** (birinchi migratsiya: `prisma/migrations/<ts>_init`). Quyidagi blok undan relation maydonlari qisqartirilgan holda farq qiladi (pastdagi eslatmaga qarang).
 
 ```prisma
 generator client {
@@ -100,9 +102,10 @@ generator client {
   output   = "../src/generated/prisma"
 }
 
+// Prisma 7: ulanish URL'i sxemada emas, packages/db/prisma.config.ts da
+// (root .env dagi DATABASE_URL). Ilova PrismaClient'ni @prisma/adapter-pg bilan yaratadi.
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 // ───────────────────────── Enums ─────────────────────────
@@ -693,7 +696,12 @@ model DocSequence {
 }
 ```
 
-> Eslatma: aniqlik uchun `createdById`, `postedById` kabi maydonlarda `User` relation'lari qisqartirilgan; haqiqiy sxemada `@relation("SaleCreatedBy", ...)` ko'rinishida qo'shiladi.
+> Eslatma: aniqlik uchun yuqorida relation maydonlarining bir qismi qisqartirilgan. Haqiqiy sxemada (T-101) **har bir `*_id` ustuni FK** (§1 tamoyil 6, §3 ER diagramma):
+> - `User` relation'lari aniq nomlar bilan: `UserCreatedBy`, `StockMovementCreatedBy`, `Sale{Created,Posted,Reversed}By`, `Purchase{Created,Posted,Reversed}By`, `StockCount{Created,Posted,Cancelled}By`, `CashTransactionCreatedBy`, `DebtCreatedBy`, `DebtRepaymentCreatedBy`, `AuditLogUser`.
+> - `store_id` → `store` (`product_cost`, `stock_movement`, `sale`, `purchase`, `stock_count`, `cash_transaction`, `debt`, `audit_log`, `doc_sequence`).
+> - `stock_movement` → `sale_line` / `purchase_line` / `stock_count`; `cash_transaction` → `sale` / `purchase` / `debt` / o'zi (`reversal_of_id`); `debt` → `sale` / `purchase` (1:1); `debt_repayment` → `cash_transaction` (1:1); `stock_count_line` → `sub_warehouse`, `product`; `stock_count_result` → `product`.
+> - Jurnallardagi (`stock_movement`, `cash_transaction`, `audit_log`) va `debt` dagi ixtiyoriy FK'lar `onDelete: Restrict` — Prisma'ning default `SetNull` i append-only jadvalda UPDATE bo'lardi. Qolganlari — Prisma default'i (majburiy: `Restrict`, ixtiyoriy: `SetNull`), §4 da ko'rsatilgan `Cascade`lar saqlangan.
+> - Postgres enum turlari Prisma nomida qoladi (`"UserRole"`, `"DocStatus"` …) — §1 tamoyil 9 faqat jadval/ustunlarga tegishli; xom SQL'da qo'shtirnoq bilan yoziladi.
 
 ## 5. Qo'lda yoziladigan SQL migratsiya
 

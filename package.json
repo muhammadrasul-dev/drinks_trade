@@ -16,7 +16,10 @@
     "test": "turbo run test",
     "db:up": "docker compose -f docker/compose.dev.yml up -d --wait postgres",
     "db:down": "docker compose -f docker/compose.dev.yml down",
-    "db:logs": "docker compose -f docker/compose.dev.yml logs -f postgres"
+    "db:logs": "docker compose -f docker/compose.dev.yml logs -f postgres",
+    "db:generate": "pnpm --filter @drinks/db generate",
+    "db:migrate": "pnpm --filter @drinks/db migrate",
+    "db:studio": "pnpm --filter @drinks/db studio"
   },
   "devDependencies": {
     "@drinks/config": "workspace:*",
