@@ -31,7 +31,7 @@ Bog'liq: [01-srs.md](01-srs.md) · [architecture.md](architecture.md) · [databa
 
 | Bosqich | Mazmuni | Vazifalar | Holat |
 |---|---|---|---|
-| 0 | Repo poydevori | T-001 … T-006 | 🟡 |
+| 0 | Repo poydevori | T-001 … T-006 | ✅ |
 | 1 | Ma'lumotlar bazasi va backend yadrosi | T-101 … T-105 | ⬜ |
 | 2 | Auth, foydalanuvchilar, layout, i18n | T-201 … T-205 | ⬜ |
 | 3 | Ma'lumotnomalar: mahsulot, ombor | T-301 … T-304 | ⬜ |
@@ -56,7 +56,7 @@ Bog'liq: [01-srs.md](01-srs.md) · [architecture.md](architecture.md) · [databa
 | T-003 | Docker: lokal PostgreSQL | T-001 | architecture §8 | ✅ |
 | T-004 | `apps/web` Next.js + Tailwind + `packages/ui` (shadcn) | T-002 | architecture §2, §6 | ✅ |
 | T-005 | `packages/shared` va `packages/server` skeleti + Vitest | T-002 | architecture §3, §10 | ✅ |
-| T-006 | CI (GitHub Actions): lint, typecheck, test | T-005 | conventions §5–6 | ⏸ GitHub repo hali yo'q — CI fayli tayyor |
+| T-006 | CI (GitHub Actions): lint, typecheck, test | T-005 | conventions §5–6 | ✅ |
 
 **T-001 — Git va monorepo skeleti**
 - `git init`, `main` branch, `.gitignore` (node_modules, .env, .next, storage/), `.editorconfig`, `.nvmrc` (Node 24).
@@ -338,3 +338,4 @@ Tayyor bo'lishi uchun (umumiy): STAFF savdo hisobotida tannarx/foyda maydonlari 
 | 2026-10-22 | T-004 bajarildi (Prompt 17): Next.js 16.4.2 + Tailwind 4.3.3 + `packages/ui` (shadcn, 10 komponent), `/api/health`. Og'ishlar: (1) ESLint'ga `uiBoundaries` va `react()` preset (react-hooks + Next.js qoidalari) qo'shildi; (2) bosh sahifadagi matn vaqtincha qattiq yozilgan — `messages/*.json` T-202 da; (3) shadcn CLI `cn` aliasini noto'g'ri `"cn"` npm paketiga aylantirdi — importlar `@drinks/ui/lib/utils` ga tuzatildi, `cn` paketi olib tashlandi; `zod`/`@hookform/resolvers` `ui` ga qo'shilmadi (T-005 `shared` da); (4) `test` vazifasi hali yo'q (0 task, yashil) — Vitest T-005 da |
 | 2026-10-22 | T-005 bajarildi (Prompt 18): `@drinks/shared` (`enums.ts`, `errors.ts` — business-logic §10 dagi 25 kod, `permissions.ts` + `can()`, bo'sh `schemas/`), `@drinks/server` (`server-only`, `core/` stublari, `modules/`), Vitest 5.0.5 (root `projects` + paket configlari), 36 test. Og'ishlar: (1) `core/rbac.ts` dagi `assertCan` hozirdanoq ishlaydi (DB'siz sof funksiya, `FORBIDDEN` testi bilan); `tx`/`locks`/`numbering` — T-104 gacha bo'sh; (2) rol enumi nomi `UserRole` (database §4 Prisma nomi bilan bir xil; architecture §3 izohidagi `Role` emas); (3) turbo `test.outputs` = `[]` (coverage hali yo'q); (4) `apps/web` `@drinks/shared` dan `Locale` ni bosh sahifada ishlatadi (dev va build'da tekshirildi) |
 | 2026-10-22 | T-006 fayli tayyor (Prompt 20): `.github/workflows/ci.yml` — Node `.nvmrc` dan, pnpm `packageManager` dan, pnpm kesh; `lint`, `format:check`, `typecheck`, `test`, `build` (build ~5 s, env talab qilmaydi). `integration` job (postgres:17-alpine) T-105 gacha o'chiq — `if: false` o'rniga `vars.RUN_INTEGRATION_TESTS` sharti (actionlint doimiy shartni xato deb hisoblaydi). Lokal tekshiruv: actionlint 1.7.12 toza, Node 24 da barcha buyruqlar o'tdi. Holat ⏸: GitHub repo/remote yo'q |
+| 2026-10-22 | T-006 bajarildi (Prompt 21): remote `github.com/muhammadrasul-dev/drinks_trade` (private), `main` push qilindi; CI run yashil (check job ~1 daq, integration — skipped). Node 20 ogohlantirishi sababli action'lar yangilandi: `actions/checkout@v7`, `pnpm/action-setup@v6`, `actions/setup-node@v7` — qayta run ham yashil. 0-bosqich yopildi |
