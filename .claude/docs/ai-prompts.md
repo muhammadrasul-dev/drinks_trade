@@ -413,3 +413,11 @@ OQ-18 va OQ-19 shoul be as your reccommended answer. And then follow the instruc
 ```
 yes merge it and push, and then give me any tasks for suitable next step for doing
 ```
+
+---
+
+## Prompt 38 — T-303, T-304, T-204 ni alohida sessiyalarda boshlash (2026-10-23)
+
+```
+ok, start all theese 3 task in seperate sessins
+```
