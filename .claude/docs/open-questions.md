@@ -24,7 +24,7 @@ SRS'dagi biznes savollar yopilgan. Bu yerda — arxitektura va DB loyihalashda c
 | OQ-14 | Xodim boshqa foydalanuvchi yaratgan qoralamani tahrirlay oladimi? | Ha (kichik jamoa); hammasi audit'da | Yopilgan — ha |
 | OQ-15 | Sotuv narxi dona uchunmi? | Ha, `sale_price` = 1 dona narxi; blok = narx × dona soni | Yopilgan — ha, dona uchun |
 | OQ-16 | Prefikssiz `/` ochilganda til qanday tanlanadi? | `NEXT_LOCALE` cookie → brauzer tili (`Accept-Language`) → `uz` (next-intl standarti) | Ochiq — tavsiya bo'yicha qilingan (T-202) |
-| OQ-17 | `pnpm user:reset-password` faolsiz akkauntga nima qiladi? | Parol tiklanadi, akkaunt faolsizligicha qoladi (CLI ogohlantiradi) | Ochiq — tavsiya bo'yicha qilingan (T-205) |
+| OQ-17 | `pnpm user:reset-password` faolsiz akkauntga nima qiladi? | Parol tiklanadi, akkaunt faolsizligicha qoladi (CLI ogohlantiradi) | Yopilgan — A: parol tiklanadi, akkaunt faolsizligicha qoladi |
 
 ---
 
@@ -84,4 +84,4 @@ ADR-014: default `uz`. Lekin brauzeri rus tilida bo'lgan foydalanuvchi `/` ni bi
 Login'dan keyin baribir `user.locale` ga yo'naltiriladi (T-201), shuning uchun farq faqat login sahifasida. B ga o'tish — `src/i18n/routing.ts` da bitta sozlama. ("Cookie bor, brauzer tili yo'q" varianti next-intl'da sozlama bilan qilinmaydi — `proxy.ts` da qo'lda.)
 
 ### OQ-17 — Faolsiz akkaunt parolini CLI orqali tiklash
-business-logic §11 bu holatni aytmaydi. **A (tavsiya, hozir shunday):** parol tiklanadi, sessiyalar va `login_attempt` tozalanadi, lekin `is_active` o'zgarmaydi — CLI "akkaunt faolsiz va shunday qoladi" deb ogohlantiradi; faollashtirish Egasining alohida amali. **B:** faolsiz akkauntga CLI rad etadi (xato). **C:** CLI parolni tiklab, akkauntni faollashtiradi ham. Egasini faolsizlantirib bo'lmaydi, shuning uchun amalda bu faqat xodimlarga tegishli.
+**Javob (2026-10-22, Prompt 33): A.** business-logic §11 bu holatni aytmaydi. **A (tanlandi):** parol tiklanadi, sessiyalar va `login_attempt` tozalanadi, lekin `is_active` o'zgarmaydi — CLI "akkaunt faolsiz va shunday qoladi" deb ogohlantiradi; faollashtirish Egasining alohida amali. **B:** faolsiz akkauntga CLI rad etadi (xato). **C:** CLI parolni tiklab, akkauntni faollashtiradi ham. Egasini faolsizlantirib bo'lmaydi, shuning uchun amalda bu faqat xodimlarga tegishli.
