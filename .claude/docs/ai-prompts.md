@@ -212,3 +212,11 @@ then, we need crate new tasks docs for working step by step, and you should copy
 ```
 Starting work with follow @.claude/docs/tasks.md and begin first not started task.
 ```
+
+---
+
+## Prompt 13 — Ortiqcha hujjatni o'chirish (2026-10-22)
+
+```
+docs/Filling-mainly-technical-docs.md this isnot need. Remove that, we have one new ai-prompts doc
+```
