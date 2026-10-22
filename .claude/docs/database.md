@@ -808,10 +808,16 @@ CREATE INDEX product_name_trgm ON product USING gin (lower(name) gin_trgm_ops);
 - Nom tashkilot bo'yicha yagona: DB `UNIQUE (organization_id, name)` (katta-kichik harfga sezgir) + servis katta-kichik harfga **sezgirsiz** tekshiradi (`Suv` va `suv` — takror). Arxivlangan qator ham nomni band qiladi → `DUPLICATE_VALUE { archived: true }` (UI "arxivdan chiqaring" deydi).
 - O'chirilmaydi: `archived_at` bilan arxivlanadi va qaytariladi (`RESTORE`). Arxivlangan toifa/brend mahsulot formasida taklif qilinmaydi, unga bog'langan mahsulotlar o'zgarmaydi.
 
+### 6.1b `warehouse` va `sub_warehouse` (T-304)
+- Do'kon darajasida (`warehouse.store_id`); aniq 2 daraja — `sub_warehouse` faqat `warehouse_id` ga ega, o'z bolasi yo'q. Tovar doim sub-omborda (`stock_balance.sub_warehouse_id`).
+- Nom: ombor — do'kon bo'yicha (`UNIQUE (store_id, name)`), sub-ombor — ombor bo'yicha (`UNIQUE (warehouse_id, name)`); servis qo'shimcha ravishda katta-kichik harfga **sezgirsiz** tekshiradi, arxivdagi qator ham nomni band qiladi (`DUPLICATE_VALUE { archived }`, §6.1a kabi).
+- O'chirilmaydi: `archived_at` bilan arxivlanadi va tiklanadi (shartlari — quyida §6.2 va [business-logic.md §9b](business-logic.md)). Ombor arxivlanganda sub-omborlarning `archived_at` i o'zgarmaydi (kaskad yo'q) — ular ombor orqali yashiriladi va ombor bilan birga qaytadi. Arxivdagi ombor/sub-ombor yangi hujjatlarda tanlanmaydi, eski hujjat va hisobotlarda ko'rinadi.
+- Sxema o'zgarmadi (migratsiya yo'q).
+
 ### 6.2 `stock_balance` va `product_cost`
 - Mahsulot birinchi marta sub-omborga kirganda qator yaratiladi (`INSERT ... ON CONFLICT DO NOTHING`, keyin `FOR UPDATE`).
 - Invariant (test bilan tekshiriladi — `assertInvariants`, architecture §10): `stock_balance.qty = Σ stock_movement.qty_delta` va `product_cost.total_qty = Σ stock_balance.qty (do'kon bo'yicha)`.
-- Sub-ombor arxivlash: faqat undagi barcha `qty = 0` bo'lsa (FR-2.2). Ombor — barcha sub-omborlari bo'sh bo'lsa.
+- Sub-ombor arxivlash: faqat undagi barcha `qty = 0` bo'lsa (FR-2.2). Ombor — barcha sub-omborlari bo'sh bo'lsa. `qty = 0` qatorlar (sotib tugatilgan) bo'sh hisoblanadi. Tekshiruv ombor qatori `FOR UPDATE` ostida (T-304, [business-logic.md §9b](business-logic.md)); ochiq inventarizatsiya bo'lsa ham arxivlanmaydi (OQ-21).
 - Uchala jadvalga faqat `modules/inventory` (`receive` / `issue` / `adjust`, T-401) yozadi — business-logic §1.5. `product_cost.updated_at` / `stock_balance.updated_at` — Prisma `@updatedAt`.
 
 ### 6.3 Hujjatlar (`sale`, `purchase`, `stock_count`)

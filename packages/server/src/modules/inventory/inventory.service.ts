@@ -569,6 +569,30 @@ export async function getAvailable(
   }));
 }
 
+/**
+ * The store's sub-warehouses that hold stock (some product qty > 0), limited
+ * to `subWarehouseIds` when given. The warehouses page flag and the FR-2.2
+ * archive check (T-304) — which calls it under the warehouse lock (§2 step 2),
+ * so no posting can add stock between the check and the archive.
+ */
+export async function getStockedSubWarehouses(
+  db: Tx,
+  ctx: ServiceContext,
+  subWarehouseIds?: readonly string[],
+): Promise<Set<string>> {
+  if (subWarehouseIds?.length === 0) return new Set();
+  const rows = await db.stockBalance.findMany({
+    where: {
+      qty: { gt: 0 },
+      subWarehouse: { warehouse: { storeId: ctx.storeId } },
+      ...(subWarehouseIds && { subWarehouseId: { in: [...new Set(subWarehouseIds)] } }),
+    },
+    select: { subWarehouseId: true },
+    distinct: ['subWarehouseId'],
+  });
+  return new Set(rows.map((row) => row.subWarehouseId));
+}
+
 export interface ProductTotals {
   productId: string;
   /** Pieces across the store's warehouses. */

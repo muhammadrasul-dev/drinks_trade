@@ -102,6 +102,48 @@
       "emptyArchived": "Arxivda brend yoʻq."
     }
   },
+  "warehouses": {
+    "title": "Omborlar",
+    "description": "Ombor → sub-omborlar. Tovar doim sub-omborda turadi.",
+    "filter": "Roʻyxat",
+    "active": "Faol",
+    "archiveList": "Arxiv",
+    "name": "Nomi",
+    "status": "Holati",
+    "actions": "Amallar",
+    "edit": "Tahrirlash",
+    "archive": "Arxivlash",
+    "restore": "Arxivdan chiqarish",
+    "archived": "Arxivlandi",
+    "restored": "Arxivdan chiqarildi",
+    "archivedBadge": "Arxivda",
+    "hasStock": "Qoldiq bor",
+    "noStock": "Boʻsh",
+    "subCount": "{count, plural, =0 {Sub-ombor yoʻq} other {# ta sub-ombor}}",
+    "duplicateArchived": "Bunday nom arxivda bor — uni arxivdan chiqaring.",
+    "parentArchived": "Ombor arxivda — avval omborni arxivdan chiqaring.",
+    "empty": "Hali ombor yoʻq.",
+    "emptyArchived": "Arxivda ombor yoʻq.",
+    "noSubWarehouses": "Sub-ombor yoʻq. Tovar kiritish uchun kamida bittasini qoʻshing.",
+    "warehouse": {
+      "add": "Ombor qoʻshish",
+      "editTitle": "Omborni tahrirlash",
+      "archiveTitle": "«{name}» omborini arxivlaysizmi?",
+      "archiveDescription": "Ombor va uning sub-omborlari hujjatlarda tanlanmaydi. Faqat barcha sub-omborlari boʻsh boʻlsa arxivlanadi.",
+      "restoreTitle": "«{name}» omborini arxivdan chiqarasizmi?",
+      "restoreDescription": "Ombor va uning faol sub-omborlari hujjatlarda yana tanlanadi.",
+      "notEmpty": "«{name}» omborida qoldiq bor ({subWarehouses}). Qoldiq nolga tushgach arxivlash mumkin."
+    },
+    "subWarehouse": {
+      "add": "Sub-ombor qoʻshish",
+      "editTitle": "Sub-omborni tahrirlash",
+      "archiveTitle": "«{name}» sub-omborini arxivlaysizmi?",
+      "archiveDescription": "Sub-ombor hujjatlarda tanlanmaydi. Faqat boʻsh boʻlsa arxivlanadi.",
+      "restoreTitle": "«{name}» sub-omborini arxivdan chiqarasizmi?",
+      "restoreDescription": "Sub-ombor hujjatlarda yana tanlanadi.",
+      "notEmpty": "«{name}» sub-omborida qoldiq bor. Qoldiq nolga tushgach arxivlash mumkin."
+    }
+  },
   "errors": {
     "UNAUTHORIZED": "Tizimga kiring.",
     "FORBIDDEN": "Bu amal uchun ruxsatingiz yoʻq.",

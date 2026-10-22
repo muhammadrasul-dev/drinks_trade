@@ -44,7 +44,7 @@ Xodim menyusida unga yopiq bo'limlar ko'rinmaydi. Bunday bo'lim manzilini qo'lda
 - **Nasiya** — to'lanmagan qism; avtomatik qarzlar ro'yxatiga tushadi. Nasiya bo'lsa hujjat **izohi majburiy** (kim qarzdor/kimga qarz — qarzlar ro'yxatida shu izoh ko'rinadi).
 
 ## 5. Birinchi sozlash (Egasi)
-1. **Omborlar** → "Ombor qo'shish" → nom. Ichida → "Sub-ombor qo'shish".
+1. **Omborlar** → "Ombor qo'shish" → nom. Ombor kartochkasida → "Sub-ombor qo'shish" (faqat 2 daraja: sub-ombor ichida yana sub-ombor bo'lmaydi). Ombor nomi takrorlanmaydi; sub-ombor nomi bitta ombor ichida takrorlanmaydi (katta-kichik harf farq qilmaydi). Kerak bo'lmay qolgan ombor/sub-omborni **arxivlang** — faqat u **bo'sh** bo'lsa (qoldiq 0) va omborda ochiq inventarizatsiya bo'lmasa. Arxivdagi ombor/sub-ombor hujjatlarda tanlanmaydi; "Arxiv" ro'yxatidan qaytarish mumkin (arxivdagi ombor ichidagi sub-omborni qaytarish uchun avval omborni qaytaring).
 2. **Mahsulotlar** → **Toifalar** / **Brendlar** → "Toifa qo'shish" / "Brend qo'shish" (nom takrorlanmaydi, katta-kichik harf farq qilmaydi). Kerak bo'lmay qolganini **arxivlang** — u yangi mahsulotlarda tanlanmaydi, mavjud mahsulotlarda saqlanib qoladi; "Arxiv" ro'yxatidan qaytarish mumkin.
 3. **Mahsulotlar** → "Mahsulot qo'shish": nom, blokdagi dona soni, sotuv narxi (1 dona), toifa, brend, SKU, shtrix-kod, rasm, minimal qoldiq, yaroqlilik muddati (ixtiyoriy, faqat ma'lumot).
 4. **Foydalanuvchilar** → "Xodim qo'shish": F.I.O, login, parol. Xodimlar soni cheklanmagan, har biriga alohida login bering (umumiy akkaunt ishlatmang, aks holda audit kim nima qilganini ko'rsata olmaydi).
@@ -123,7 +123,8 @@ Kim, qachon, nimani o'zgartirgani (eski va yangi qiymat). O'tgan sana bilan kiri
 | Xabar | Sabab va yechim |
 |---|---|
 | "Qoldiq yetarli emas" | Sub-omborda tovar kam. Boshqa sub-ombordan soting yoki avval xarid kiriting |
-| "Ombor inventarizatsiyada" | Shu omborda ochiq sanoq bor. Uni bajaring yoki bekor qiling |
+| "Ombor inventarizatsiyada" | Shu omborda ochiq sanoq bor. Uni bajaring yoki bekor qiling (ombor/sub-omborni arxivlash ham shu paytda mumkin emas) |
+| "…da qoldiq bor. Qoldiq nolga tushgach arxivlash mumkin" | Ombor/sub-omborda tovar bor. Avval uni soting (yoki inventarizatsiyada boshqa sub-omborga o'tkazing), keyin arxivlang |
 | "Kassada mablag' yetarli emas" | Chiqim summasi kassa balansidan katta |
 | "To'lov summasi hujjat summasiga teng emas" | Naqd + Karta + Nasiya ni tekshiring |
 | "Avval tegishli savdoni storno qiling" | Xarid tovarining bir qismi sotilgan, xaridni bekor qilib bo'lmaydi |
