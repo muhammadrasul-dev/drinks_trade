@@ -24,7 +24,7 @@ export function splitPieces(qty: number, unitsPerBlock: number): BlocksAndPieces
   return { blocks: Math.floor(qty / unitsPerBlock), pieces: qty % unitsPerBlock };
 }
 
-/** Unit words; the UI passes the translated `enums.InputUnit.*` labels. */
+/** Unit words; the UI passes the translated `enums.QtyUnit.*` labels. */
 export interface QtyLabels {
   block: string;
   piece: string;

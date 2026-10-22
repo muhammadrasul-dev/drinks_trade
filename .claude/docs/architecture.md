@@ -117,7 +117,8 @@ drinks_trade/
 │       │   │   ├── [locale]/
 │       │   │   │   ├── (auth)/login/
 │       │   │   │   └── (app)/              # himoyalangan zona, layout + sidebar
-│       │   │   │       ├── dashboard/
+│       │   │   │       ├── page.tsx        # bosh sahifa (dashboard, `/`)
+│       │   │   │       ├── forbidden.tsx   # 403 (T-203)
 │       │   │   │       ├── products/
 │       │   │   │       ├── warehouses/
 │       │   │   │       ├── sales/
@@ -233,7 +234,11 @@ apps/web ──► packages/server ──► packages/db
 
 ### 4.2 Yozish (mutatsiya)
 1. Client forma `react-hook-form` + `shared` zod sxema bilan validatsiya qiladi.
-2. Server Action (`features/sales/actions.ts`) → `action()` wrapper: session, zod qayta validatsiya, servis chaqiruvi, xatoni `ActionResult` ga o'giradi.
+2. Server Action (`features/sales/actions.ts`) → `action()` wrapper (`apps/web/src/lib/action.ts`, T-203): session (yo'q → `UNAUTHORIZED`), zod qayta validatsiya (`validationError` — `@drinks/shared`, servislar ham shuni ishlatadi → `VALIDATION_FAILED` + `fieldErrors`), servis chaqiruvi (`ctx` tayyor: `auth.toServiceContext`), `DomainError` → `ActionResult`. Boshqa xatolar (`redirect()`, `forbidden()`, bug) qayta otiladi. Sessiyasiz formalar (login) — `publicAction()`. Ruxsat — servisda (`assertCan`).
+   ```ts
+   'use server';
+   export const createProduct = action(productInputSchema, (input, { ctx }) => products.create(ctx, input));
+   ```
 3. Servis: `withTransaction` ichida qulflar → biznes tekshiruvlar → yozuvlar → audit → commit.
 4. `revalidatePath` / `revalidateTag` bilan kesh yangilanadi.
 
@@ -318,6 +323,10 @@ Tekshiruv **3 joyda**: (1) servis (`assertCan`) — majburiy; (2) mapper — max
 - **Default — Server Components.** Client Component faqat interaktivlik kerak bo'lganda (formalar, jadval filtrlari, dialoglar).
 - Ma'lumot o'qish — Server Component ichida servis chaqiruvi. Alohida client fetch kutubxonasi (TanStack Query) v1 da kerak emas.
 - Layout: chap sidebar (rolga qarab menyu), yuqorida til almashtirgich (uz/ru), foydalanuvchi menyusi; **ochiq inventarizatsiya banneri** — ombor inventarizatsiyada bo'lsa barcha sahifalarda sariq ogohlantirish (BR-8).
+  - Amalga oshirilishi (T-203): `app/[locale]/(app)/layout.tsx` (`requireSession`) → `components/app-shell/` (`sidebar-nav`, `mobile-nav` — `md` dan kichik ekranda Sheet, `user-menu` — F.I.O, login, rol, **Chiqish**; `stock-count-banner` — hozircha bo'sh joy, T-603 to'ldiradi).
+  - Menyu — `lib/nav.ts`: `NAV_SECTIONS` (bo'lim → `href`, ruxsat `permissions.ts` dan, ikonka), `navForRole(role)` (ruxsatsiz bo'lim va bo'sh guruh tushiriladi). Ro'yxatda `sale.read`/`purchase.read` yo'q, shuning uchun Savdo/Xarid/Inventarizatsiya bo'limlari `*.write` ruxsati bilan ochiladi (ikkala rolda bor).
+  - Sahifa himoyasi — **serverda**: har sahifa `requireSection(locale, 'cash')` yoki `requirePermission(locale, 'cash.read')` (`lib/session.ts`) chaqiradi → ruxsat yo'q bo'lsa `forbidden()` → `(app)/forbidden.tsx` (HTTP 403, menyu bilan). Next.js'da bu `experimental.authInterrupts` bayrog'ini talab qiladi (`next.config.ts`). Menyu va sahifa tekshiruvi bitta jadvaldan (`NAV_SECTIONS`) olinadi. Hali tayyor bo'lmagan bo'limlar — `ComingSoon` placeholder (keyingi vazifalar almashtiradi).
+  - Umumiy UI: `packages/ui` — `DataTable` (TanStack Table v9, `dataTableColumnHelper<T>()`; ustunlar render funksiyasi bo'lgani uchun Client Component modulida e'lon qilinadi; filtr/sahifalash serverda), `PageHeader`, shadcn `alert-dialog`, `sheet`, `separator`. `apps/web/src/components` (tarjima kerak bo'lganlar) — `MoneyText` (`formatSom` + `common.som`), `QtyText` (`formatQty` + `enums.QtyUnit.*`), `ConfirmDialog` (bajarish/storno/o'chirishdan oldin; `onConfirm` tugaguncha ochiq turadi).
 - Hujjat formalari (savdo/xarid): qatorlar jadvali, har qatorda mahsulot (qidiruv/shtrix-kod), sub-ombor, miqdor (dona/blok almashtirgich), narx, summa; pastda to'lov qismlari (Naqd/Karta/Nasiya) va "Qoldiq: N blok M dona" ko'rsatkichi. Tugmalar: **Saqlash (qoralama)** · **Bajarish** · **O'chirish** (faqat qoralama) · **Storno** (faqat bajarilgan).
 - Savdo qatorida qoldiq yetmasa — qator qizil, xabar, "Bajarish" o'chiq (FR-3.3). Bajarishda server yana tekshiradi (BR-7).
 - Raqamlar: so'm `1 250 000 soʻm` formatida (no-break space bilan), miqdor `3 blok 2 dona` — faqat `@drinks/shared` dagi `formatSom` / `formatQty` orqali ([business-logic.md §1.4](business-logic.md)).

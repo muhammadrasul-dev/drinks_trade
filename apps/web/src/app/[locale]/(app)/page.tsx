@@ -1,26 +1,23 @@
 import type { Locale } from '@drinks/shared';
+import { PageHeader } from '@drinks/ui/components/page-header';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
-import { LocaleSwitcher } from '@/components/locale-switcher';
-import { LogoutButton } from '@/features/auth/components/logout-button';
-import { requireSession } from '@/lib/session';
+import { requireSection } from '@/lib/session';
 
-// Protected placeholder; T-203 replaces it with the (app) layout and dashboard.
-export default async function HomePage({ params }: PageProps<'/[locale]'>) {
+// Dashboard placeholder; T-902 fills it.
+export default async function DashboardPage({ params }: PageProps<'/[locale]'>) {
   const { locale } = await params;
   setRequestLocale(locale as Locale);
-  const session = await requireSession(locale as Locale);
-  const t = await getTranslations('home');
-  const tRole = await getTranslations('enums.UserRole');
+  const { user } = await requireSection(locale as Locale, 'dashboard');
+  const t = await getTranslations();
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-4 p-8">
-      <LocaleSwitcher />
-      <h1 className="text-2xl font-semibold">{t('title')}</h1>
-      <p className="text-muted-foreground text-sm">
-        {t('greeting', { name: session.user.fullName, role: tRole(session.user.role) })}
-      </p>
-      <LogoutButton />
-    </main>
+    <PageHeader
+      title={t('nav.sections.dashboard')}
+      description={t('home.greeting', {
+        name: user.fullName,
+        role: t(`enums.UserRole.${user.role}`),
+      })}
+    />
   );
 }

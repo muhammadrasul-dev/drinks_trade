@@ -9,9 +9,48 @@
     "ru": "Русский"
   },
   "home": {
-    "title": "drinks_trade",
-    "description": "Ichimliklar doʻkoni uchun hisob tizimi",
     "greeting": "Xush kelibsiz, {name} ({role})."
+  },
+  "common": {
+    "cancel": "Bekor qilish",
+    "confirm": "Tasdiqlash",
+    "comingSoon": "Bu boʻlim keyingi bosqichlarda qoʻshiladi.",
+    "som": "soʻm"
+  },
+  "nav": {
+    "label": "Asosiy menyu",
+    "open": "Menyuni ochish",
+    "groups": {
+      "main": "Asosiy",
+      "catalog": "Maʼlumotnomalar",
+      "documents": "Hujjatlar",
+      "finance": "Moliya",
+      "reports": "Hisobotlar",
+      "admin": "Boshqaruv"
+    },
+    "sections": {
+      "dashboard": "Bosh sahifa",
+      "products": "Mahsulotlar",
+      "warehouses": "Omborlar",
+      "sales": "Savdo",
+      "purchases": "Xarid",
+      "stockCounts": "Inventarizatsiya",
+      "cash": "Kassa",
+      "debts": "Qarzlar",
+      "stockReport": "Qoldiq hisoboti",
+      "salesReport": "Savdo hisoboti",
+      "pnlReport": "P&L (foyda va zarar)",
+      "users": "Foydalanuvchilar",
+      "audit": "Audit jurnali"
+    }
+  },
+  "userMenu": {
+    "label": "Foydalanuvchi menyusi"
+  },
+  "forbidden": {
+    "title": "Ruxsat yoʻq",
+    "description": "Bu sahifani koʻrish uchun ruxsatingiz yoʻq.",
+    "backHome": "Bosh sahifaga"
   },
   "auth": {
     "login": {
