@@ -3,4 +3,5 @@
 export * from './audit';
 export * from './auth';
 export * from './cash';
+export * from './debts';
 export * from './users';

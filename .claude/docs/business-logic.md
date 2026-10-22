@@ -56,7 +56,7 @@ Har bir bajarish/storno tranzaksiyasi qulflarni **shu tartibda** oladi (kerak bo
 Qoida `packages/server/src/core/locks.ts` da funksiyalar sifatida yoziladi; servislar qulfni faqat shu funksiyalar orqali oladi.
 
 Amalga oshirilishi (T-104):
-- Funksiyalar: (1) `lockSale` / `lockPurchase` / `lockStockCount`; (2) `lockWarehouses` (`exclusive: true` → `FOR UPDATE`); (3) `nextDocNumber` (`core/numbering.ts`: `INSERT … ON CONFLICT DO UPDATE … RETURNING` — qator qulfi tranzaksiya oxirigacha); (4) `lockCashboxes` (`ORDER BY type::text`, ya'ni `CARD`, `CASH` — enum e'lon tartibi emas); (5) `lockDebt`; (6) `lockProductCosts`; (7) `lockStockBalances`.
+- Funksiyalar: (1) `lockSale` / `lockPurchase` / `lockStockCount`; (2) `lockWarehouses` (`exclusive: true` → `FOR UPDATE`); (3) `nextDocNumber` (`core/numbering.ts`: `INSERT … ON CONFLICT DO UPDATE … RETURNING` — qator qulfi tranzaksiya oxirigacha); (4) `lockCashboxes` (`ORDER BY type::text`, ya'ni `CARD`, `CASH` — enum e'lon tartibi emas); (5) `lockDebt` (`direction`, `source`, `status`, `amount`, `repaidAmount` qaytaradi — T-403); (6) `lockProductCosts`; (7) `lockStockBalances`.
 - Har qadam bitta chaqiruvda olinadi (barcha id'lar birga, tartib SQL `ORDER BY` da). `assertLockOrder` shu tranzaksiyada orqaga qaytishni yoki qadamni takrorlashni xato bilan to'xtatadi.
 - `lockProductCosts` / `lockStockBalances` yo'q qatorlarni avval bo'sh holatda yaratadi (`total_qty = 0, avg_cost = 0` / `qty = 0`, `ON CONFLICT DO NOTHING`, shu tartibda) — chaqiruvchi har kalit uchun qulflangan qator oladi.
 - Topilmagan yoki boshqa do'konga tegishli hujjat/ombor/kassa/qarz → `NOT_FOUND` (`params.entity`).
@@ -251,6 +251,11 @@ Qarz qaytarish: `debt.repaidAmount += amount`; teng bo'lsa `status = CLOSED`. Qa
 
 Qo'lda kiritilgan yozuvni bekor qilish (OQ-08): faqat OWNER, teskari `MANUAL_REVERSAL` yozuvi bilan (`reversal_of_id` → asl yozuv); asl yozuv o'chirilmaydi. Teskari yozuv kassa yo'nalishini teskari qiladi (chiqim bekor → kirim), shuning uchun kirimni bekor qilishda balans tekshiriladi. Qarz berish/olish storno'si qarzni `CANCELLED` qiladi (qaytarishlari bo'lsa — bloklanadi). P&L o'qishda storno qilingan yo'l kira hisobga olinmaydi.
 
+Amalga oshirilishi (T-403, `packages/server/src/modules/debts`): yagona yozish nuqtasi `debt` qatorlarini ochish va bekor qilish uchun. Ichki servis — ruxsat, kiritma va sana (OQ-07) chaqiruvchida, qulflarni (§2) ham chaqiruvchi oladi.
+- `debts.open(tx, ctx, input)` → `{ id, direction, cashTransactionId }`. `MANUAL`: `direction` va `lockCashboxes` bilan qulflangan `cashbox` beriladi; izohsiz → `NOTE_REQUIRED`; `RECEIVABLE` → `cash.record(DEBT_GIVEN, OUT)` (yetmasa `CASHBOX_INSUFFICIENT`, butun tranzaksiya rollback), `PAYABLE` → `cash.record(DEBT_TAKEN, IN)`; kassa yozuvi `debt_id` bilan, `tx_date = debt_date`. `SALE` (`saleId`) → `RECEIVABLE`, `PURCHASE` (`purchaseId`) → `PAYABLE`, kassa harakatisiz (to'langan qismlarni bajarish o'zi yozadi); izoh ixtiyoriy (OQ-18). Summa ≤ 0 yoki kasr → `RangeError`. Audit `CREATE debt`.
+- `debts.cancel(tx, ctx, debt, { cashbox? })` — `debt` = `lockDebt` (5-qadam) natijasi (`direction`, `source`, `status`, `amount`, `repaidAmount`). `CANCELLED` → `DEBT_CANCELLED`; `repaidAmount > 0` (shu jumladan `CLOSED`) → `DEBT_HAS_REPAYMENTS` (OQ-04; params'da summa yo'q). `MANUAL`: asl `DEBT_GIVEN`/`DEBT_TAKEN` yozuvi teskari `MANUAL_REVERSAL` bilan qaytariladi (OQ-08; `reversal_of_id`, `debt_id`) — shu yozuvning kassasi 4-qadamda qulflangan va `cashbox` sifatida berilgan bo'lishi shart; olingan qarzni bekor qilish — chiqim, balans yetmasa `CASHBOX_INSUFFICIENT`. `SALE`/`PURCHASE`: kassa harakatisiz (§5.3 8-qadam). `status = CANCELLED`, audit `CANCEL debt`.
+- Qaytarish (`debt_repayment`, `repaidAmount`, `CLOSED`) — T-704 da (shu bo'limdagi jadval qoidalari bo'yicha).
+
 ## 8. P&L (BR-11)
 
 ```
@@ -284,6 +289,7 @@ Filtr: kun / oy / yil / ixtiyoriy oraliq (Toshkent vaqti).
 | `PAYMENT_SPLIT_MISMATCH` | BR-9 |
 | `CASHBOX_INSUFFICIENT` | BR-9 (STAFF uchun xabarda balans summasi ko'rsatilmaydi) |
 | `DEBT_HAS_REPAYMENTS` | OQ-04 |
+| `DEBT_CANCELLED` | qarz allaqachon bekor qilingan (masalan, ikki marta storno) |
 | `DEBT_OVERPAYMENT` | qaytarish > qarz qoldig'i |
 | `NOTE_REQUIRED` | boshqa chiqim / qarz izohsiz |
 | `ENTITY_NOT_EMPTY` | bo'sh bo'lmagan ombor/sub-omborni arxivlash (FR-2.2) |

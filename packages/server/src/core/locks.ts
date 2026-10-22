@@ -5,6 +5,8 @@
 import type { Prisma } from '@drinks/db';
 import {
   type CashboxType,
+  type DebtDirection,
+  type DebtSource,
   type DebtStatus,
   type DocStatus,
   DomainError,
@@ -171,6 +173,8 @@ export async function lockCashboxes(
 
 export interface LockedDebt {
   id: string;
+  direction: DebtDirection;
+  source: DebtSource;
   status: DebtStatus;
   amount: number;
   repaidAmount: number;
@@ -179,9 +183,18 @@ export interface LockedDebt {
 export async function lockDebt(tx: Tx, storeId: string, id: string): Promise<LockedDebt> {
   assertLockOrder(tx, LockStep.DEBT);
   const rows = await tx.$queryRaw<
-    { id: string; status: DebtStatus; amount: bigint; repaidAmount: bigint }[]
+    {
+      id: string;
+      direction: DebtDirection;
+      source: DebtSource;
+      status: DebtStatus;
+      amount: bigint;
+      repaidAmount: bigint;
+    }[]
   >`
-    SELECT id, status::text AS status, amount, repaid_amount AS "repaidAmount" FROM debt
+    SELECT id, direction::text AS direction, source::text AS source, status::text AS status,
+           amount, repaid_amount AS "repaidAmount"
+    FROM debt
     WHERE id = ${id}::uuid AND store_id = ${storeId}::uuid
     FOR UPDATE`;
   const row = only(rows, 'debt');
