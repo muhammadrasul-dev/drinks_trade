@@ -389,3 +389,11 @@ should be A and refactor then
 ```
 yes clear these worktrees
 ```
+
+---
+
+## Prompt 35 — T-203, T-401, T-403 ni alohida sessiyalarda boshlash (2026-10-22)
+
+```
+start all three in separate sessions
+```
