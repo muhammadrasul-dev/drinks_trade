@@ -319,7 +319,7 @@ Tekshiruv **3 joyda**: (1) servis (`assertCan`) — majburiy; (2) mapper — max
 - Layout: chap sidebar (rolga qarab menyu), yuqorida til almashtirgich (uz/ru), foydalanuvchi menyusi; **ochiq inventarizatsiya banneri** — ombor inventarizatsiyada bo'lsa barcha sahifalarda sariq ogohlantirish (BR-8).
 - Hujjat formalari (savdo/xarid): qatorlar jadvali, har qatorda mahsulot (qidiruv/shtrix-kod), sub-ombor, miqdor (dona/blok almashtirgich), narx, summa; pastda to'lov qismlari (Naqd/Karta/Nasiya) va "Qoldiq: N blok M dona" ko'rsatkichi. Tugmalar: **Saqlash (qoralama)** · **Bajarish** · **O'chirish** (faqat qoralama) · **Storno** (faqat bajarilgan).
 - Savdo qatorida qoldiq yetmasa — qator qizil, xabar, "Bajarish" o'chiq (FR-3.3). Bajarishda server yana tekshiradi (BR-7).
-- Raqamlar: so'm `1 250 000 so'm` formatida (bo'shliq bilan), miqdor `3 blok 2 dona`.
+- Raqamlar: so'm `1 250 000 soʻm` formatida (no-break space bilan), miqdor `3 blok 2 dona` — faqat `@drinks/shared` dagi `formatSom` / `formatQty` orqali ([business-logic.md §1.4](business-logic.md)).
 - Responsiv: asosan desktop/planshet; telefon ekranida ham ishlashi kerak (kassada telefon bilan ishlatilishi mumkin).
 
 ## 7. i18n
