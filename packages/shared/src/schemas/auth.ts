@@ -13,3 +13,14 @@ export const loginInputSchema = z.object({
 });
 
 export type LoginInput = z.input<typeof loginInputSchema>;
+
+/** New-password rule (architecture §11): at least 8 characters; the cap bounds argon2 work. */
+export const passwordSchema = z.string().min(8).max(128);
+
+/** `users.resetPassword` input (CLI `pnpm user:reset-password <login>`, business-logic §11). */
+export const resetPasswordInputSchema = z.object({
+  username: loginInputSchema.shape.username,
+  password: passwordSchema,
+});
+
+export type ResetPasswordInput = z.input<typeof resetPasswordInputSchema>;

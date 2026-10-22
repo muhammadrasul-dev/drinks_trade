@@ -9,7 +9,8 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:int": "vitest run --config vitest.int.config.ts"
+    "test:int": "vitest run --config vitest.int.config.ts",
+    "user:reset-password": "tsx scripts/reset-password.ts"
   },
   "dependencies": {
     "@drinks/db": "workspace:*",
@@ -22,6 +23,7 @@
     "@drinks/config": "workspace:*",
     "@types/node": "24.19.2",
     "dotenv": "18.0.8",
+    "tsx": "4.23.15",
     "typescript": "6.0.3",
     "vite": "8.3.4",
     "vitest": "5.0.5"

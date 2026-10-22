@@ -143,6 +143,7 @@ drinks_trade/
 │       └── next.config.ts
 ├── packages/
 │   ├── server/                     # BACKEND yadrosi (faqat serverda ishlaydi: `server-only`)
+│   │   ├── scripts/                # CLI (faqat I/O): reset-password.ts → `pnpm user:reset-password`
 │   │   └── src/
 │   │       ├── modules/
 │   │       │   ├── auth/           # login, logout, session, parol hash
@@ -364,6 +365,7 @@ SEED_OWNER_PASSWORD=change-me
 | `pnpm db:seed` | boshlang'ich ma'lumot (OWNER, do'kon, 2 kassa) — `prisma db seed` → `prisma.config.ts` `migrations.seed` (`tsx prisma/seed.ts`); idempotent |
 | `pnpm db:seed:dev` | `db:seed` + namunaviy ma'lumot (`seed.dev.ts`, `NODE_ENV=production` da ishlamaydi); idempotent |
 | `pnpm db:studio` | Prisma Studio |
+| `pnpm user:reset-password <login>` | parolni tiklash (Egasi unutsa; business-logic §11): yangi parol ikki marta yashirin so'raladi, sessiyalar va login bloki o'chiriladi, audit `PASSWORD_RESET`. `packages/server/scripts/reset-password.ts` (`tsx`), root `.env` dagi `DATABASE_URL` ga ulanadi |
 | `pnpm dev` | Next.js dev |
 | `pnpm test` / `test:int` / `test:e2e` | testlar (`test` — DB'siz unit; `test:int` — `@drinks/db` va `@drinks/server` integratsiya testlari `DATABASE_URL_TEST` bazasida, `*.int.test.ts`) |
 | `pnpm lint` | root `eslint .` (butun repo, bitta config) |
@@ -405,7 +407,7 @@ Biznes qoidalar uchun har bir BR-xx ga kamida bitta integratsiya testi bo'lishi 
   - faolsizlantirish/qayta faollashtirish (`is_active`). Akkaunt **o'chirilmaydi**, chunki hujjat va auditda unga havola bor.
 - Egasi o'z login va parolini ham shu yerdan o'zgartiradi (joriy parolni kiritish sharti bilan). Xodim o'z parolini o'zgartira olmaydi, buni Egasi qiladi.
 - Login yoki parol o'zgarganda yoki akkaunt faolsizlantirilganda o'sha foydalanuvchining **barcha sessiyalari darhol o'chiriladi**: u qayta kirishi kerak bo'ladi.
-- Egasi parolini unutsa, uni serverda CLI orqali tiklaydi: `pnpm user:reset-password <login>`.
+- Egasi parolini unutsa, uni serverda CLI orqali tiklaydi: `pnpm user:reset-password <login>` (T-205: `packages/server/scripts/` — faqat I/O, mantiq `users.resetPassword` da; skript `src/index.ts` ni emas, modulni to'g'ridan-to'g'ri import qiladi, chunki `server-only` Node'da xato beradi).
 - Login: 3–32 belgi, `a-z 0-9 . _ -`, katta-kichik harf farqlanmaydi (kichik harfda saqlanadi), yagona bo'ladi. Parol: kamida 8 belgi.
 - Barcha amallar auditga yoziladi: `USER_CREATE`, `USER_UPDATE`, `PASSWORD_RESET`, `USER_DEACTIVATE`. Parolning o'zi ham, hashi ham auditga yozilmaydi.
 
