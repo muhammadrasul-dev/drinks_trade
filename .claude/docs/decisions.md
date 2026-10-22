@@ -62,6 +62,7 @@ Holatlar: `Taklif` (foydalanuvchi tasdig'ini kutmoqda) · `Qabul qilingan` · `A
 ## ADR-008 — Pul va tannarx turlari
 **Qaror.** Pul — `BIGINT` (butun so'm). O'rtacha tannarx va birlik tannarx — `NUMERIC(20,4)`. Summaga aylantirishda ROUND HALF UP. Servis chegarasida `bigint → number` (`Number.isSafeInteger` tekshiruvi; 9·10¹⁵ so'mgacha xavfsiz), `Decimal → string`.
 **Oqibat.** + UI va JSON'da BigInt muammosi yo'q. − Juda katta qiymat bo'lsa xato chiqadi (amalda imkonsiz).
+**Amalda (T-104).** `packages/server/src/core/money.ts`: `moneyToNumber(bigint)` / `moneyToBigInt(number)` (xavfsiz butun son bo'lmasa `RangeError`), `decimalToString(Decimal)` → har doim 4 kasr xona (`"12.5000"`); Prisma shu stringni Decimal kiritmasi sifatida qabul qiladi.
 
 ## ADR-009 — Bir vaqtdalik
 **Qaror.** `READ COMMITTED` + `SELECT ... FOR UPDATE` qat'iy tartibda ([business-logic.md §2](business-logic.md)); DB `CHECK` cheklovlari oxirgi himoya. Qoralamalarda optimistik `version`.
