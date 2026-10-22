@@ -381,3 +381,11 @@ start any tasks which can start one time and dont occures issues in seperate ses
 ```
 should be A and refactor then
 ```
+
+---
+
+## Prompt 34 — T-301/T-205/T-402 worktree'larini o'chirish (2026-10-22)
+
+```
+yes clear these worktrees
+```
