@@ -349,3 +349,11 @@ Ha, dev bazani reset qil
 ```
 yes clear theese worktrees
 ```
+
+---
+
+## Prompt 30 — T-105 va T-201 ni alohida sessiyalarda boshlash (2026-10-22)
+
+```
+start both in seperate sessions
+```
