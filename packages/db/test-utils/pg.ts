@@ -1,31 +1,9 @@
-// Minimal helpers for DB integration tests (T-102). T-105 generalizes them
-// (truncate helper, factories, invariant checks).
-import { fileURLToPath } from 'node:url';
-
-import { config } from 'dotenv';
+// Raw-SQL helpers for tests that assert on Postgres errors (SQLSTATE,
+// constraint names), where Prisma's error wrapping gets in the way.
 import pg from 'pg';
 import { expect } from 'vitest';
 
 export type Row = Record<string, unknown>;
-
-export function testDatabaseUrl(): string {
-  config({ path: fileURLToPath(new URL('../../../../.env', import.meta.url)), quiet: true });
-  const url = process.env.DATABASE_URL_TEST;
-  if (!url) {
-    throw new Error('DATABASE_URL_TEST is not set (copy .env.example to .env)');
-  }
-  // Guard against pointing the suite at a real database.
-  if (!new URL(url).pathname.endsWith('_test')) {
-    throw new Error(`DATABASE_URL_TEST must name a *_test database, got ${url}`);
-  }
-  return url;
-}
-
-export async function connect(): Promise<pg.Client> {
-  const client = new pg.Client({ connectionString: testDatabaseUrl() });
-  await client.connect();
-  return client;
-}
 
 /** INSERT a row built from a column → value map and return it. */
 export async function insert(client: pg.Client, table: string, row: Row): Promise<Row> {

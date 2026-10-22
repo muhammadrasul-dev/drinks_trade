@@ -795,7 +795,7 @@ CREATE INDEX product_name_trgm ON product USING gin (lower(name) gin_trgm_ops);
 
 ### 6.2 `stock_balance` va `product_cost`
 - Mahsulot birinchi marta sub-omborga kirganda qator yaratiladi (`INSERT ... ON CONFLICT DO NOTHING`, keyin `FOR UPDATE`).
-- Invariant (test bilan tekshiriladi): `stock_balance.qty = Σ stock_movement.qty_delta` va `product_cost.total_qty = Σ stock_balance.qty (do'kon bo'yicha)`.
+- Invariant (test bilan tekshiriladi — `assertInvariants`, architecture §10): `stock_balance.qty = Σ stock_movement.qty_delta` va `product_cost.total_qty = Σ stock_balance.qty (do'kon bo'yicha)`.
 - Sub-ombor arxivlash: faqat undagi barcha `qty = 0` bo'lsa (FR-2.2). Ombor — barcha sub-omborlari bo'sh bo'lsa.
 
 ### 6.3 Hujjatlar (`sale`, `purchase`, `stock_count`)

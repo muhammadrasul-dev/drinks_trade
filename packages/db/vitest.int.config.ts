@@ -7,7 +7,9 @@ export default defineProject({
     name: 'db-int',
     environment: 'node',
     include: ['test/int/**/*.int.test.ts'],
-    globalSetup: ['test/int/global-setup.ts'],
+    // Shared kit (test-utils/README.md): migrate once, TRUNCATE before each file.
+    globalSetup: ['test-utils/global-setup.ts'],
+    setupFiles: ['test-utils/setup.ts'],
     // Files share one database; run them one at a time.
     fileParallelism: false,
   },

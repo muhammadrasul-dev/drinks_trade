@@ -41,9 +41,6 @@ jobs:
 
   integration:
     name: Integration tests (Postgres)
-    # Disabled until T-105 adds the integration test setup; enabled in T-105
-    # (T-105 removes this guard). The repo variable is intentionally not set.
-    if: vars.RUN_INTEGRATION_TESTS == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     needs: check
@@ -75,5 +72,6 @@ jobs:
           cache: pnpm
 
       - run: pnpm install --frozen-lockfile
-      # T-105: apply migrations and run the integration suite here, e.g.
-      # pnpm test:int (its Vitest globalSetup runs `prisma migrate deploy` on DATABASE_URL_TEST)
+      # Each package's Vitest globalSetup runs `prisma migrate deploy` on
+      # DATABASE_URL_TEST; every test file starts on truncated tables.
+      - run: pnpm test:int

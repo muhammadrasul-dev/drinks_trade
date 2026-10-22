@@ -5,18 +5,12 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { DEV_STAFF_PASSWORD, seedDev } from '../../prisma/seed.dev';
 import { createClient, ownerFromEnv, seed, type OwnerCredentials } from '../../prisma/seed';
-import { testDatabaseUrl } from './db';
+import { assertInvariants, testDatabaseUrl } from '../../test-utils';
 import type { PrismaClient } from '../../src/generated/prisma/client';
 
 const owner: OwnerCredentials = { username: 'owner', password: 'owner-pass-123' };
 
 let prisma: PrismaClient;
-
-// The seed commits, so the tables are emptied before and after the suite.
-// TRUNCATE bypasses the row-level append-only triggers.
-async function truncateAll(): Promise<void> {
-  await prisma.$executeRawUnsafe('TRUNCATE organization CASCADE');
-}
 
 async function counts(): Promise<Record<string, number>> {
   return {
@@ -35,12 +29,12 @@ async function counts(): Promise<Record<string, number>> {
 }
 
 beforeAll(async () => {
+  // The kit's setup file has already emptied the database for this file.
   prisma = createClient(testDatabaseUrl());
-  await truncateAll();
 });
 
 afterAll(async () => {
-  await truncateAll();
+  await assertInvariants(prisma);
   await prisma.$disconnect();
 });
 

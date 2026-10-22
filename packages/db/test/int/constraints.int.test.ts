@@ -6,7 +6,7 @@ import { randomUUID } from 'node:crypto';
 import type pg from 'pg';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
-import { connect, expectPgError, insert, type Row } from './db';
+import { connectPg, expectPgError, insert, type Row } from '../../test-utils';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const inDays = (days: number): Date => new Date(Date.now() + days * DAY_MS);
@@ -240,7 +240,7 @@ async function createFixtures(): Promise<Fixtures> {
 }
 
 beforeAll(async () => {
-  client = await connect();
+  client = await connectPg();
 });
 
 afterAll(async () => {
