@@ -228,3 +228,11 @@ docs/Filling-mainly-technical-docs.md this isnot need. Remove that, we have one 
 ```
 yes start but on new session
 ```
+
+---
+
+## Prompt 15 — T-003 ni yangi sessiyada boshlash (2026-10-22)
+
+```
+T-003 start on new session
+```
