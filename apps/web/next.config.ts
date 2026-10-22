@@ -1,6 +1,9 @@
 import path from 'node:path';
 
 import type { NextConfig } from 'next';
+import createNextIntlPlugin from 'next-intl/plugin';
+
+const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 
 const nextConfig: NextConfig = {
   // Self-contained server bundle for docker/web.Dockerfile (architecture §8.4).
@@ -11,4 +14,4 @@ const nextConfig: NextConfig = {
   transpilePackages: ['@drinks/shared', '@drinks/ui'],
 };
 
-export default nextConfig;
+export default withNextIntl(nextConfig);

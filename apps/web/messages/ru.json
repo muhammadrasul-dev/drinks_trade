@@ -1,0 +1,126 @@
+{
+  "meta": {
+    "title": "drinks_trade",
+    "description": "Система учёта для магазина напитков"
+  },
+  "localeSwitcher": {
+    "label": "Язык",
+    "uz": "Oʻzbekcha",
+    "ru": "Русский"
+  },
+  "home": {
+    "title": "drinks_trade",
+    "description": "Система учёта для магазина напитков",
+    "goToLogin": "Перейти на страницу входа"
+  },
+  "auth": {
+    "login": {
+      "title": "Вход в систему",
+      "description": "Введите логин и пароль",
+      "username": "Логин",
+      "password": "Пароль",
+      "submit": "Войти",
+      "notReady": "Вход пока не работает — будет добавлен в T-201."
+    }
+  },
+  "errors": {
+    "UNAUTHORIZED": "Войдите в систему.",
+    "FORBIDDEN": "У вас нет прав на это действие.",
+    "VALIDATION_FAILED": "Данные введены неверно.",
+    "NOT_FOUND": "Данные не найдены.",
+    "DOCUMENT_CHANGED": "Документ изменён другим пользователем. Обновите страницу.",
+    "DOCUMENT_NOT_DRAFT": "Изменять можно только черновик.",
+    "DOCUMENT_NOT_POSTED": "Сторнировать можно только проведённый документ.",
+    "INSUFFICIENT_STOCK": "Недостаточно товара на складе.",
+    "PURCHASE_REVERSAL_INSUFFICIENT_STOCK": "Нельзя сторнировать закупку: часть товара уже продана.",
+    "WAREHOUSE_IN_STOCK_COUNT": "На складе идёт инвентаризация. Движения заблокированы до её завершения.",
+    "STOCK_COUNT_ALREADY_OPEN": "Для этого склада уже есть открытая инвентаризация.",
+    "PAYMENT_SPLIT_MISMATCH": "Сумма частей оплаты не равна сумме документа.",
+    "CASHBOX_INSUFFICIENT": "В кассе недостаточно средств.",
+    "DEBT_HAS_REPAYMENTS": "По долгу есть погашения. Сначала отмените их.",
+    "DEBT_OVERPAYMENT": "Сумма погашения больше остатка долга.",
+    "NOTE_REQUIRED": "Комментарий обязателен.",
+    "ENTITY_NOT_EMPTY": "Нельзя архивировать непустой объект.",
+    "ENTITY_ARCHIVED": "Нельзя выбрать архивный объект.",
+    "DUPLICATE_VALUE": "Такое значение уже существует.",
+    "DOC_DATE_IN_FUTURE": "Дата не может быть в будущем.",
+    "UNITS_PER_BLOCK_CHANGED": "Количество штук в блоке у товара изменилось. Проверьте количества и сохраните снова.",
+    "INVALID_CREDENTIALS": "Неверный логин или пароль.",
+    "USER_INACTIVE": "Аккаунт деактивирован.",
+    "TOO_MANY_ATTEMPTS": "Слишком много попыток. Повторите через 15 минут.",
+    "CURRENT_PASSWORD_INVALID": "Текущий пароль неверен."
+  },
+  "enums": {
+    "UserRole": {
+      "OWNER": "Владелец",
+      "STAFF": "Сотрудник"
+    },
+    "Locale": {
+      "uz": "Узбекский",
+      "ru": "Русский"
+    },
+    "DocStatus": {
+      "DRAFT": "Черновик",
+      "POSTED": "Проведён",
+      "REVERSED": "Сторнирован"
+    },
+    "StockCountStatus": {
+      "DRAFT": "Черновик",
+      "POSTED": "Проведена",
+      "CANCELLED": "Отменена"
+    },
+    "QtyUnit": {
+      "PIECE": "шт.",
+      "BLOCK": "блок"
+    },
+    "MovementType": {
+      "PURCHASE": "Закупка",
+      "PURCHASE_REVERSAL": "Сторно закупки",
+      "SALE": "Продажа",
+      "SALE_REVERSAL": "Сторно продажи",
+      "COUNT_ADJUSTMENT": "Корректировка по инвентаризации"
+    },
+    "CashboxType": {
+      "CASH": "Наличные",
+      "CARD": "Карта"
+    },
+    "CashDirection": {
+      "IN": "Приход",
+      "OUT": "Расход"
+    },
+    "CashTxType": {
+      "SALE_RECEIPT": "Поступление от продажи",
+      "SALE_REFUND": "Возврат по продаже",
+      "PURCHASE_PAYMENT": "Оплата закупки",
+      "PURCHASE_REFUND": "Возврат по закупке",
+      "DEBT_TAKEN": "Получен долг",
+      "DEBT_GIVEN": "Выдан долг",
+      "DEBT_REPAID_BY_ME": "Мы погасили долг",
+      "DEBT_REPAID_TO_ME": "Нам вернули долг",
+      "TRAVEL_EXPENSE": "Транспортные расходы",
+      "OTHER_EXPENSE": "Прочий расход",
+      "TRANSFER_OUT": "Перевод из кассы",
+      "TRANSFER_IN": "Перевод в кассу",
+      "MANUAL_REVERSAL": "Сторно"
+    },
+    "DebtDirection": {
+      "RECEIVABLE": "Нам должны",
+      "PAYABLE": "Мы должны"
+    },
+    "DebtSource": {
+      "MANUAL": "Вручную",
+      "SALE": "Продажа",
+      "PURCHASE": "Закупка"
+    },
+    "DebtStatus": {
+      "OPEN": "Открыт",
+      "CLOSED": "Закрыт",
+      "CANCELLED": "Отменён"
+    },
+    "DocType": {
+      "SALE": "Продажа",
+      "PURCHASE": "Закупка",
+      "STOCK_COUNT": "Инвентаризация"
+    }
+  }
+}

@@ -96,11 +96,12 @@ Aniq versiyalar loyiha `init` qilinganda `package.json` da qotiriladi (pin) va s
 | react-hook-form | 7.90.0 | `packages/ui` (`form` komponenti) |
 | @next/eslint-plugin-next | 16.4.2 | `packages/config` |
 | eslint-plugin-react-hooks | 7.1.1 | `packages/config` |
-| Vitest | 5.0.5 | root, `packages/shared`, `packages/server` (`devDependencies`) |
+| Vitest | 5.0.5 | root, `packages/shared`, `packages/server`, `apps/web` (`devDependencies`) |
 | Vite | 8.3.4 | Vitest'ning majburiy peer'i; Vitest bilan bir joyda |
 | server-only | 0.0.1 | `packages/server` |
 | prisma (CLI) / @prisma/client / @prisma/adapter-pg | 7.10.1 | `packages/db` (`prisma-client` generator → `src/generated/prisma`, gitignore'da; `postinstall` da generatsiya). npm `latest` tegi 8.0.0-rc — RC, shuning uchun 7.x barqaror |
 | dotenv | 18.0.8 | `packages/db` (`prisma.config.ts` root `.env` ni o'qiydi) |
+| next-intl | 4.14.9 | `apps/web` (plugin `next.config.ts` da, `src/i18n/request.ts`) |
 
 ## 3. Monorepo tuzilmasi
 
@@ -131,10 +132,10 @@ drinks_trade/
 │       │   │       ├── reports/[report]/export/route.ts
 │       │   │       └── health/route.ts
 │       │   ├── features/<modul>/   # modulga xos UI: components/, actions.ts, columns.tsx
-│       │   ├── components/         # ilova darajasidagi umumiy UI (layout, sidebar)
+│       │   ├── components/         # ilova darajasidagi umumiy UI (layout, sidebar, locale-switcher)
 │       │   ├── lib/                # session o'qish, action-wrapper, format helperlar
-│       │   ├── i18n/               # next-intl config, routing
-│       │   └── middleware.ts       # locale + auth redirect
+│       │   ├── i18n/               # next-intl: routing.ts, navigation.ts, request.ts
+│       │   └── proxy.ts            # locale + auth redirect (Next.js 16: middleware.ts → proxy.ts)
 │       ├── messages/
 │       │   ├── uz.json
 │       │   └── ru.json
@@ -223,7 +224,7 @@ apps/web ──► packages/server ──► packages/db
 ## 4. So'rov oqimi
 
 ### 4.1 O'qish (sahifa ochish)
-1. `middleware.ts`: locale aniqlanadi; session cookie yo'q bo'lsa `/login` ga.
+1. `proxy.ts` (Next.js 16 da `middleware.ts` nomi o'zgargan): locale aniqlanadi; session cookie yo'q bo'lsa `/[locale]/login` ga.
 2. Server Component `getSession()` → `ServiceContext` yaratadi.
 3. Servis chaqiriladi (`productsService.list(ctx, filters)`), servis RBAC tekshiradi, DTO qaytaradi.
 4. DTO — rolga qarab **filtrlangan**: STAFF uchun `costTotal`, `grossProfit` kabi maydonlar **serverda** olib tashlanadi (UI'da yashirish yetarli emas).
@@ -319,9 +320,12 @@ Tekshiruv **3 joyda**: (1) servis (`assertCan`) — majburiy; (2) mapper — max
 - Responsiv: asosan desktop/planshet; telefon ekranida ham ishlashi kerak (kassada telefon bilan ishlatilishi mumkin).
 
 ## 7. i18n
-- `next-intl`, URL prefiks: `/uz/...`, `/ru/...`; default `uz`.
-- Foydalanuvchi tanlagan til `user.locale` da saqlanadi, login'dan keyin shu tilga yo'naltiriladi.
-- Tarjima kalitlari modul bo'yicha: `products.title`, `errors.INSUFFICIENT_STOCK`, `enums.CashTxType.TRAVEL_EXPENSE`.
+- `next-intl`, URL prefiks: `/uz/...`, `/ru/...` (`localePrefix: 'always'`); default `uz`. Barcha sahifalar `app/[locale]/` ostida, root layout — `app/[locale]/layout.tsx` (`<html lang>` locale'dan; `generateStaticParams` + `setRequestLocale` — statik render).
+- Fayllar: `src/i18n/routing.ts` (locale ro'yxati `@drinks/shared` `Locale` enumidan), `src/i18n/navigation.ts` (`Link`, `useRouter`, `usePathname`, `redirect` — `next/link`/`next/navigation` o'rniga shularni ishlating), `src/i18n/request.ts` (xabarlarni yuklash), `src/proxy.ts` (prefikssiz yo'l → locale'ga redirect; `api`, `_next` va fayllar chiqarib tashlangan). Kalitlar tiplangan: `src/global.d.ts` (`AppConfig.Messages` = `uz.json` shakli) — mavjud bo'lmagan kalit `typecheck` da xato.
+- Prefikssiz yo'l (`/`) uchun til: `NEXT_LOCALE` cookie → brauzer `Accept-Language` → `uz` (next-intl standarti; OQ-16).
+- Til almashtirgich (`src/components/locale-switcher.tsx`) URL prefiksini almashtiradi, cookie'ni next-intl yozadi. Foydalanuvchi tanlagan til `user.locale` da saqlanadi (`features/i18n/actions.ts` → `saveUserLocale`, hozircha T-201/T-104 gacha bo'sh — `HOOK` izohi), login'dan keyin shu tilga yo'naltiriladi (T-201).
+- Tarjima kalitlari modul bo'yicha: `products.title`, `errors.INSUFFICIENT_STOCK`, `enums.CashTxType.TRAVEL_EXPENSE`. `apps/web/test/messages.test.ts` tekshiradi: `uz.json` va `ru.json` kalitlari bir xil, bo'sh qiymat yo'q, `errors.*` = `ErrorCode` ro'yxati, `enums.*` = `shared/enums.ts` a'zolari. Yangi xato kodi yoki enum qo'shilsa — ikkala faylga tarjima qo'shilmaguncha test qizil.
+- O'zbekcha matnlarda `oʻ`/`gʻ` uchun U+02BB (ʻ), tutuq belgisi uchun U+02BC (ʼ) ishlatiladi — oddiy `'` ICU formatida maxsus belgi.
 - Foydalanuvchi kiritgan ma'lumot (mahsulot nomi, izohlar) tarjima qilinmaydi.
 - PDF/Excel eksport ham joriy til bo'yicha.
 
