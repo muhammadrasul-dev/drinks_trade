@@ -808,6 +808,7 @@ CREATE INDEX product_name_trgm ON product USING gin (lower(name) gin_trgm_ops);
 - Mahsulot birinchi marta sub-omborga kirganda qator yaratiladi (`INSERT ... ON CONFLICT DO NOTHING`, keyin `FOR UPDATE`).
 - Invariant (test bilan tekshiriladi — `assertInvariants`, architecture §10): `stock_balance.qty = Σ stock_movement.qty_delta` va `product_cost.total_qty = Σ stock_balance.qty (do'kon bo'yicha)`.
 - Sub-ombor arxivlash: faqat undagi barcha `qty = 0` bo'lsa (FR-2.2). Ombor — barcha sub-omborlari bo'sh bo'lsa.
+- Uchala jadvalga faqat `modules/inventory` (`receive` / `issue` / `adjust`, T-401) yozadi — business-logic §1.5. `product_cost.updated_at` / `stock_balance.updated_at` — Prisma `@updatedAt`.
 
 ### 6.3 Hujjatlar (`sale`, `purchase`, `stock_count`)
 - `number` — `doc_sequence` dan, qoralama **yaratilganda** beriladi (qoralama o'chirilsa raqam bo'sh qoladi — bu normal).
