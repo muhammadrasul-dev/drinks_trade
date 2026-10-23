@@ -9,6 +9,7 @@ import {
   type SaleDetail,
   type SaleProductOption,
   stockKeyOf,
+  unitPieces,
   type WarehouseOption,
 } from '@drinks/shared';
 import { SALE_NOTE_MAX, type SaleDraftInput, saleDraftInputSchema } from '@drinks/shared/schemas';
@@ -122,8 +123,7 @@ function defaults(sale: SaleDetail | undefined, today: string, firstSub: string)
 /** Pieces of a line (BR-1), 0 while it is incomplete. */
 function piecesOf(line: Partial<LineValues> | undefined, product?: SaleProductOption): number {
   if (!line?.inputQty || !product) return 0;
-  const qty =
-    line.inputUnit === QtyUnit.BLOCK ? line.inputQty * product.unitsPerBlock : line.inputQty;
+  const qty = unitPieces(line.inputUnit ?? QtyUnit.PIECE, line.inputQty, product.unitsPerBlock);
   return Number.isSafeInteger(qty) ? qty : 0;
 }
 

@@ -8,6 +8,7 @@ import {
   splitPieces,
   type StockCountDetail,
   type StockCountRow,
+  toPieces,
 } from '@drinks/shared';
 import { STOCK_COUNT_NOTE_MAX, STOCK_COUNT_QTY_MAX } from '@drinks/shared/schemas';
 import { Button } from '@drinks/ui/components/button';
@@ -70,7 +71,7 @@ function isCounted(entry: Entry | undefined): entry is Entry {
 }
 
 function countedQty(entry: Entry, unitsPerBlock: number): number {
-  return Number(entry.blocks || 0) * unitsPerBlock + Number(entry.pieces || 0);
+  return toPieces(Number(entry.blocks || 0), Number(entry.pieces || 0), unitsPerBlock);
 }
 
 /** Digits only, capped like the schema (STOCK_COUNT_QTY_MAX). */
