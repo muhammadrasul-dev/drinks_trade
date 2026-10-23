@@ -43,6 +43,7 @@ import type { z } from 'zod';
 
 import type { ServiceContext } from '../../core/context';
 import { resolveStoreDate, storeDayRange } from '../../core/dates';
+import { assertLineProductsUnchanged } from '../../core/doc-lines';
 import { lockCashboxes, lockDebt, lockPurchase, lockWarehouses } from '../../core/locks';
 import { decimalToString, moneyToBigInt, moneyToNumber } from '../../core/money';
 import { nextDocNumber } from '../../core/numbering';
@@ -472,37 +473,6 @@ const POST_SELECT = {
 type PostRow = Prisma.PurchaseGetPayload<{ select: typeof POST_SELECT }>;
 
 /**
- * Products must still be active, and a BLOCK line must still hold
- * inputQty × the product's current units per block (OQ-06); otherwise the
- * user re-saves the draft, which recomputes the pieces.
- */
-function assertProductsUnchanged(lines: PostRow['lines']): void {
-  for (const line of lines) {
-    if (line.product.archivedAt !== null) {
-      throw new DomainError(ErrorCode.ENTITY_ARCHIVED, {
-        entity: 'product',
-        name: line.product.name,
-      });
-    }
-  }
-  const changed = lines.filter(
-    (line) =>
-      line.inputUnit === QtyUnit.BLOCK && line.qty !== line.inputQty * line.product.unitsPerBlock,
-  );
-  if (changed.length > 0) {
-    throw new DomainError(ErrorCode.UNITS_PER_BLOCK_CHANGED, {
-      lines: changed.map((line) => ({
-        lineNo: line.lineNo,
-        productId: line.productId,
-        product: line.product.name,
-        qty: line.qty,
-        unitsPerBlock: line.product.unitsPerBlock,
-      })),
-    });
-  }
-}
-
-/**
  * Posts a draft (BR-4): goods enter the chosen sub-warehouses, the average
  * cost is recalculated (BR-6), the cash and card parts leave their cashboxes
  * and the credit part opens a PAYABLE debt — one transaction, locks in
@@ -542,7 +512,7 @@ async function post(ctx: ServiceContext, input: PurchasePostInput): Promise<Purc
     await lockWarehouses(tx, ctx.storeId, warehouseIds);
     await warehouses.assertNoOpenStockCount(tx, ctx, warehouseIds);
     await warehouses.resolveActive(tx, ctx, subWarehouseIds);
-    assertProductsUnchanged(doc.lines);
+    assertLineProductsUnchanged(doc.lines);
 
     // 4. Cashboxes of the paid parts. cash.record re-checks the balance; this
     //    pre-check just fails before any stock moves. No amounts in the error.

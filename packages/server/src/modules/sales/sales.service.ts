@@ -48,6 +48,7 @@ import type { z } from 'zod';
 
 import type { ServiceContext } from '../../core/context';
 import { resolveStoreDate, storeDayRange } from '../../core/dates';
+import { assertLineProductsUnchanged } from '../../core/doc-lines';
 import { lockCashboxes, lockSale, lockWarehouses } from '../../core/locks';
 import { moneyToBigInt, moneyToNumber } from '../../core/money';
 import { nextDocNumber } from '../../core/numbering';
@@ -546,29 +547,7 @@ type PostRow = Prisma.SaleGetPayload<{ select: typeof POST_SELECT }>;
  * recomputes pieces, prices and the total.
  */
 function assertProductsUnchanged(lines: PostRow['lines']): void {
-  for (const line of lines) {
-    if (line.product.archivedAt !== null) {
-      throw new DomainError(ErrorCode.ENTITY_ARCHIVED, {
-        entity: 'product',
-        name: line.product.name,
-      });
-    }
-  }
-  const blockChanged = lines.filter(
-    (line) =>
-      line.inputUnit === QtyUnit.BLOCK && line.qty !== line.inputQty * line.product.unitsPerBlock,
-  );
-  if (blockChanged.length > 0) {
-    throw new DomainError(ErrorCode.UNITS_PER_BLOCK_CHANGED, {
-      lines: blockChanged.map((line) => ({
-        lineNo: line.lineNo,
-        productId: line.productId,
-        product: line.product.name,
-        qty: line.qty,
-        unitsPerBlock: line.product.unitsPerBlock,
-      })),
-    });
-  }
+  assertLineProductsUnchanged(lines);
   const priceChanged = lines.filter((line) => line.unitPrice !== line.product.salePrice);
   if (priceChanged.length > 0) {
     throw new DomainError(ErrorCode.SALE_PRICE_CHANGED, {
