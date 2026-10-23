@@ -30,6 +30,8 @@ SRS'dagi biznes savollar yopilgan. Bu yerda — arxitektura va DB loyihalashda c
 
 **2026-10-23 (T-902):** OQ-39 va OQ-40 ochildi — bosh sahifadagi "Kam qolgan mahsulotlar" blokida arxivlangan mahsulotlar, ro'yxat hajmi va tartibi; tavsiya bo'yicha qilingan, javob kutilmoqda.
 
+**2026-10-23 (T-804):** OQ-41, OQ-42 va OQ-43 ochildi — eksport tili, Excel faylining ustunlari va P&L ishoralari, fayl nomi; tavsiya bo'yicha qilingan, javob kutilmoqda.
+
 | # | Savol | Tavsiya | Holat |
 |---|---|---|---|
 | OQ-01 | Storno qilingan savdo P&L'da qaysi sanada aks etadi? | Asl hujjat sanasida (hujjat davr hisobidan butunlay chiqadi) | Yopilgan — asl sanada (A) |
@@ -70,6 +72,9 @@ SRS'dagi biznes savollar yopilgan. Bu yerda — arxitektura va DB loyihalashda c
 | OQ-36 | P&L davri tanlanmasdan ochilsa qaysi davr? "Oy" va "Yil" — to'liq kalendar oy/yilmi yoki bugungacha? | 1) Joriy oy; 2) to'liq kalendar oy/yil (kelajakdagi kunlar bo'sh — summa bugungacha bilan bir xil), ‹ › bilan qo'shni davrga, kelajakka emas | Ochiq — tavsiya bo'yicha qilingan (T-803) |
 | OQ-39 | Bosh sahifadagi "Kam qolgan mahsulotlar" blokida arxivlangan mahsulotlar ko'rinadimi? | Yo'q — faqat faol mahsulotlar; "Qoldiq hisobotida ko'rish" havolasi ham faqat faollarni ochadi (`?low=1&archived=0`), son bir xil | Ochiq — tavsiya bo'yicha qilingan (T-902) |
 | OQ-40 | Blokda nechta mahsulot va qaysi tartibda ko'rsatiladi? | Jami soni + eng ko'p kamaygan 10 tasi (`qoldiq / minimal` o'sish tartibida — qoldig'i 0 lar birinchi; teng bo'lsa nom bo'yicha); qolganlari — "Yana N ta" va hisobotga havola | Ochiq — tavsiya bo'yicha qilingan (T-902) |
+| OQ-41 | PDF/Excel eksport qaysi tilda: foydalanuvchi turgan sahifa tilidami yoki profilida saqlangan tilda? | Sahifa tilida (`/uz/...` → o'zbekcha, `/ru/...` → ruscha; tugma `?locale=` bilan yuboradi), parametr bo'lmasa yoki noto'g'ri bo'lsa — `user.locale` | Ochiq — tavsiya bo'yicha qilingan (T-804) |
+| OQ-42 | Excel faylida qaysi ustunlar va P&L chiqimlari qanday ishora bilan? | PDF — ekrandagi ustunlar; Excel — ekran ustunlari + alohida toifa / brend / SKU, miqdor donada raqam bilan (va matnda blok+dona), qoldiqda minimal qoldiq va "Kam qoldi"; jami — `SUM()` formulasi; P&L chiqimlari manfiy son, foyda manfiy bo'lsa qizil; o'rtacha tannarx 2 kasr bilan | Ochiq — tavsiya bo'yicha qilingan (T-804) |
+| OQ-43 | Yuklab olinadigan fayl nomi qanday? | Tarjima qilingan hisobot nomi + davr: `savdo_2026-10-01_2026-10-23.xlsx`, `qoldiq_2026-10-23.pdf` (bugungi sana), `foyda-zarar_2026-10.pdf` (oy / kun / yil / oraliq); eski brauzerlar uchun inglizcha ASCII nom (`sales_…`) | Ochiq — tavsiya bo'yicha qilingan (T-804) |
 
 ---
 
@@ -279,3 +284,22 @@ T-902. Necha mahsulot ko'rsatilishi va tartibi aytilmagan; mahsulotlar soni o'si
 - **B:** nom bo'yicha (qoldiq hisoboti kabi), shu 10 ta.
 - **C:** hammasi, cheklovsiz.
 B ga o'tish — `dashboard.queries.ts` dagi `low.sort(compareStockShortage)` ni olib tashlash; C — `slice` ni olib tashlash (+ `dashboard.int.test.ts` dagi OQ-40 testi).
+
+### OQ-41 — Eksport tili
+T-804. Architecture §7: "PDF/Excel eksport ham joriy til bo'yicha" — lekin Route Handler (`/api/...`) til prefiksisiz, ikki manba bor: foydalanuvchi turgan sahifaning tili (URL) va profilida saqlangan til (`user.locale`, til almashtirgich yozadi). Odatda ikkalasi bir xil; farq qiladi, masalan, boshqa qurilmada boshqa tilda ochilgan sahifada.
+- **A (tavsiya, T-804 da shunday):** sahifa tili — eksport tugmasi havolasiga `?locale=` qo'shiladi (`reportExportHref`); parametr yo'q yoki noto'g'ri bo'lsa — `user.locale`. Ekranda ko'rgan narsasi qaysi tilda bo'lsa, fayl ham shunda.
+- **B:** doim `user.locale` (`?locale=` e'tiborsiz).
+B ga o'tish — `app/api/reports/[report]/export/route.ts` da `locale` ni faqat `session.user.locale` dan olish (+ `route.test.ts` dagi til testi).
+
+### OQ-42 — Excel faylining ustunlari va P&L ishoralari
+T-804. ADR-010 faqat "raqamlar raqam formatida, so'm formati bilan" deydi. Ekrandagi jadval katakchalari bir nechta ma'lumotni birlashtiradi (mahsulot + toifa · brend · SKU; "3 blok 2 dona / = 20 dona"), Excel'da esa saralash va yig'ish uchun alohida ustunlar qulay.
+- **A (tavsiya, T-804 da shunday):** PDF — ekrandagi ustunlar va ko'rinish (mahsulot ostida toifa · brend · SKU, miqdor blok+dona va "= N dona", "Kam qoldi"). Excel — mahsulot nomi ("(arxiv)" belgisi bilan), toifa, brend, SKU alohida; miqdor matnda (blok+dona) va donada **raqam** bilan; qoldiq hisobotida minimal qoldiq (dona), "Kam qoldi" ustuni, ombor/sub-ombor filtri bo'lsa "Do'konda jami, dona"; pul — `#,##0 "soʻm"` formatli raqam, o'rtacha tannarx — 2 kasr bilan (to'liq qiymat), foyda manfiy bo'lsa qizil; jami qatori — `SUM()` formulasi (natijasi server jamisi). P&L — "Ko'rsatkich / Izoh / Summa": chiqimlar (tannarx, yo'l kira, kamomad) **manfiy** son, yalpi va sof foyda manfiy bo'lsa qizil. Tannarx/foyda ustunlari faqat server javobida bo'lsa (STAFF — yo'q, CLAUDE.md 6-qoida). Joylashuv "Ombor / Sub-ombor" ko'rinishida (ekrandagi "→" o'rniga: PDF shriftida bu belgi yo'q).
+- **B:** Excel ham ekrandagi ustunlarning o'zi (birlashtirilgan katakchalar matn sifatida).
+- **C:** P&L chiqimlari Excel'da musbat (ekrandagi kabi alohida "−" belgisiz).
+B ga o'tish — `features/reports/export/{stock,sales}-document.ts` dagi `only: 'xlsx'` ustunlarni olib tashlash va `only: 'pdf'` larni ikkala formatga ochish; C — `pnl-document.ts` dagi `minus()` ni olib tashlash (+ `documents.test.ts`).
+
+### OQ-43 — Eksport fayli nomi
+T-804. Nom aytilmagan.
+- **A (tavsiya, T-804 da shunday):** `<tarjima qilingan nom>_<davr>.<pdf|xlsx>`: qoldiq — bugungi sana (`qoldiq_2026-10-23.pdf`, ru `остатки_…`), savdo — `from_to` (`savdo_2026-10-01_2026-10-23.xlsx`; bir kun — bitta sana, ochiq chet — bo'sh: `2026-10-01_`), P&L — kun / oy / yil / oraliq (`foyda-zarar_2026-10.pdf`). `Content-Disposition` da `filename*` (UTF-8, kirill ham) va eski brauzerlar uchun inglizcha ASCII `filename` (`sales_2026-10-01_2026-10-23.xlsx`).
+- **B:** faqat inglizcha ASCII nom (`sales_…`) — har qanday tizimda xavfsiz, lekin foydalanuvchi tilida emas.
+B ga o'tish — `features/reports/export/export-links.ts` dagi `contentDisposition` da `filename*` ni olib tashlash (+ `export-links.test.ts`, `route.test.ts`).
