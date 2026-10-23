@@ -413,8 +413,8 @@ SEED_OWNER_PASSWORD=change-me
 | `pnpm format` / `format:check` | Prettier (yozish / tekshirish) |
 | `pnpm typecheck` / `build` | turbo orqali |
 
-### 8.4 Production (keyingi bosqich — SRS 8: "texnologiya, joylashtirish keyin")
-`compose.prod.yml`: `web` (Next.js `output: 'standalone'`, `web.Dockerfile` multi-stage), `postgres`, bir martalik `migrate` servisi (`prisma migrate deploy`), kunlik `pg_dump` backup. Joylashtirish platformasi ochiq savol (OQ-12).
+### 8.4 Production — kerak emas
+Loyiha faqat lokal (stage) muhitda ishlaydi (OQ-12 yopilgan, T-1003 bekor qilingan). Production Docker/deploy rejalashtirilmagan; kerak bo'lsa yangi vazifa sifatida qayta ko'riladi.
 
 ## 9. Fayl saqlash
 Mahsulot rasmi (FR-1.1) — v1 da server diskidagi `UPLOAD_DIR` (Docker volume). Kod `StorageAdapter` interfeysi orqali yozadi, keyin S3/MinIO ga o'tish oson. Rasm hajmi ≤ 2 MB, formatlar: jpg/png/webp; serverda 512px gacha kichraytiriladi (sharp).

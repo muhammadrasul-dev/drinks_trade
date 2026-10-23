@@ -628,3 +628,11 @@ okey fix this ui issue and refactor mainly logics and functions places in new se
 ```
 yes, first run tests and merge and push to main
 ```
+
+---
+
+## Prompt 64 — OQ-12 ni yopish, T-1003 ni bekor qilish, eski branch'ni o'chirish (2026-10-23)
+
+```
+yes, do theese works and give information after that
+```

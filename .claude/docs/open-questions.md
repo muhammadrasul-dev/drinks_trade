@@ -47,7 +47,7 @@ SRS'dagi biznes savollar yopilgan. Bu yerda — arxitektura va DB loyihalashda c
 | OQ-09 | Xarid storno'sida o'rtacha tannarx | Formula bilan qayta hisob; manfiy chiqsa 0 | Yopilgan — qayta hisoblanadi |
 | OQ-10 | Login va parolni tiklash | Username + parol; parolni Egasi qayta o'rnatadi | Yopilgan — har kimning o'z logini; xodim akkauntlarini Egasi boshqaradi |
 | OQ-11 | Alohida backend servis (apps/api) kerakmi? | Hozir yo'q — Next.js + `packages/server` | Yopilgan — yo'q, v1 faqat web, mobil yo'q |
-| OQ-12 | Production qayerda ishlaydi? | Keyingi bosqich (VPS + Docker Compose tavsiya) | Keyinga |
+| OQ-12 | Production qayerda ishlaydi? | Keyingi bosqich (VPS + Docker Compose tavsiya) | Yopilgan — production kerak emas, loyiha faqat lokal (stage) ishlaydi |
 | OQ-13 | Inventarizatsiyada kiritilmagan (sanalmagan) qator | O'zgarishsiz qoladi; nol — faqat aniq "0" kiritilsa | Yopilgan — o'zgarishsiz qoladi |
 | OQ-14 | Xodim boshqa foydalanuvchi yaratgan qoralamani tahrirlay oladimi? | Ha (kichik jamoa); hammasi audit'da | Yopilgan — ha |
 | OQ-15 | Sotuv narxi dona uchunmi? | Ha, `sale_price` = 1 dona narxi; blok = narx × dona soni | Yopilgan — ha, dona uchun |
@@ -329,3 +329,5 @@ T-804. Nom aytilmagan.
 - **A (tavsiya, T-804 da shunday):** `<tarjima qilingan nom>_<davr>.<pdf|xlsx>`: qoldiq — bugungi sana (`qoldiq_2026-10-23.pdf`, ru `остатки_…`), savdo — `from_to` (`savdo_2026-10-01_2026-10-23.xlsx`; bir kun — bitta sana, ochiq chet — bo'sh: `2026-10-01_`), P&L — kun / oy / yil / oraliq (`foyda-zarar_2026-10.pdf`). `Content-Disposition` da `filename*` (UTF-8, kirill ham) va eski brauzerlar uchun inglizcha ASCII `filename` (`sales_2026-10-01_2026-10-23.xlsx`).
 - **B:** faqat inglizcha ASCII nom (`sales_…`) — har qanday tizimda xavfsiz, lekin foydalanuvchi tilida emas.
 B ga o'tish — `features/reports/export/export-links.ts` dagi `contentDisposition` da `filename*` ni olib tashlash (+ `export-links.test.ts`, `route.test.ts`).
+
+**2026-10-23 (Prompt 64):** OQ-12 yopildi — production kerak emas, loyiha faqat lokal (stage) ishlaydi. T-1003 bekor qilindi.

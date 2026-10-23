@@ -17,7 +17,7 @@ Bog'liq: [01-srs.md](01-srs.md) · [architecture.md](architecture.md) · [databa
 6. Shu fayldagi vazifa holatini yangilaydi, hujjatlarda o'zgarish bo'lsa ularni ham yangilaydi.
 7. Qisqa hisobot beradi (o'zbekcha): nima qilindi, qanday tekshirildi, nima qoldi.
 
-**Holatlar:** `⬜` boshlanmagan · `🟡` jarayonda · `✅` tayyor · `⏸` to'xtatilgan (sababi izohda)
+**Holatlar:** `⬜` boshlanmagan · `🟡` jarayonda · `✅` tayyor · `⏸` to'xtatilgan (sababi izohda) · `❌` bekor qilingan
 
 **Qoidalar:**
 - Bir vaqtda bitta vazifa `🟡` bo'ladi.
@@ -41,7 +41,7 @@ Bog'liq: [01-srs.md](01-srs.md) · [architecture.md](architecture.md) · [databa
 | 7 | Kassa va qarzlar | T-701 … T-704 | ✅ |
 | 8 | Hisobotlar va eksport | T-801 … T-804 | ✅ |
 | 9 | Audit va bosh sahifa | T-901 … T-902 | ✅ |
-| 10 | Yakuniy sinov va relizga tayyorlash | T-1001 … T-1003 | 🟡 |
+| 10 | Yakuniy sinov va relizga tayyorlash | T-1001 … T-1003 | ✅ |
 
 **Birinchi ishlaydigan natija (MVP):** 0–5-bosqichlardan keyin — login, mahsulot va ombor, xarid, savdo, qoldiq. Shu yerda foydalanuvchi bilan oraliq ko'rik o'tkaziladi.
 
@@ -320,7 +320,7 @@ Tayyor bo'lishi uchun (umumiy): STAFF savdo hisobotida tannarx/foyda maydonlari 
 |---|---|---|---|---|
 | T-1001 | E2E testlar (Playwright) | T-902 | architecture §10 | ✅ |
 | T-1002 | Hujjatlarni yakunlash (user-guide skrinshotlar bilan) | T-1001 | user-guide | ✅ |
-| T-1003 | Production Docker va deploy | T-1001, OQ-12 | architecture §8.4 | ⏸ OQ-12 kutilmoqda |
+| T-1003 | Production Docker va deploy | T-1001, OQ-12 | architecture §8.4 | ❌ bekor qilindi (OQ-12: production kerak emas) |
 
 **T-1001** — oqimlar: login → mahsulot → xarid → savdo → qoldiq hisoboti; STAFF foyda/kassani ko'rmaydi; inventarizatsiya bloki; til almashtirish.
 
@@ -394,3 +394,4 @@ Tayyor bo'lishi uchun (umumiy): STAFF savdo hisobotida tannarx/foyda maydonlari 
 | 2026-10-23 | T-804 `claude/t-804-integration` branch'ida main (`c5d9ea7`, T-1001 bilan) ustiga birlashtirildi (Prompt 56; konfliktlar tasks/open-questions/architecture va `pnpm-lock.yaml` da — lockfile `pnpm install` bilan qayta yig'ildi). E2E (6/6) T-804 eksport tugmalari bilan ham o'tadi. Refactor: tranzaksiya ichidagi `Promise.all` lar (`inventory.assertInStore`, `stockCounts` `toDetail`) ketma-ket so'rovga o'tkazildi — tranzaksiya bitta ulanish, pg@9 da bir vaqtdagi `client.query()` olib tashlanadi. Testlarda qolgan "already executing a query" ogohlantirishi `@prisma/adapter-pg` 7.10.1 ning o'zidan (stack Prisma ichida), bizning koddan emas. |
 | 2026-10-23 | "Umumiy holat" jadvalida 3, 5, 7-bosqichlar `⬜` qolgan edi (ularning barcha vazifalari ✅) — `✅` ga tuzatildi (Prompt 61). |
 | 2026-10-23 | Savdo formasi 1280 px da toshishi tuzatildi va refactor (Prompt 62, `claude/sale-form-fix-refactor-d44480` branch). **Sabab:** `LINE_GRID` ustunlarining minimal kengligi yig'indisi ~1044 px (12rem mahsulot + 10rem sub-ombor + qat'iy 6–8rem ustunlar), 1280 px da sidebar va padding'dan keyin ~930 px qoladi — sahifa 1312 px bo'lib ketardi (xarid formasida ham shu naqsh, lekin 1024 px da). **Tuzatish** (alohida sessiya yozgan `fix/sale-form-1280-overflow` o'zgarishi olindi): ustunlar torroq, jadval ko'rinishiga o'tish sotuvda `md` → `xl`, xaridda `md` → `lg` (undan torroqda qator karta). Inventarizatsiya formasi (`lg`, 6 ustun) 1024 px da tekshirildi — toshmaydi. **Himoya:** `apps/e2e/tests/form-layout.spec.ts` (inventarizatsiya formasi — `stock-count-block.spec.ts` ichida; yordamchi `support/layout.ts`) — sotuv, xarid va inventarizatsiya formalarida 1440/1280/1024/768/390 px da sahifa gorizontal skrolli va karta chegarasidan chiqqan boshqaruv elementlari yo'qligini tekshiradi (eski kodda 1280 da `1312 > 1280` bilan yiqiladi). **Refactor (xatti-harakat o'zgarmadi):** `isUniqueViolation` 4 nusxadan `core/tx.ts` ga; `keyOf` (inventory, stock-counts) o'rniga shared `stockKeyOf`; qatordagi dona formulasi (3 joyda) → shared `unitPieces`, inventarizatsiya formasidagi `countedQty` → `toPieces`; ikkala `computeLines` dagi mahsulotlarni yuklash → `core/doc-lines.ts` `loadActiveProducts`; to'lov yig'indisi (4 joyda) → shared `paymentSum`; `toNumber`/`toAmount` (4 nusxa) → `apps/web/src/lib/number-input.ts`; `useAvailability` hook → `features/sales/use-availability.ts`; `ProductPicker` va `DocStatusBadge` `features/purchases` dan `apps/web/src/components` ga (savdo/inventarizatsiya purchases'ga bog'lanmaydi). conventions §3 ga joylashuv qoidasi, architecture §3 ga umumiy komponentlar qo'shildi. Tekshiruv: `pnpm lint`, `typecheck`, `test`, `test:int` (52 + 349), `test:e2e`. |
+| 2026-10-23 | OQ-12 yopildi: production kerak emas, loyiha faqat lokal (stage) ishlaydi (Prompt 64). T-1003 `❌` bekor qilindi, 10-bosqich `✅`. Avval tayyorlangan VPS/Caddy/backup fayllari (`claude/t-1003-prod-docker-6af26e`) main'ga qo'shilmadi, branch o'chirildi. |
