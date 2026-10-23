@@ -305,6 +305,60 @@
       "STOCK_COUNT": "Inventarizatsiya"
     }
   },
+  "cash": {
+    "title": "Kassa",
+    "journal": "Kassa jurnali",
+    "empty": "Yozuv topilmadi.",
+    "entered": "Kiritilgan: {date}",
+    "balances": {
+      "label": "Kassa balanslari",
+      "updatedAt": "Oxirgi oʻzgarish: {date}"
+    },
+    "filters": {
+      "label": "Filtrlar",
+      "from": "dan",
+      "to": "gacha",
+      "cashbox": "Kassa",
+      "allCashboxes": "Barcha kassalar",
+      "type": "Turi",
+      "allTypes": "Barcha turlar",
+      "direction": "Yoʻnalish",
+      "allDirections": "Kirim va chiqim",
+      "reset": "Tozalash"
+    },
+    "totals": {
+      "label": "Tanlangan yozuvlar boʻyicha jami",
+      "in": "Kirim:",
+      "out": "Chiqim:",
+      "count": "Yozuvlar:"
+    },
+    "columns": {
+      "id": "№",
+      "date": "Sana",
+      "cashbox": "Kassa",
+      "type": "Turi",
+      "amount": "Summa",
+      "balanceAfter": "Balans",
+      "reference": "Asos",
+      "note": "Izoh",
+      "author": "Kiritgan"
+    },
+    "reference": {
+      "purchase": "Xarid {number}",
+      "sale": "Savdo {number}",
+      "debt": "Qarz: {direction}",
+      "transferTo": "→ {cashbox}",
+      "transferFrom": "← {cashbox}",
+      "reversalOf": "#{id} yozuv stornosi",
+      "reversedBy": "Storno qilingan (#{id})"
+    },
+    "pagination": {
+      "label": "Sahifalar",
+      "range": "{from}–{to} / {total}",
+      "prev": "Oldingi",
+      "next": "Keyingi"
+    }
+  },
   "products": {
     "title": "Mahsulotlar",
     "add": "Mahsulot qoʻshish",
