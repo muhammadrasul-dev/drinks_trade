@@ -85,3 +85,27 @@ export interface SalesReport {
     grossProfit?: number;
   };
 }
+
+/**
+ * P&L of a period (T-803, BR-11, business-logic §8, database §7.3). OWNER
+ * only (`report.pnl`) — the whole report is confidential, so there is no
+ * reduced STAFF variant. Whole som; every line is ≥ 0 except the profits.
+ */
+export interface PnlReport {
+  /** Σ sale.total_amount of POSTED sales dated in the period (credit sales too). */
+  revenue: number;
+  /** Σ sale.cost_total of the same sales — the cost frozen at posting (BR-6). */
+  cogs: number;
+  /** revenue − cogs. */
+  grossProfit: number;
+  /** Σ TRAVEL_EXPENSE dated in the period that were not reversed. */
+  travelExpense: number;
+  /** Σ |stock_count_result.amount| over amount < 0, POSTED counts dated in the period ("Kamomad"). */
+  stockShortage: number;
+  /** Σ stock_count_result.amount over amount > 0 of the same counts ("Ortiqcha"). */
+  stockSurplus: number;
+  /** grossProfit − travelExpense − stockShortage + stockSurplus. */
+  netProfit: number;
+  /** How many records each line sums: posted sales, travel expenses, posted stock counts. */
+  counts: { sales: number; travelExpenses: number; stockCounts: number };
+}
