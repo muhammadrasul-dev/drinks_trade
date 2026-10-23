@@ -293,7 +293,7 @@ describe('stock report: filters', () => {
     ]);
   });
 
-  it('low stock: store-wide total below the minimum, out-of-stock included (OQ-27)', async () => {
+  it('low stock: store-wide total below the minimum, out-of-stock included (OQ-28)', async () => {
     const low = await product({ name: 'Cola', minStock: 12 });
     const enough = await product({ name: 'Fanta', minStock: 5 });
     const noMin = await product({ name: 'Pepsi', minStock: 0 });

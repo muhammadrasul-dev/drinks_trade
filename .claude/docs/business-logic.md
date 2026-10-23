@@ -303,7 +303,7 @@ Filtr: kun / oy / yil / ixtiyoriy oraliq (Toshkent vaqti).
 
 ## 9. Kam qoldiq ogohlantirishi (FR-1.3)
 `Σ stock_balance.qty (do'kon bo'yicha) < product.minStock` (va `minStock > 0`) → mahsulotlar ro'yxatida belgi + dashboard'da "Kam qolgan mahsulotlar" bloki. Push/SMS yo'q.
-Qoldiq hisobotida (T-801) ham shu qoida: `lowStock` ombor filtridan qat'i nazar do'kon bo'yicha jamiga qarab; "Kam qolganlar" filtri qoldig'i 0 mahsulotlarni ham ko'rsatadi (OQ-27).
+Qoldiq hisobotida (T-801) ham shu qoida: `lowStock` ombor filtridan qat'i nazar do'kon bo'yicha jamiga qarab; "Kam qolganlar" filtri qoldig'i 0 mahsulotlarni ham ko'rsatadi (OQ-28).
 Amalda (T-303): `isLowStock(stockQty, minStock)` (`@drinks/shared`); `stockQty` = `product_cost.total_qty` (invariant bo'yicha `Σ stock_balance.qty` ga teng) — `inventory.getProductTotals` orqali; DTO'da `stockQty`, `lowStock`.
 
 ## 9a. Toifa va brend (T-302, FR-1.1)

@@ -34,7 +34,7 @@ const PRODUCT_SELECT = {
  * Products with stock in the store (or in the chosen warehouse /
  * sub-warehouse), by name. With `lowStock` only products whose store-wide
  * stock is below their minimum; without a location filter that includes
- * products with no stock at all (OQ-27).
+ * products with no stock at all (OQ-28).
  */
 async function stock(ctx: ServiceContext, query: StockReportQuery = {}): Promise<StockReport> {
   assertCan(ctx.user, 'report.stock');

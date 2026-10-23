@@ -16,7 +16,7 @@ SRS'dagi biznes savollar yopilgan. Bu yerda — arxitektura va DB loyihalashda c
 
 **2026-10-23:** OQ-25 (T-901) yopildi — B: audit jurnalida faqat joriy do'kon yozuvlari.
 
-**2026-10-23 (T-801):** OQ-27 ochildi — qoldiq hisobotidagi mahsulotlar va tannarx ustunlari; tavsiya bo'yicha qilingan, javob kutilmoqda.
+**2026-10-23 (T-801):** OQ-28 ochildi — qoldiq hisobotidagi mahsulotlar va tannarx ustunlari; tavsiya bo'yicha qilingan, javob kutilmoqda.
 
 | # | Savol | Tavsiya | Holat |
 |---|---|---|---|
@@ -45,7 +45,7 @@ SRS'dagi biznes savollar yopilgan. Bu yerda — arxitektura va DB loyihalashda c
 | OQ-20 | Omborda qoldig'i bor mahsulotni arxivlash mumkinmi? | Ha — ruxsat, tasdiqlash oynasida qolgan miqdor va "sotib bo'lmaydi" ogohlantirishi; arxivdan istalgan payt chiqariladi | Yopilgan — A: ruxsat, ogohlantirish bilan |
 | OQ-24 | Kassa jurnali qaysi tartibda ko'rsatiladi: hisobot sanasi (`tx_date`) yoki kiritilgan vaqt bo'yicha? | `tx_date` bo'yicha, yangisi tepada (teng bo'lsa — keyin kiritilgani tepada); o'tgan sana bilan kiritilgan yozuvlarda `balance_after` ketma-ket bo'lmasligi mumkin | Yopilgan — A (2026-10-23) |
 | OQ-25 | Audit jurnalida do'konga bog'lanmagan (`store_id IS NULL`) yozuvlar — muvaffaqiyatsiz kirish (`LOGIN_FAILED`) — Egasiga ko'rinadimi? | Ha — o'z tashkilotidagi foydalanuvchi haqidagilari va noma'lum login bilan urinishlar | Yopilgan — B (foydalanuvchi, 2026-10-23) |
-| OQ-27 | Qoldiq hisobotida qaysi mahsulotlar chiqadi va tannarx ustunlari qaysi ruxsat bilan? | Qoldig'i bor (`qty > 0`) mahsulotlar; "Kam qolganlar" filtrida (joylashuv filtrisiz) qoldig'i 0 bo'lganlari ham; tannarx/qiymat — `report.sales.cost` (faqat Egasi), yangi ruxsat yo'q | Ochiq — tavsiya bo'yicha qilingan (T-801) |
+| OQ-28 | Qoldiq hisobotida qaysi mahsulotlar chiqadi va tannarx ustunlari qaysi ruxsat bilan? | Qoldig'i bor (`qty > 0`) mahsulotlar; "Kam qolganlar" filtrida (joylashuv filtrisiz) qoldig'i 0 bo'lganlari ham; tannarx/qiymat — `report.sales.cost` (faqat Egasi), yangi ruxsat yo'q | Ochiq — tavsiya bo'yicha qilingan (T-801) |
 
 ---
 
@@ -159,7 +159,7 @@ T-901. `audit_log.store_id` ixtiyoriy: `LOGIN_FAILED` (`auth.service`) sessiyasi
 - **B (tanlandi, T-901 da shunday):** faqat `store_id = joriy do'kon` — muvaffaqiyatsiz kirishlar jurnalda ko'rinmaydi (faqat `login_attempt` blokida ishlaydi).
 A ga qaytish — `audit.queries.ts` dagi `where` ga `store_id IS NULL`, `entity_type = 'user'` (o'z tashkiloti foydalanuvchilari) shartini `OR` bilan qo'shish, `LOGIN_FAILED` ni `AUDIT_ACTIONS` va tarjimalarga qaytarish (+ test).
 
-### OQ-27 — Qoldiq hisobotidagi mahsulotlar va tannarx ustunlari
+### OQ-28 — Qoldiq hisobotidagi mahsulotlar va tannarx ustunlari
 T-801. SRS §7.1 "har mahsulot dona va blokda; joylashuv bo'yicha" deydi; database §7.1 namunasi faqat `sb.qty > 0` qatorlarni oladi. Ikki narsa aniq emas:
 1. **Qoldig'i 0 mahsulot.** Hammasi sotilgan yoki hech qachon kirmagan mahsulot `stock_balance` da `qty > 0` qatoriga ega emas — oddiy ro'yxatda chiqmaydi. Lekin minimal qoldig'i bo'lsa, u eng "kam qolgan" mahsulot (FR-1.3).
    - **A (tavsiya, T-801 da shunday):** oddiy ko'rinishda faqat qoldig'i borlar (database §7.1). "Kam qolganlar" filtri yoqilsa va ombor/sub-ombor tanlanmagan bo'lsa — `minStock > 0` va do'kon bo'yicha jami `< minStock` bo'lgan **barcha** mahsulotlar, qoldig'i 0 bo'lganlari ham (joylashuv "—"). Ombor tanlangan bo'lsa — faqat o'sha joyda qoldig'i borlar, "kam" belgisi esa doim do'kon bo'yicha jamiga qarab (business-logic §9).

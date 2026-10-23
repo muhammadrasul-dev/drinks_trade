@@ -310,7 +310,7 @@ Ruxsatlar `shared/permissions.ts` da yagona joyda:
 | `document.reverse` (storno, shu jumladan qo'lda kassa yozuvlari) | ✅ | ❌ (OQ-03) |
 | `document.paymentSplit.write` (o'z hujjatida Naqd/Karta/Nasiya kiritish) | ✅ | ✅ (OQ-02) |
 | `report.stock`, `report.sales` | ✅ | ✅ |
-| `report.sales.cost` (tannarx/foyda ustunlari; qoldiq hisobotida o'rtacha tannarx va qiymat ham — OQ-27) | ✅ | ❌ |
+| `report.sales.cost` (tannarx/foyda ustunlari; qoldiq hisobotida o'rtacha tannarx va qiymat ham — OQ-28) | ✅ | ❌ |
 | `report.pnl` | ✅ | ❌ |
 | `cash.read`, `cash.write` | ✅ | ❌ |
 | `debt.read`, `debt.write` | ✅ | ❌ |
