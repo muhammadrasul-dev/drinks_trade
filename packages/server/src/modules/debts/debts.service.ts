@@ -2,7 +2,7 @@
 // opens and cancels debt rows. Internal service — callers (manual cash entries,
 // sale/purchase posting and reversal) check permissions, validate input and
 // dates (OQ-07) and take the locks of business-logic §2 themselves. Repayments
-// (debt_repayment, CLOSED) belong to the debts screen (T-704).
+// (debt_repayment, CLOSED) were added with the debts screen (T-704).
 import {
   CashDirection,
   CashTxType,
@@ -60,6 +60,12 @@ export type DebtOpenInput = DebtOpenBase &
     /** Credit part of a purchase being posted: PAYABLE, no cash movement. */
     | { source: 'PURCHASE'; purchaseId: string }
   );
+
+/** Cash entry of a repayment (business-logic §7). */
+export const DEBT_REPAYMENT_CASH_TYPE = {
+  RECEIVABLE: CashTxType.DEBT_REPAID_TO_ME,
+  PAYABLE: CashTxType.DEBT_REPAID_BY_ME,
+} as const satisfies Record<DebtDirection, CashTxType>;
 
 export interface DebtOpenResult {
   id: string;
@@ -205,4 +211,96 @@ export async function cancel(
   });
 
   return { cashTransactionId };
+}
+
+export interface DebtRepayInput {
+  /** Locked by lockCashboxes() before lockDebt() (§2 steps 4 → 5); the user picks it (FR-7.2). */
+  cashbox: Cashbox;
+  /** Whole som, > 0 and ≤ the remaining amount. */
+  amount: number;
+  note?: string | null;
+  /** Defaults to now. Callers validate it (OQ-07). */
+  repaidAt?: Date;
+}
+
+export interface DebtRepayResult {
+  id: string;
+  cashTransactionId: bigint;
+  repaidAmount: number;
+  status: DebtStatus;
+}
+
+/**
+ * Books a (partial) repayment of an OPEN debt of any source: a
+ * DEBT_REPAID_TO_ME (IN) / DEBT_REPAID_BY_ME (OUT) entry on the picked
+ * cashbox, a debt_repayment row and `repaidAmount += amount`; the debt is
+ * CLOSED once fully repaid. More than the remaining amount (a CLOSED debt
+ * has none) → DEBT_OVERPAYMENT; repaying a debt taken beyond the cashbox
+ * balance → CASHBOX_INSUFFICIENT and the caller's transaction rolls back.
+ */
+export async function repay(
+  tx: Tx,
+  ctx: ServiceContext,
+  debt: LockedDebt,
+  input: DebtRepayInput,
+): Promise<DebtRepayResult> {
+  if (!(input.amount > 0)) {
+    throw new RangeError(`Repayment amount must be positive, got ${input.amount}`);
+  }
+  const amount = moneyToBigInt(input.amount);
+  if (debt.status === DebtStatus.CANCELLED) throw new DomainError(ErrorCode.DEBT_CANCELLED);
+  if (input.amount > debt.amount - debt.repaidAmount) {
+    throw new DomainError(ErrorCode.DEBT_OVERPAYMENT);
+  }
+  const note = input.note?.trim() || null;
+  const repaidAt = input.repaidAt ?? new Date();
+
+  const entry = await cash.record(tx, ctx, input.cashbox, {
+    type: DEBT_REPAYMENT_CASH_TYPE[debt.direction],
+    amount: input.amount,
+    txDate: repaidAt,
+    note,
+    debtId: debt.id,
+  });
+  const repayment = await tx.debtRepayment.create({
+    data: {
+      debtId: debt.id,
+      amount,
+      repaidAt,
+      cashTransactionId: entry.id,
+      note,
+      createdById: ctx.user.id,
+    },
+    select: { id: true },
+  });
+  await audit.log(tx, ctx, {
+    action: 'CREATE',
+    entityType: 'debt_repayment',
+    entityId: repayment.id,
+    after: {
+      debtId: debt.id,
+      amount,
+      repaidAt,
+      cashboxId: input.cashbox.id,
+      cashTransactionId: entry.id,
+      note,
+    },
+  });
+
+  const repaidAmount = debt.repaidAmount + input.amount;
+  const status = repaidAmount === debt.amount ? DebtStatus.CLOSED : DebtStatus.OPEN;
+  await tx.debt.update({
+    where: { id: debt.id },
+    data: { repaidAmount: moneyToBigInt(repaidAmount), status },
+    select: { id: true },
+  });
+  await audit.log(tx, ctx, {
+    action: 'UPDATE',
+    entityType: 'debt',
+    entityId: debt.id,
+    before: { repaidAmount: debt.repaidAmount, status: debt.status },
+    after: { repaidAmount, status },
+  });
+
+  return { id: repayment.id, cashTransactionId: entry.id, repaidAmount, status };
 }

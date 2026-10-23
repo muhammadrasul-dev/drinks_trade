@@ -92,15 +92,16 @@ Ikkita kassa: **Naqd** va **Karta**, balanslari alohida. Kassa manfiy bo'lmaydi.
 |---|---|---|
 | Yo'l kira | Kassa → "Chiqim" → Yo'l kira | Xarajat (foydani kamaytiradi) |
 | Boshqa chiqim (masalan, egasi pul oldi) | Kassa → "Chiqim" → Boshqa (izoh majburiy) | Yo'q |
-| Qarz berish / olish | Kassa → "Qarz berish" / "Qarz olish" (izoh majburiy) | Yo'q |
+| Qarz berish / olish | Qarzlar → "Qarz berish" / "Qarz olish" (izoh majburiy) | Yo'q |
 | Kassalar orasida o'tkazma | Kassa → "O'tkazma" | Yo'q |
 
 Xato kiritilgan yozuv (masalan, yo'l kira summasi noto'g'ri) o'chirilmaydi: yozuv yonidagi **Storno** tugmasi teskari yozuv yaratadi, ikkalasi ham jurnalda qoladi.
 
 ## 10. Qarzlar (faqat Egasi)
-- Ikki ro'yxat: **Menga qarz** (nasiya savdo, berilgan qarz) va **Mendan qarz** (nasiya xarid, olingan qarz).
-- Ustunlar: summa, qaytarilgan, qoldiq, izoh, sana.
-- "Qaytarish" → summa (qisman ham mumkin) → kassani tanlang. To'liq qaytsa qarz yopiladi.
+- Tepada ikki karta: **Bizga qarzdor** (nasiya savdo, berilgan qarz) va **Bizning qarzimiz** (nasiya xarid, olingan qarz) — ochiq qarzlar bo'yicha jami qoldiq.
+- Ro'yxat ustunlari: sana, yo'nalish, izoh, summa, qaytarilgan, qoldiq, holat (Ochiq / Yopilgan / Bekor qilingan), manba (qo'lda yoki xarid/savdo raqami). Filtrlar: izoh bo'yicha qidirish, yo'nalish, holat, manba, sana oralig'i.
+- **Qarz berish** — pul tanlangan kassadan chiqadi (kassada yetarli bo'lishi kerak); **Qarz olish** — pul tanlangan kassaga kiradi. Izoh majburiy: kontragent ro'yxati yo'q, kim va nima uchun ekanini izohga yozing.
+- Ochiq qarz yonidagi **Qaytarish** → summa (qisman ham mumkin, qoldiqdan ko'p emas) → kassani va sanani tanlang (qarz sanasidan oldin emas). To'liq qaytsa qarz yopiladi. Qaytarishlar tarixi qator yonidagi strelka bilan ochiladi.
 
 ## 11. Hisobotlar
 Hammasi **PDF** va **Excel**ga yuklab olinadi.

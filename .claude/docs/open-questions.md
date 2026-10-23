@@ -44,6 +44,7 @@ SRS'dagi biznes savollar yopilgan. Bu yerda — arxitektura va DB loyihalashda c
 | OQ-24 | Kassa jurnali qaysi tartibda ko'rsatiladi: hisobot sanasi (`tx_date`) yoki kiritilgan vaqt bo'yicha? | `tx_date` bo'yicha, yangisi tepada (teng bo'lsa — keyin kiritilgani tepada); o'tgan sana bilan kiritilgan yozuvlarda `balance_after` ketma-ket bo'lmasligi mumkin | Yopilgan — A (2026-10-23) |
 | OQ-25 | Audit jurnalida do'konga bog'lanmagan (`store_id IS NULL`) yozuvlar — muvaffaqiyatsiz kirish (`LOGIN_FAILED`) — Egasiga ko'rinadimi? | Ha — o'z tashkilotidagi foydalanuvchi haqidagilari va noma'lum login bilan urinishlar | Yopilgan — B (foydalanuvchi, 2026-10-23) |
 | OQ-26 | Xarid storno'sida tovar harakati va kassa qaytimi (`PURCHASE_REFUND`) qaysi sana bilan yoziladi: asl hujjat sanasi yoki storno payti? | Asl `doc_date` (OQ-01 kabi: storno qilingan hujjat o'z davrida nolga tushadi; bajarishdagi `tx_date = doc_date` bilan simmetrik) | Ochiq — tavsiya bo'yicha qilingan (T-406) |
+| OQ-27 | Qarz qaytarish sanasi qarz sanasidan oldin bo'lishi mumkinmi? | Yo'q — qaytarish kuni ≥ qarz kuni (Toshkent), aks holda `VALIDATION_FAILED` (`date`) | Ochiq — tavsiya bo'yicha qilingan (T-704) |
 
 ---
 
@@ -163,3 +164,8 @@ T-406. §5.3 storno yozuvlarining (`stock_movement.doc_date`, `cash_transaction.
 - **B:** storno payti (`now()`). Pul haqiqatda bugun qaytadi — bugungi kassa sanog'i bilan mos; o'tgan kunlar jurnali o'zgarmaydi. Kamchilik: xarid kuni chiqim, storno kuni kirim bo'lib qoladi (sana bo'yicha hisobotlarda ikki kun bo'yicha "yoyiladi").
 B ga o'tish — `purchases.reverse` da `inventory.issue({ docDate })` va `cash.record({ txDate })` ga `new Date()` (+ testdagi sana tekshiruvlari). T-503 (savdo storno'si) ham shu javobga ergashadi.
 
+### OQ-27 — Qarz qaytarish sanasi qarz sanasidan oldin
+T-704. Qaytarish ham, qarz ham o'tgan sana bilan kiritilishi mumkin (OQ-07: faqat kelajak taqiqlangan). Hujjatlar qaytarish sanasining qarz sanasiga nisbatini aytmaydi; o'tgan sana bilan kiritilgan qarzni undan ham oldingi sana bilan "qaytarish" mumkin bo'lib qoladi — kassa jurnali va P&L davrlarida mantiqsiz ketma-ketlik.
+- **A (tavsiya, T-704 da shunday):** qaytarish kuni ≥ qarz kuni (do'kon vaqti bo'yicha, bir kun ichida ruxsat). Aks holda `VALIDATION_FAILED` (`params.reason = BEFORE_DEBT_DATE`, `fieldErrors.date`); formada sana maydoni `min` = qarz kuni.
+- **B:** cheklov yo'q — faqat OQ-07 (kelajak emas).
+B ga o'tish — `debts.commands.ts` dagi `BEFORE_DEBT_DATE` tekshiruvini olib tashlash (+ test).

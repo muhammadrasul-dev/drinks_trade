@@ -157,7 +157,7 @@ drinks_trade/
 │   │       │   ├── purchases/
 │   │       │   ├── stock-counts/
 │   │       │   ├── cash/
-│   │       │   ├── debts/
+│   │       │   ├── debts/          # open/cancel/repay (ichki) + qarzlar sahifasi (T-704)
 │   │       │   ├── reports/        # stock, sales, pnl + eksport
 │   │       │   └── audit/
 │   │       ├── core/
