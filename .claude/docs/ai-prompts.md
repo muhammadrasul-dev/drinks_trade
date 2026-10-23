@@ -564,3 +564,11 @@ yes do merge and then simply refactor
 ```
 T-803 va T-902 theese test should do seperate sessions, then do refactor
 ```
+
+---
+
+## Prompt 56 — Main'ga merge, qolgan vazifalarni alohida sessiyalarda, keyin oddiy refactor (2026-10-23)
+
+```
+yes merge to main, and then begin you sayed tasks in seperate sessions, after theese done do simplky refactor
+```
