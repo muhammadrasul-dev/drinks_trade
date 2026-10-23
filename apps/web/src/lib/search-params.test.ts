@@ -8,6 +8,7 @@ import {
   hrefWith,
   pageParam,
   schemaParam,
+  searchParamsOf,
   textParam,
   uuidParam,
 } from './search-params';
@@ -56,5 +57,14 @@ describe('search params', () => {
     expect(hrefWith('/products', { q: 'a b', archived: true, page: 2 })).toBe(
       '/products?q=a+b&archived=1&page=2',
     );
+  });
+
+  it('searchParamsOf gives a Route Handler the shape pages get', () => {
+    expect(searchParamsOf(new URLSearchParams('from=2026-10-01&low=1&low=0&to='))).toEqual({
+      from: '2026-10-01',
+      low: ['1', '0'],
+      to: '',
+    });
+    expect(searchParamsOf(new URLSearchParams())).toEqual({});
   });
 });
