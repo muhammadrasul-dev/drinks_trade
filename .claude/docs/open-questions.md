@@ -48,6 +48,7 @@ SRS'dagi biznes savollar yopilgan. Bu yerda — arxitektura va DB loyihalashda c
 | OQ-26 | Xarid storno'sida tovar harakati va kassa qaytimi (`PURCHASE_REFUND`) qaysi sana bilan yoziladi: asl hujjat sanasi yoki storno payti? | Asl `doc_date` (OQ-01 kabi: storno qilingan hujjat o'z davrida nolga tushadi; bajarishdagi `tx_date = doc_date` bilan simmetrik) | Ochiq — tavsiya bo'yicha qilingan (T-406) |
 | OQ-27 | Qarz qaytarish sanasi qarz sanasidan oldin bo'lishi mumkinmi? | Yo'q — qaytarish kuni ≥ qarz kuni (Toshkent), aks holda `VALIDATION_FAILED` (`date`) | Ochiq — tavsiya bo'yicha qilingan (T-704) |
 | OQ-28 | Qoldiq hisobotida qaysi mahsulotlar chiqadi va tannarx ustunlari qaysi ruxsat bilan? | Qoldig'i bor (`qty > 0`) mahsulotlar; "Kam qolganlar" filtrida (joylashuv filtrisiz) qoldig'i 0 bo'lganlari ham; tannarx/qiymat — `report.sales.cost` (faqat Egasi), yangi ruxsat yo'q | Ochiq — tavsiya bo'yicha qilingan (T-801) |
+| OQ-29 | Savdo qoralamasi saqlangandan keyin mahsulot narxi o'zgarsa, bajarish (T-502) qaysi narx bilan o'tadi? | Bajarish rad etiladi (`SALE_PRICE_CHANGED { lines }`), foydalanuvchi qoralamani qayta saqlaydi — yangi narx va jami ko'rinadi (OQ-06 kabi) | Ochiq — T-502 dan oldin javob kerak |
 
 ---
 
@@ -183,3 +184,9 @@ T-801. SRS §7.1 "har mahsulot dona va blokda; joylashuv bo'yicha" deydi; databa
    - **B:** yangi `report.stock.cost` ruxsati (OWNER) — architecture §5.5 jadvaliga qator.
    - **C:** tannarx ustunlarini olib tashlash — SRS matniga so'zma-so'z.
 1-B ga o'tish — `stockReportQuerySchema` ga `withEmpty` va `stock-report.queries.ts` dagi `includeEmpty` shartini almashtirish (+ test). 2-B — `permissions.ts` + `getProductTotals` o'rniga alohida tekshiruv; 2-C — `reports.stock` dan `avgCost`/`value` ni olib tashlash.
+
+### OQ-29 — Qoralamadan keyin narx o'zgarishi
+T-501. Savdo qatori narxni qoralama **saqlanganda** mahsulotdan nusxalaydi (business-logic §4.1 4-qadam, OQ-05, OQ-15). Qoralama ochiq turganida Egasi/xodim mahsulot narxini o'zgartirsa, saqlangan `unit_price` eskirib qoladi. §4.2 bu holatni aytmaydi. Forma har doim joriy narxni ko'rsatadi va qayta saqlashda uni yozadi — savol faqat qayta saqlanmagan qoralamani bajarish haqida.
+- **A (tavsiya):** bajarishda `line.unitPrice ≠ product.salePrice` bo'lsa → `SALE_PRICE_CHANGED { lines: [{ lineNo, product, unitPrice, salePrice }] }`; foydalanuvchi qoralamani qayta saqlaydi (yangi jami va to'lov qismlari ko'rinadi). BR-2 "bitta narx" saqlanadi, kassir pulni eski summada olmaydi. OQ-06 (`UNITS_PER_BLOCK_CHANGED`) bilan bir xil yo'l. Yangi xato kodi kerak.
+- **B:** saqlangan narx bilan bajariladi — mijozga aytilgan summa o'zgarmaydi, lekin narx o'zgargandan keyin eski narxda sotish mumkin bo'ladi.
+- **C:** bajarishda narx jimgina qayta hisoblanadi — jami o'zgaradi va to'lov qismlari mos kelmay `PAYMENT_SPLIT_MISMATCH` beradi (tushunarsiz xato), tavsiya etilmaydi.

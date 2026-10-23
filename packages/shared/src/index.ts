@@ -6,6 +6,7 @@ export * from './errors';
 export * from './money';
 export * from './permissions';
 export * from './product';
+export * from './sale';
 export * from './types';
 export * from './units';
 export * from './validation';

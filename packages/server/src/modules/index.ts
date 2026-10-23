@@ -8,5 +8,6 @@ export * from './inventory';
 export * from './products';
 export * from './purchases';
 export * from './reports';
+export * from './sales';
 export * from './users';
 export * from './warehouses';
