@@ -930,5 +930,96 @@
       "avgCost": "Oʻrtacha tannarx (1 dona)",
       "value": "Qiymati"
     }
+  },
+  "stockCounts": {
+    "title": "Inventarizatsiya",
+    "description": "Ochiq inventarizatsiya shu ombordagi savdo, xarid va storno bajarilishini bloklaydi.",
+    "docTitle": "Inventarizatsiya {number}",
+    "docDescription": "{warehouse} · {date} · {author}",
+    "empty": "Inventarizatsiya topilmadi.",
+    "columns": {
+      "number": "Raqam",
+      "date": "Sana",
+      "warehouse": "Ombor",
+      "status": "Holati",
+      "counted": "Sanalgan qatorlar",
+      "shortage": "Kamomad",
+      "surplus": "Ortiqcha",
+      "author": "Ochgan"
+    },
+    "filters": {
+      "label": "Filtrlar",
+      "number": "Raqam",
+      "status": "Holati",
+      "allStatuses": "Barcha holatlar",
+      "warehouse": "Ombor",
+      "allWarehouses": "Barcha omborlar"
+    },
+    "pagination": {
+      "label": "Sahifalar",
+      "range": "{from}–{to} / {total}",
+      "prev": "Oldingi",
+      "next": "Keyingi"
+    },
+    "open": {
+      "button": "Yangi inventarizatsiya",
+      "title": "Inventarizatsiyani ochish",
+      "description": "Ochilgandan keyin bu omborda savdo, xarid va storno bajarilmaydi — inventarizatsiya bajarilguncha yoki bekor qilinguncha. Qoralamalarni saqlash mumkin.",
+      "warehouse": "Ombor",
+      "pickWarehouse": "Omborni tanlang",
+      "busyOption": "{name} — {number} ochiq",
+      "date": "Sana",
+      "note": "Izoh",
+      "submit": "Ochish",
+      "done": "{number} ochildi",
+      "alreadyOpen": "«{warehouse}» omborida {number} inventarizatsiyasi allaqachon ochiq."
+    },
+    "form": {
+      "blocked": "«{warehouse}» ombori inventarizatsiyada: bu yerda savdo, xarid va storno bajarilmaydi. Ish tugagach inventarizatsiyani bajaring yoki bekor qiling.",
+      "date": "Sana",
+      "note": "Izoh",
+      "rows": "Sanoq",
+      "search": "Mahsulotni qidirish",
+      "hint": "Haqiqiy sonni blok va donada kiriting. Boʻsh qoldirilgan qator sanalmagan hisoblanadi va qoldigʻi oʻzgarmaydi; yoʻq boʻlsa — 0 kiriting.",
+      "noRows": "Omborda qoldiq yoʻq. Topilgan tovarni pastda qoʻshing.",
+      "product": "Mahsulot",
+      "system": "Tizimda",
+      "counted": "Sanalgan",
+      "blocks": "Blok",
+      "pieces": "Dona",
+      "diff": "Farq",
+      "diffAmount": "Farq summasi",
+      "perBlock": "blokda {count} dona",
+      "archived": "arxivda",
+      "afterSave": "saqlangach",
+      "blocksOf": "{product} ({sub}) — blok",
+      "piecesOf": "{product} ({sub}) — dona",
+      "notCounted": "sanalmagan",
+      "addTitle": "Roʻyxatda yoʻq tovar topildimi?",
+      "subWarehouse": "Sub-ombor",
+      "productSearch": "Nom, SKU yoki shtrix-kod",
+      "noProducts": "Mahsulot topilmadi",
+      "addRow": "Qoʻshish",
+      "countedRows": "Sanalgan qatorlar",
+      "uncounted": "{count} ta qator sanalmagan — ularning qoldigʻi oʻzgarmaydi.",
+      "shortage": "Kamomad (taxminan)",
+      "surplus": "Ortiqcha (taxminan)",
+      "estimateHint": "Ombor boʻyicha jami farq × oʻrtacha tannarx. Sub-omborlar orasidagi farq summaga taʼsir qilmaydi.",
+      "reload": "Sahifani yangilash",
+      "unsaved": "Oʻzgarishlar saqlanmagan",
+      "archivedItem": "«{name}» arxivda — uni bu yerda sanab boʻlmaydi."
+    },
+    "cancel": {
+      "button": "Bekor qilish",
+      "title": "{number} inventarizatsiyasini bekor qilasizmi?",
+      "description": "Kiritilgan sanoq saqlanadi, lekin qoldiq oʻzgarmaydi. «{warehouse}» omboridagi blok darhol olib tashlanadi.",
+      "done": "{number} bekor qilindi"
+    },
+    "view": {
+      "postedAt": "Bajarilgan",
+      "cancelledAt": "Bekor qilingan",
+      "lines": "Sanalgan qatorlar ({count})",
+      "noLines": "Sanalgan qator yoʻq."
+    }
   }
 }
