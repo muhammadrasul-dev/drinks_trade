@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { blockPrice, isLowStock } from './product';
+import { blockPrice, compareStockShortage, isLowStock } from './product';
 
 describe('blockPrice', () => {
   it('OQ-15: per-piece price × units per block', () => {
@@ -19,5 +19,26 @@ describe('isLowStock', () => {
     expect(isLowStock(5, 6)).toBe(true);
     expect(isLowStock(6, 6)).toBe(false);
     expect(isLowStock(0, 0)).toBe(false);
+  });
+});
+
+describe('compareStockShortage', () => {
+  it('OQ-40: lowest share of the minimum first, out of stock leading; ties keep their order', () => {
+    const rows = [
+      { name: 'half', stockQty: 5, minStock: 10 },
+      { name: 'almost', stockQty: 99, minStock: 100 },
+      { name: 'empty', stockQty: 0, minStock: 3 },
+      { name: 'tenth', stockQty: 2, minStock: 20 },
+      { name: 'half too', stockQty: 1, minStock: 2 },
+      { name: 'empty too', stockQty: 0, minStock: 50 },
+    ];
+    expect(rows.sort(compareStockShortage).map((row) => row.name)).toEqual([
+      'empty',
+      'empty too',
+      'tenth',
+      'half',
+      'half too',
+      'almost',
+    ]);
   });
 });

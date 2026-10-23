@@ -13,3 +13,18 @@ export function blockPrice(salePrice: number, unitsPerBlock: number): number {
 export function isLowStock(stockQty: number, minStock: number): boolean {
   return minStock > 0 && stockQty < minStock;
 }
+
+/** Low-stock products listed on the home page (T-902, OQ-40); the rest are only counted. */
+export const DASHBOARD_LOW_STOCK_LIMIT = 10;
+
+/**
+ * Order of low-stock products (OQ-40): the lowest share of the minimum first,
+ * so out-of-stock products lead. Equal shares keep their order (the caller
+ * sorts by name first). `minStock` must be > 0.
+ */
+export function compareStockShortage(
+  a: { stockQty: number; minStock: number },
+  b: { stockQty: number; minStock: number },
+): number {
+  return a.stockQty / a.minStock - b.stockQty / b.minStock;
+}
