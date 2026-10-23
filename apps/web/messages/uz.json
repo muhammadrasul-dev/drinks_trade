@@ -711,6 +711,18 @@
       "noteRequired": "Nasiya qismi bor — izohga mijoz kimligini yozing va saqlang.",
       "splitMismatch": "Toʻlov qismlari jamiga teng emas — tuzatib, saqlang."
     },
+    "reverse": {
+      "button": "Storno",
+      "title": "{number} savdosini storno qilasizmi?",
+      "description": "Tovar savdodagi tannarx bilan sub-omborlarga qaytadi va oʻrtacha tannarx qayta hisoblanadi. Naqd va karta qismi kassadan qaytariladi, nasiya qarzi bekor qilinadi. Savdo oʻz sanasidagi hisobotlardan chiqadi. Storno qilingan savdoni qaytarib boʻlmaydi.",
+      "reason": "Sabab",
+      "reasonPlaceholder": "Nega storno qilinmoqda",
+      "done": "{number} storno qilindi",
+      "cashboxInsufficient": "«{cashbox}» kassasida mablagʻ yetarli emas — pulni qaytarib boʻlmaydi.",
+      "debtRepaid": "Nasiya qarzi boʻyicha qaytarishlar bor — avval ularni bekor qiling, keyin savdoni storno qiling.",
+      "stockCount": "«{warehouse}» omborida {number} inventarizatsiyasi ochiq — u tugaguncha storno qilib boʻlmaydi.",
+      "archived": "«{name}» arxivlangan — tovar qaytishi uchun avval uni tiklang."
+    },
     "form": {
       "date": "Sana",
       "note": "Izoh",

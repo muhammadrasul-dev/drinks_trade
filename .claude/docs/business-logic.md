@@ -173,6 +173,16 @@ BEGIN
 COMMIT
 ```
 
+**Amalda (T-503)** — `sales.reverse` (`document.reverse`, faqat OWNER — OQ-03; STAFF → `FORBIDDEN`), `purchases.reverse` (§5.3) bilan bir xil tuzilish; kiritma `{ id, reason }` (`saleReverseInputSchema`, sabab — umumiy `reverseReasonSchema`, trim, 1–500 belgi):
+- `lockSale`; `POSTED` emas → `DOCUMENT_NOT_POSTED` (qoralama ham, ikkinchi storno ham). `assertCan` tranzaksiyadan oldin (STAFF hech narsani qulflamaydi).
+- 3-qadam: `warehouses.lockActive` — `lockWarehouses` (FOR SHARE) → `assertNoOpenStockCount` (`WAREHOUSE_IN_STOCK_COUNT`) → sub-ombor/ombor arxivi (`ENTITY_ARCHIVED { entity, name }`). Arxivlangan sub-omborga tovar qaytmaydi — avval uni tiklash kerak (OQ-30). Arxivlangan **mahsulot** xato emas (arxiv qoldiqni taqiqlamaydi).
+- Qulflar §2 tartibida — 4- va 5-qadam qulf bo'yicha **teskari**: avval kassalar (§2, 4), keyin qarz (§2, 5). 5-qadam: `cash.lockPaidParts(…, OUT)` — har qism uchun `balance ≥ part`, aks holda `CASHBOX_INSUFFICIENT { cashbox }` (summasiz). 4/9-qadam: `lockDebt` → `debts.cancel` darhol (`DEBT_HAS_REPAYMENTS`, OQ-04) — ikkala blok ham tovar harakatidan oldin, tranzaksiya hech narsa yozmaydi.
+- 6–7: `inventory.receive(SALE_REVERSAL)` — qatordagi muzlatilgan `unit_cost` / `cost_amount` bilan (OQ-18), mahsulot bo'yicha bitta `avgOnReceipt`; harakat `sale_line_id` bilan. `sale.cost_total` va qatordagi tannarx o'zgarmaydi.
+- 8: `cash.recordPaidParts(SALE_REFUND)` naqd va karta uchun (izoh = sabab). Harakatlar va kassa yozuvlari **asl `doc_date`** bilan (OQ-26 — T-406 kabi), shuning uchun savdo o'z sanasidagi P&L dan chiqadi (OQ-01; hisobot T-803 da).
+- 10–11: `REVERSED`, `reversedAt`, `reversedById`, `reverseReason`, `version + 1`; audit `REVERSE`: `before { status, version }`, `after` — sabab, harakatlar (`inventory.auditMovements`: avg oldin/keyin), kassa yozuvlari id'lari, `cancelledDebtId`; `meta.reason`, o'tgan sanali hujjatda `meta.backdated`.
+- UI: bajarilgan savdo sahifasida "Storno" tugmasi (faqat OWNER) — umumiy `components/reverse-dialog.tsx` (xarid storno'si ham shuni ishlatadi), bloklangan storno xabari oynada qoladi.
+- Umumiy yordamchilar (T-503 refactor, xatti-harakat o'zgarmagan): `cash.lockPaidParts` / `cash.recordPaidParts` (savdo/xarid bajarish va storno'sidagi to'langan qismlar), `warehouses.lockActive` (savdo/xarid bajarish va savdo storno'si — inventarizatsiya bloki shu yerda), `inventory.auditMovements` (xarid bajarish/storno va savdo storno audit harakatlari).
+
 ## 5. Xarid
 
 ### 5.1 Qoralama

@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { DocStatus, QtyUnit } from '../enums';
+import { reverseReasonSchema } from './purchase';
 
 // Sale draft (T-501, FR-3.1–3.3, business-logic §4.1). The same schemas
 // validate the form in the browser and the input in packages/server. A line
@@ -66,6 +67,13 @@ export const salePostInputSchema = z.object({
   version: z.number().int().min(0),
 });
 export type SalePostInput = z.input<typeof salePostInputSchema>;
+
+/** Reversal (T-503, BR-3): OWNER only (OQ-03); the reason is required. */
+export const saleReverseInputSchema = z.object({
+  id: z.uuid(),
+  reason: reverseReasonSchema,
+});
+export type SaleReverseInput = z.input<typeof saleReverseInputSchema>;
 
 export const saleIdInputSchema = z.object({ id: z.uuid() });
 export type SaleIdInput = z.input<typeof saleIdInputSchema>;
