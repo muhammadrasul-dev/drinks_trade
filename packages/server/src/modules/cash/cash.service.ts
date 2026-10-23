@@ -2,10 +2,10 @@
 // cashbox.balance and cash_transaction. Internal service — callers (posting,
 // reversals, manual cash entries, debts) check permissions themselves and
 // call record() inside their own transaction, after lockCashboxes().
-import { CashDirection, CashTxType, DomainError, ErrorCode } from '@drinks/shared';
+import { CashboxType, CashDirection, CashTxType, DomainError, ErrorCode } from '@drinks/shared';
 
 import type { ServiceContext } from '../../core/context';
-import type { LockedCashbox } from '../../core/locks';
+import { type LockedCashbox, lockCashboxes } from '../../core/locks';
 import { moneyToBigInt, moneyToNumber } from '../../core/money';
 import type { Tx } from '../../core/tx';
 import { audit } from '../audit';
@@ -150,4 +150,68 @@ export function reverse(
     amount: moneyToNumber(original.amount),
     reversalOfId: original.id,
   });
+}
+
+// ── Paid parts of a document (sale/purchase posting and reversal) ─────────
+
+/** The cash or card part of a document's payment split, whole so'm > 0. */
+export interface PaidPart {
+  type: CashboxType;
+  amount: number;
+}
+
+export interface LockedPaidParts {
+  /** CASH then CARD, only the parts > 0. */
+  parts: PaidPart[];
+  cashboxes: ReadonlyMap<CashboxType, LockedCashbox>;
+}
+
+/**
+ * Lock step 4 (business-logic §2) for a document's cash and card parts. When
+ * the money goes OUT (purchase posting, sale reversal) each part must fit its
+ * cashbox: record() re-checks, but this fails before any stock moves.
+ * CASHBOX_INSUFFICIENT carries only the cashbox type (OQ-02, CLAUDE.md rule 6).
+ */
+export async function lockPaidParts(
+  tx: Tx,
+  ctx: ServiceContext,
+  paid: { paidCash: number; paidCard: number },
+  direction: CashDirection,
+): Promise<LockedPaidParts> {
+  const parts = [
+    { type: CashboxType.CASH, amount: paid.paidCash },
+    { type: CashboxType.CARD, amount: paid.paidCard },
+  ].filter((part) => part.amount > 0);
+  const locked = await lockCashboxes(
+    tx,
+    ctx.storeId,
+    parts.map((part) => part.type),
+  );
+  const cashboxes = new Map(locked.map((box) => [box.type, box]));
+  if (direction === CashDirection.OUT) {
+    for (const part of parts) {
+      if (cashboxes.get(part.type)!.balance < part.amount) {
+        throw new DomainError(ErrorCode.CASHBOX_INSUFFICIENT, { cashbox: part.type });
+      }
+    }
+  }
+  return { parts, cashboxes };
+}
+
+/** Books one entry per part locked by lockPaidParts(); returns their ids as strings (audit). */
+export async function recordPaidParts(
+  tx: Tx,
+  ctx: ServiceContext,
+  { parts, cashboxes }: LockedPaidParts,
+  entry: Omit<CashRecordBase, 'amount'> & { type: keyof typeof CASH_TX_DIRECTION },
+): Promise<string[]> {
+  const ids: string[] = [];
+  for (const part of parts) {
+    const result = await record(tx, ctx, cashboxes.get(part.type)!, {
+      ...entry,
+      amount: part.amount,
+    });
+    ids.push(result.id.toString());
+  }
+  return ids;
 }

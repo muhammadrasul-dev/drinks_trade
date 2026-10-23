@@ -140,6 +140,8 @@ Kim, qachon, nimani o'zgartirgani (eski va yangi qiymat). O'tgan sana bilan kiri
 | "Kassada mablag' yetarli emas" | Chiqim summasi kassa balansidan katta (o'tkazma stornosida — pul qaytadigan kassada yetarli emas) |
 | "To'lov summasi hujjat summasiga teng emas" | Naqd + Karta + Nasiya ni tekshiring |
 | "Avval tegishli savdoni storno qiling" | Xarid tovarining bir qismi sotilgan, xaridni bekor qilib bo'lmaydi |
+| "«Naqd» (yoki «Karta») kassasida mablag' yetarli emas — pulni qaytarib bo'lmaydi" | Savdo storno'sida kassada savdo pulidan kam qolgan. Kassani to'ldiring (yoki o'tkazma qiling), keyin storno qiling |
+| "Nasiya qarzi bo'yicha qaytarishlar bor" | Mijoz nasiyaning bir qismini qaytargan. Avval qaytarishlarni bekor qiling, keyin savdoni storno qiling |
 | "Hujjat o'zgargan, sahifani yangilang" | Boshqa foydalanuvchi shu qoralamani tahrirlagan |
 | "Kelajak sana tanlab bo'lmaydi" | Hujjat sanasi faqat bugun yoki o'tgan kun bo'lishi mumkin |
 | "Blokdagi dona soni o'zgargan" | Mahsulot kartochkasi o'zgargan, qoralamani qayta saqlang |

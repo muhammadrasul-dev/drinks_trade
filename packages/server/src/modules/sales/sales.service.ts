@@ -1,13 +1,14 @@
-// Sales (FR-3.1–3.3, business-logic §4): drafts (T-501) and posting (T-502).
+// Sales (FR-3.1–3.3, business-logic §4): drafts (T-501), posting (T-502)
+// and reversal (T-503).
 // A draft touches neither stock nor cash; each line copies the product's
 // per-piece sale price (OQ-05, OQ-15) and carries a stock warning (FR-3.3) — a
 // short draft can be saved, posting re-checks under the locks and moves stock
 // (inventory), cash (cash) and opens the credit debt (debts) in one
-// transaction. Any user may edit any draft (OQ-14); concurrent edits are
+// transaction, and reversal undoes all three. Any user may edit any draft (OQ-14); concurrent edits are
 // caught by the `version` column.
 import type { Prisma } from '@drinks/db';
 import {
-  CashboxType,
+  CashDirection,
   CashTxType,
   DebtSource,
   DocStatus,
@@ -41,6 +42,8 @@ import {
   saleListQuerySchema,
   type SalePostInput,
   salePostInputSchema,
+  type SaleReverseInput,
+  saleReverseInputSchema,
   type SaleUpdateInput,
   saleUpdateInputSchema,
 } from '@drinks/shared/schemas';
@@ -49,8 +52,8 @@ import type { z } from 'zod';
 import type { ServiceContext } from '../../core/context';
 import { resolveStoreDate, storeDayRange } from '../../core/dates';
 import { assertLineProductsUnchanged } from '../../core/doc-lines';
-import { lockCashboxes, lockSale, lockWarehouses } from '../../core/locks';
-import { moneyToBigInt, moneyToNumber } from '../../core/money';
+import { lockDebt, lockSale } from '../../core/locks';
+import { decimalToString, moneyToBigInt, moneyToNumber } from '../../core/money';
 import { nextDocNumber } from '../../core/numbering';
 import { assertCan } from '../../core/rbac';
 import { type Tx, withTransaction } from '../../core/tx';
@@ -591,29 +594,16 @@ async function post(ctx: ServiceContext, input: SalePostInput): Promise<SaleDeta
     if (paidCredit > 0 && !doc.note?.trim()) throw new DomainError(ErrorCode.NOTE_REQUIRED);
     if (doc.docDate.getTime() > Date.now()) throw new DomainError(ErrorCode.DOC_DATE_IN_FUTURE);
 
-    // 2. Warehouses FOR SHARE, then the stock-count block (BR-8, §3) and the
-    //    archive state under that lock (§9c). A sub-warehouse never changes its
-    //    warehouse, so the first resolveActive may run before the lock.
-    const subWarehouseIds = doc.lines.map((line) => line.subWarehouseId);
-    const warehouseIds = [
-      ...new Set((await warehouses.resolveActive(tx, ctx, subWarehouseIds)).values()),
-    ];
-    await lockWarehouses(tx, ctx.storeId, warehouseIds);
-    await warehouses.assertNoOpenStockCount(tx, ctx, warehouseIds);
-    await warehouses.resolveActive(tx, ctx, subWarehouseIds);
+    // 2. Warehouses FOR SHARE, the stock-count block (BR-8, §3) and the archive state.
+    await warehouses.lockActive(
+      tx,
+      ctx,
+      doc.lines.map((line) => line.subWarehouseId),
+    );
     assertProductsUnchanged(doc.lines);
 
     // 4. Cashboxes of the paid parts: money comes IN, so no balance check.
-    const paid = [
-      { type: CashboxType.CASH, amount: paidCash },
-      { type: CashboxType.CARD, amount: paidCard },
-    ].filter((part) => part.amount > 0);
-    const locked = await lockCashboxes(
-      tx,
-      ctx.storeId,
-      paid.map((part) => part.type),
-    );
-    const cashboxes = new Map(locked.map((box) => [box.type, box]));
+    const paid = await cash.lockPaidParts(tx, ctx, { paidCash, paidCard }, CashDirection.IN);
 
     // 5–8. Stock out at the current average (inventory takes locks 6–7 and
     //      throws INSUFFICIENT_STOCK per short pair), then the cost is frozen.
@@ -641,17 +631,12 @@ async function post(ctx: ServiceContext, input: SalePostInput): Promise<SaleDeta
     }
 
     // 9. Cash IN for the cash and card parts.
-    const cashTransactionIds: string[] = [];
-    for (const part of paid) {
-      const entry = await cash.record(tx, ctx, cashboxes.get(part.type)!, {
-        type: CashTxType.SALE_RECEIPT,
-        amount: part.amount,
-        txDate: doc.docDate,
-        note: doc.note,
-        saleId: id,
-      });
-      cashTransactionIds.push(entry.id.toString());
-    }
+    const cashTransactionIds = await cash.recordPaidParts(tx, ctx, paid, {
+      type: CashTxType.SALE_RECEIPT,
+      txDate: doc.docDate,
+      note: doc.note,
+      saleId: id,
+    });
 
     // 10. Credit part → RECEIVABLE debt; its note is the document note (OQ-19).
     const debt =
@@ -710,4 +695,140 @@ async function post(ctx: ServiceContext, input: SalePostInput): Promise<SaleDeta
   });
 }
 
-export const sales = { list, get, create, update, remove, post, availability, productOptions };
+// ── Reversal (T-503, BR-3, business-logic §4.3) ──────────────────────────
+
+const REVERSE_SELECT = {
+  number: true,
+  docDate: true,
+  paidCash: true,
+  paidCard: true,
+  debt: { select: { id: true } },
+  lines: {
+    orderBy: { lineNo: 'asc' },
+    select: {
+      id: true,
+      lineNo: true,
+      productId: true,
+      subWarehouseId: true,
+      qty: true,
+      unitCost: true,
+      costAmount: true,
+    },
+  },
+} as const satisfies Prisma.SaleSelect;
+
+/**
+ * Reverses a posted sale (BR-3): its goods come back to the sub-warehouses at
+ * the cost frozen on each line and the average is recalculated (OQ-18), the
+ * paid parts leave their cashboxes (SALE_REFUND) and the credit debt is
+ * cancelled. Blocked while the debt has repayments (OQ-04), while a cashbox
+ * holds less than its part (CASHBOX_INSUFFICIENT, BR-9), during an open stock
+ * count (BR-8) or when a sub-warehouse was archived since (OQ-31). OWNER only
+ * (OQ-03); one transaction, locks in business-logic §2 order, audit REVERSE
+ * with the reason. Entries carry the document date, so the sale leaves the
+ * reports of its own period (OQ-01, OQ-26).
+ */
+async function reverse(ctx: ServiceContext, input: SaleReverseInput): Promise<SaleDetail> {
+  assertCan(ctx.user, 'document.reverse');
+  const { id, reason } = parseInput(saleReverseInputSchema, input);
+
+  return withTransaction(async (tx) => {
+    // 1. The document: only a posted one can be reversed.
+    const locked = await lockSale(tx, ctx.storeId, id);
+    if (locked.status !== DocStatus.POSTED) throw new DomainError(ErrorCode.DOCUMENT_NOT_POSTED);
+    const doc = await tx.sale.findUniqueOrThrow({ where: { id }, select: REVERSE_SELECT });
+    const paidCash = moneyToNumber(doc.paidCash);
+    const paidCard = moneyToNumber(doc.paidCard);
+
+    // 3. Warehouses FOR SHARE, the stock-count block (BR-8, §3) and the archive
+    //    state: goods must not come back into an archived sub-warehouse (OQ-31).
+    await warehouses.lockActive(
+      tx,
+      ctx,
+      doc.lines.map((line) => line.subWarehouseId),
+    );
+
+    // 5. Cashboxes of the paid parts (§2 step 4, before the debt): the money
+    //    goes back OUT, so each part must fit (BR-9) — CASHBOX_INSUFFICIENT
+    //    before any stock moves.
+    const paid = await cash.lockPaidParts(tx, ctx, { paidCash, paidCard }, CashDirection.OUT);
+
+    // 4/9. The credit debt (§2 step 5): cancelled here so DEBT_HAS_REPAYMENTS
+    //      (OQ-04) fails before any stock moves.
+    const debtId = doc.debt?.id ?? null;
+    if (debtId) await debts.cancel(tx, ctx, await lockDebt(tx, ctx.storeId, debtId));
+
+    // 6–7. Goods come back at the cost frozen on each line (OQ-18); the
+    //      average is recalculated per product. Inventory takes locks 6–7.
+    const movements = await inventory.receive(tx, ctx, {
+      type: MovementType.SALE_REVERSAL,
+      docDate: doc.docDate,
+      lines: doc.lines.map((line) => {
+        if (line.unitCost === null || line.costAmount === null) {
+          throw new Error(`Posted sale line ${line.id} has no frozen cost`);
+        }
+        return {
+          subWarehouseId: line.subWarehouseId,
+          productId: line.productId,
+          qty: line.qty,
+          unitCost: decimalToString(line.unitCost),
+          costAmount: moneyToNumber(line.costAmount),
+          saleLineId: line.id,
+        };
+      }),
+    });
+
+    // 8. Cash OUT for the parts received at posting.
+    const cashTransactionIds = await cash.recordPaidParts(tx, ctx, paid, {
+      type: CashTxType.SALE_REFUND,
+      txDate: doc.docDate,
+      note: reason,
+      saleId: id,
+    });
+
+    // 10–11. Status, then audit REVERSE (costs are fine here: audit is OWNER-only).
+    const reversedAt = new Date();
+    await tx.sale.update({
+      where: { id },
+      data: {
+        status: DocStatus.REVERSED,
+        reversedAt,
+        reversedById: ctx.user.id,
+        reverseReason: reason,
+        version: { increment: 1 },
+      },
+      select: { id: true },
+    });
+    await audit.log(tx, ctx, {
+      action: 'REVERSE',
+      entityType: 'sale',
+      entityId: id,
+      before: { status: DocStatus.POSTED, version: locked.version },
+      after: {
+        status: DocStatus.REVERSED,
+        number: doc.number,
+        docDate: doc.docDate,
+        reversedAt,
+        reverseReason: reason,
+        movements: inventory.auditMovements(movements, doc.lines),
+        cashTransactionIds,
+        cancelledDebtId: debtId,
+      },
+      backdated: isBackdated(doc.docDate),
+      meta: { reason },
+    });
+    return toDetail(tx, ctx, await loadDetail(tx, ctx, id));
+  });
+}
+
+export const sales = {
+  list,
+  get,
+  create,
+  update,
+  remove,
+  post,
+  reverse,
+  availability,
+  productOptions,
+};

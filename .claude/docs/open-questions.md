@@ -14,6 +14,8 @@ SRS'dagi biznes savollar yopilgan. Bu yerda — arxitektura va DB loyihalashda c
 
 **2026-10-23 (Prompt 41):** OQ-23 yopildi — tavsiya bo'yicha (A). **Ochiq savol qolmadi.**
 
+**2026-10-23 (T-503):** OQ-31 ochildi — arxivlangan sub-omborga savdo storno'si; tavsiya bo'yicha qilingan, javob kutilmoqda.
+
 **2026-10-23:** OQ-25 (T-901) yopildi — B: audit jurnalida faqat joriy do'kon yozuvlari.
 
 **2026-10-23 (T-801):** OQ-28 ochildi — qoldiq hisobotidagi mahsulotlar va tannarx ustunlari; tavsiya bo'yicha qilingan, javob kutilmoqda.
@@ -50,6 +52,7 @@ SRS'dagi biznes savollar yopilgan. Bu yerda — arxitektura va DB loyihalashda c
 | OQ-28 | Qoldiq hisobotida qaysi mahsulotlar chiqadi va tannarx ustunlari qaysi ruxsat bilan? | Qoldig'i bor (`qty > 0`) mahsulotlar; "Kam qolganlar" filtrida (joylashuv filtrisiz) qoldig'i 0 bo'lganlari ham; tannarx/qiymat — `report.sales.cost` (faqat Egasi), yangi ruxsat yo'q | Yopilgan — 1-A, 2-A (tavsiya, 2026-10-23) |
 | OQ-29 | Savdo qoralamasi saqlangandan keyin mahsulot narxi o'zgarsa, bajarish (T-502) qaysi narx bilan o'tadi? | Bajarish rad etiladi (`SALE_PRICE_CHANGED { lines }`), foydalanuvchi qoralamani qayta saqlaydi — yangi narx va jami ko'rinadi (OQ-06 kabi) | Yopilgan — A (tavsiya, 2026-10-23) |
 | OQ-30 | Qo'lda kiritilgan kassa yozuvi storno'si (T-703) qaysi sana bilan yoziladi: asl yozuv sanasi yoki storno payti? | Asl yozuvning `tx_date` si (OQ-01/OQ-26 kabi: xato yozuv o'z kunida nolga tushadi, jurnalda asl yozuv yonida turadi) | Ochiq — tavsiya bo'yicha qilingan (T-703) |
+| OQ-31 | Savdo storno qilinayotganda tovar qaytadigan sub-ombor (yoki uning ombori) arxivlangan bo'lsa? | Storno bloklanadi (`ENTITY_ARCHIVED`) — avval sub-omborni tiklash kerak | Ochiq — tavsiya bo'yicha qilingan (T-503), javob kutilmoqda |
 
 ---
 
@@ -198,3 +201,9 @@ T-703. Xato kiritilgan yo'l kira/boshqa chiqim/o'tkazma storno qilinganda teskar
 - **B:** storno payti (bugun). Pul aslida bugun "qaytgani" ko'rinadi, lekin asl kunning kassa jami noto'g'ri qoladi.
 P&L ga ta'sir yo'q: storno qilingan yo'l kira sanadan qat'i nazar hisobga olinmaydi (§8).
 
+### OQ-31 — Arxivlangan sub-omborga savdo storno'si
+T-503. Savdo bajarilgach sub-ombor bo'sh qolishi mumkin; FR-2.2 bo'sh sub-omborni arxivlashga ruxsat beradi. Keyin savdo storno qilinsa, §4.3 tovarni o'sha sub-omborga qaytaradi — arxivlangan sub-omborda qoldiq paydo bo'ladi (u formalarda tanlanmaydi, sotib ham, arxivdan "bo'shatib" ham bo'lmaydi). §4.3 bu holatni aytmaydi.
+- **A (tavsiya, T-503 da shunday):** storno bloklanadi — `ENTITY_ARCHIVED { entity: 'sub_warehouse' | 'warehouse', name }`, xabar: "avval uni tiklang". Bajarishdagi arxiv tekshiruvi bilan bir xil (`warehouses.lockActive`), arxivlangan joyda qoldiq bo'lmaydi.
+- **B:** ruxsat — tovar arxivlangan sub-omborga qaytadi; Egasi keyin uni tiklab tovarni ko'chiradi. Kamchilik: arxivlangan joyda yashirin qoldiq.
+- (Arxivlangan **mahsulot** xato emas — arxiv mahsulot qoldig'ini taqiqlamaydi, tovar qaytadi.)
+B ga o'tish — `sales.reverse` da `warehouses.lockActive` o'rniga `lockWarehouses` + `assertNoOpenStockCount` (xarid storno'sidagidek) va `sale-reverse.int.test.ts` dagi OQ-31 testi.

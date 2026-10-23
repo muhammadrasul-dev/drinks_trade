@@ -348,6 +348,22 @@ export const warehouses = {
     return new Map(rows.map((row) => [row.id, row.warehouseId]));
   },
 
+  /**
+   * §2 step 2 for a document that moves stock into or out of these
+   * sub-warehouses (sale/purchase posting, sale reversal): their warehouses
+   * FOR SHARE, then — under that lock — the stock-count block (BR-8, §3) and
+   * the archive state (§9c). A sub-warehouse never changes its warehouse, so
+   * the first resolveActive may run before the lock.
+   */
+  async lockActive(tx: Tx, ctx: ServiceContext, subWarehouseIds: readonly string[]) {
+    const warehouseIds = [
+      ...new Set((await warehouses.resolveActive(tx, ctx, subWarehouseIds)).values()),
+    ];
+    await lockWarehouses(tx, ctx.storeId, warehouseIds);
+    await assertNoOpenStockCount(tx, ctx, warehouseIds);
+    await warehouses.resolveActive(tx, ctx, subWarehouseIds);
+  },
+
   async create(ctx: ServiceContext, input: WarehouseCreateInput): Promise<WarehouseItem> {
     assertCan(ctx.user, 'warehouse.write');
     const { name } = parseInput(warehouseCreateInputSchema, input);
