@@ -15,6 +15,7 @@ import {
   postDocument,
 } from '../support/app';
 import { msg } from '../support/i18n';
+import { expectFits } from '../support/layout';
 
 test.use({ storageState: STORAGE_STATE.owner });
 
@@ -46,6 +47,12 @@ test('stock count: posting a sale in the counted warehouse waits for the count',
   });
 
   const countNumber = await openStockCount(page, WAREHOUSE);
+
+  // The counting form fits at every width while the count is open.
+  const countUrl = page.url();
+  await expectFits(page, countUrl, () =>
+    expect(page.getByText(PRODUCT.name).first()).toBeVisible(),
+  );
 
   // Back on the sale draft: the banner names the warehouse and the count.
   await page.goto(saleUrl);
