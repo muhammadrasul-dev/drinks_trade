@@ -358,6 +358,38 @@
       "range": "{from}–{to} / {total}",
       "prev": "Oldingi",
       "next": "Keyingi"
+    },
+    "form": {
+      "amount": "Summa, soʻm",
+      "fromCashbox": "Qaysi kassadan",
+      "toCashbox": "Qaysi kassaga",
+      "balance": "Balans:",
+      "date": "Sana",
+      "note": "Izoh (ixtiyoriy)",
+      "noteRequired": "Izoh (nima uchun)"
+    },
+    "travel": {
+      "button": "Yoʻl kira",
+      "title": "Yoʻl kira",
+      "description": "Pul tanlangan kassadan chiqadi va P&L da xarajat boʻladi.",
+      "notePlaceholder": "Masalan: tovar olib kelish, taksi",
+      "submit": "Saqlash",
+      "done": "Yoʻl kira saqlandi."
+    },
+    "other": {
+      "button": "Boshqa chiqim",
+      "title": "Boshqa chiqim",
+      "description": "Pul tanlangan kassadan chiqadi. Izoh majburiy.",
+      "notePlaceholder": "Masalan: elektr toʻlovi",
+      "submit": "Saqlash",
+      "done": "Chiqim saqlandi."
+    },
+    "transfer": {
+      "button": "Oʻtkazma",
+      "title": "Kassalar orasida oʻtkazma",
+      "description": "Pul bir kassadan chiqib, ikkinchisiga kiradi. Jami pul oʻzgarmaydi.",
+      "submit": "Oʻtkazish",
+      "done": "Oʻtkazma saqlandi."
     }
   },
   "debts": {

@@ -12,7 +12,7 @@ import { Input } from '@drinks/ui/components/input';
 import { useTranslations } from 'next-intl';
 import type { ChangeEvent, ComponentProps } from 'react';
 
-// Inputs shared by the give/take and repay dialogs (T-704).
+// Amount and cashbox inputs of the debt (T-704) and cash (T-702) dialogs.
 
 /** Digits only → number; empty → undefined (the schema then says "required"). */
 export function toNumber(event: ChangeEvent<HTMLInputElement>): number | undefined {
@@ -39,7 +39,7 @@ export function AmountInput({ value, onChange, ...field }: AmountInputProps) {
   );
 }
 
-/** The cashbox the money goes out of / into (FR-7.2). */
+/** The cashbox the money goes out of / into (FR-6.2, FR-7.2). */
 export function CashboxSelect({
   value,
   onChange,

@@ -1,19 +1,23 @@
 import { cashQueries } from '@drinks/server';
-import type { Locale } from '@drinks/shared';
+import { type Locale, storeToday } from '@drinks/shared';
 import { Button } from '@drinks/ui/components/button';
 import { PageHeader } from '@drinks/ui/components/page-header';
+import { ArrowLeftRightIcon, CarIcon, ReceiptIcon } from 'lucide-react';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
 import { MoneyText } from '@/components/money-text';
 import { CashBalances } from '@/features/cash/components/cash-balances';
+import { CashExpenseDialog } from '@/features/cash/components/cash-expense-dialog';
 import { CashFilters } from '@/features/cash/components/cash-filters';
 import { CashJournalTable } from '@/features/cash/components/cash-journal-table';
+import { CashTransferDialog } from '@/features/cash/components/cash-transfer-dialog';
 import { journalHref, parseJournalParams } from '@/features/cash/list-params';
 import { Link } from '@/i18n/navigation';
 import { getServiceContext, requireSection } from '@/lib/session';
 
-// Cash (T-701, FR-6.1): both balances and the journal, OWNER only. The
-// section guard answers STAFF with 403; the service refuses them as well.
+// Cash (T-701, FR-6.1): both balances and the journal; the actions travel
+// expense, other expense and transfer (T-702, FR-6.2–6.3). OWNER only: the
+// section guard answers STAFF with 403; the services refuse them as well.
 export default async function CashPage({ params, searchParams }: PageProps<'/[locale]/cash'>) {
   const { locale } = await params;
   setRequestLocale(locale as Locale);
@@ -25,14 +29,52 @@ export default async function CashPage({ params, searchParams }: PageProps<'/[lo
     cashQueries.journal(ctx, filters),
   ]);
   const t = await getTranslations('cash');
+  const today = storeToday();
 
   const from = page.total === 0 ? 0 : (page.page - 1) * page.pageSize + 1;
   const to = Math.min(page.page * page.pageSize, page.total);
 
   return (
     <>
-      {/* T-702 adds the cash actions (travel expense, other expense, transfer) as `actions`. */}
-      <PageHeader title={t('title')} />
+      <PageHeader
+        title={t('title')}
+        actions={
+          <>
+            <CashExpenseDialog
+              kind="travel"
+              balances={balances}
+              today={today}
+              trigger={
+                <Button>
+                  <CarIcon />
+                  {t('travel.button')}
+                </Button>
+              }
+            />
+            <CashExpenseDialog
+              kind="other"
+              balances={balances}
+              today={today}
+              trigger={
+                <Button variant="outline">
+                  <ReceiptIcon />
+                  {t('other.button')}
+                </Button>
+              }
+            />
+            <CashTransferDialog
+              balances={balances}
+              today={today}
+              trigger={
+                <Button variant="outline">
+                  <ArrowLeftRightIcon />
+                  {t('transfer.button')}
+                </Button>
+              }
+            />
+          </>
+        }
+      />
       <CashBalances balances={balances} />
       <section aria-labelledby="cash-journal" className="flex flex-col gap-4">
         <h2 id="cash-journal" className="text-lg font-semibold">

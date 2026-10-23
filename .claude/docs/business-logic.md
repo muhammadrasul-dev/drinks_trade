@@ -310,6 +310,11 @@ Qarzlar sahifasi (T-704, `debts.commands.ts` / `debts.queries.ts`; hammasi `debt
 - `debtCommands.repay(ctx, { debtId, cashbox, amount, note?, date })` — `lockCashboxes` → `lockDebt` (§2: 4 → 5) → qaytarish kuni < qarz kuni → `VALIDATION_FAILED { reason: BEFORE_DEBT_DATE }` (OQ-27) → `debts.repay`. Ikki parallel qaytarish qarz qatori qulfida navbatlashadi — ikkinchisi yangilangan qoldiqni ko'radi.
 - `debtQueries.list(ctx, query)` — yo'nalish, holat, manba, `debt_date` oralig'i (Toshkent kuni, `storeDayRange`), izoh bo'yicha qidiruv (katta-kichik harfga sezgirsiz); tartib `debt_date` ↓, `id` ↓; 50 tadan; har qatorda `remaining = amount − repaidAmount` va qaytarishlar (eskisi birinchi, kassasi bilan). `debtQueries.totals(ctx)` — filtrlarsiz, `OPEN` qarzlar qoldig'i yo'nalish bo'yicha.
 
+Kassa amallari (T-702, `cash.commands.ts`; hammasi `cash.write` — faqat OWNER, STAFF `FORBIDDEN`; bitta tranzaksiya, sana `resolveStoreDate` (OQ-07)):
+- `cashCommands.travelExpense(ctx, { cashbox, amount, note?, date })` — `lockCashboxes` → `cash.record(TRAVEL_EXPENSE)`; izoh ixtiyoriy.
+- `cashCommands.otherExpense(ctx, { cashbox, amount, note, date })` — xuddi shunday `OTHER_EXPENSE`; bo'sh izoh → `NOTE_REQUIRED` (`cash.record` dan, sxema emas).
+- `cashCommands.transfer(ctx, { from, to, amount, note?, date })` — `from = to` → `VALIDATION_FAILED` (`to`); ikkala kassa bitta `lockCashboxes` chaqiruvida, keyin `cash.record(TRANSFER_OUT)` manbada va `cash.record(TRANSFER_IN)` maqsadda — bitta yangi `transfer_group_id`, bir xil `tx_date` va izoh. OUT birinchi: manba yetmasa `CASHBOX_INSUFFICIENT`, ikkala yozuv ham yozilmaydi. Natija `{ transferGroupId, outId, inId }`.
+
 O'qish (T-701, `cash.queries.ts`): `cashQueries.balances(ctx)` — do'konning ikki kassasi (CASH, keyin CARD) joriy balansi bilan; `cashQueries.journal(ctx, query)` — `cash_transaction` jurnali: `from`/`to` (Toshkent kuni, `tx_date`), `cashbox`, `type`, `direction`, `page` (50 tadan); tartib — `tx_date` ↓, `id` ↓ (OQ-24); `totals` — barcha filtrlangan yozuvlar bo'yicha Σ kirim / Σ chiqim. Ikkalasi `cash.read` (faqat OWNER) — STAFF `FORBIDDEN` (CLAUDE.md 6-qoida).
 
 ## 8. P&L (BR-11)

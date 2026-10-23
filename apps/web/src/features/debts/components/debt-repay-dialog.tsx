@@ -27,10 +27,10 @@ import { useTranslations } from 'next-intl';
 import { type ReactElement, useState, useTransition } from 'react';
 import { useForm } from 'react-hook-form';
 
+import { AmountInput, CashboxSelect } from '@/components/money-fields';
 import { MoneyText } from '@/components/money-text';
 
 import { repayDebt } from '../actions';
-import { AmountInput, CashboxSelect } from './debt-fields';
 
 interface DebtRepayDialogProps {
   debt: DebtListItem;
