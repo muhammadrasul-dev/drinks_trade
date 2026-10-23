@@ -941,7 +941,33 @@
     }
   },
   "reports": {
-    "archivedTag": "архив"
+    "archivedTag": "архив",
+    "export": {
+      "label": "Экспорт",
+      "pdf": "PDF",
+      "xlsx": "Excel",
+      "pdfTitle": "Скачать отчёт в PDF",
+      "xlsxTitle": "Скачать отчёт в Excel",
+      "generatedAt": "Сформирован: {at}",
+      "totalProducts": "Итого: {count, plural, one {# товар} few {# товара} many {# товаров} other {# товара}}",
+      "fileName": {
+        "stock": "остатки",
+        "sales": "продажи",
+        "pnl": "прибыли-убытки"
+      },
+      "columns": {
+        "category": "Категория",
+        "brand": "Бренд",
+        "sku": "SKU",
+        "pieces": "{column}, шт.",
+        "locations": "Размещение (склад / подсклад)",
+        "storeQty": "Всего в магазине, шт.",
+        "minStock": "Минимальный остаток, шт.",
+        "line": "Показатель",
+        "hint": "Примечание",
+        "amount": "Сумма"
+      }
+    }
   },
   "stockReport": {
     "title": "Остатки товаров",

@@ -36,9 +36,11 @@ export function parseStockReportParams(
   ) as StockReportFilters;
 }
 
-/** Filters → `/reports/stock?…` (empty values left out). */
-export function stockReportHref(filters: StockReportFilters): string {
-  return hrefWith(STOCK_REPORT_HREF, {
+/** Filters → search params for `hrefWith` (the page URL and its export links). */
+export function stockReportSearch(
+  filters: StockReportFilters,
+): Record<string, string | boolean | undefined> {
+  return {
     warehouse: filters.warehouseId,
     sub: filters.subWarehouseId,
     category: filters.categoryId,
@@ -46,7 +48,12 @@ export function stockReportHref(filters: StockReportFilters): string {
     low: filters.lowStock,
     // false is a filter here (active only), so it is written as "0".
     archived: filters.archived === undefined ? undefined : filters.archived ? '1' : '0',
-  });
+  };
+}
+
+/** Filters → `/reports/stock?…` (empty values left out). */
+export function stockReportHref(filters: StockReportFilters): string {
+  return hrefWith(STOCK_REPORT_HREF, stockReportSearch(filters));
 }
 
 /** True when any filter is set. */

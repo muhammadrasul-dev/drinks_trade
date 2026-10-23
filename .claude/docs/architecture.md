@@ -105,6 +105,11 @@ Aniq versiyalar loyiha `init` qilinganda `package.json` da qotiriladi (pin) va s
 | @playwright/test | 1.56.1 | `apps/e2e` (Chromium `chromium-1194`; npm `latest` 1.64.1 — OQ-46) |
 | pg / @types/pg | 8.23.1 | `apps/e2e` (`scripts/prepare-db.ts`: E2E bazasini qayta yaratish), `packages/db` |
 | tsx | 4.23.15 | `apps/e2e`, `packages/db`, `packages/server` |
+| @react-pdf/renderer | 4.9.0 | `packages/server` (PDF eksport, T-804; JSX — `packages/server/tsconfig.json` da `jsx: react-jsx`) |
+| exceljs | 4.4.0 | `packages/server` (Excel eksport, T-804) |
+| react / @types/react | 19.3.1 / 19.3.0 | `packages/server` (react-pdf hujjati uchun; `apps/web` bilan bir versiya) |
+| pdfjs-dist | 6.4.299 | `packages/server` `devDependencies` (PDF testlarida matnni o'qish) |
+| Noto Sans (Regular, Bold) | 2.015 (notofonts) | `packages/server/assets/fonts/` (OFL, `OFL.txt` yonida) — PDF'da lotin + kirill |
 
 ## 3. Monorepo tuzilmasi
 
@@ -135,7 +140,7 @@ drinks_trade/
 │       │   │   │       └── audit/          # faqat OWNER
 │       │   │   └── api/
 │       │   │       ├── products/[id]/image/route.ts   # mahsulot rasmi, sessiya bilan (T-303)
-│       │   │       ├── reports/[report]/export/route.ts
+│       │   │       ├── reports/[report]/export/route.ts   # PDF / Excel eksport (T-804)
 │       │   │       └── health/route.ts
 │       │   ├── features/<modul>/   # modulga xos UI: components/, actions.ts, columns.tsx
 │       │   ├── components/         # ilova darajasidagi umumiy UI (layout, sidebar, locale-switcher)
@@ -145,11 +150,11 @@ drinks_trade/
 │       ├── messages/
 │       │   ├── uz.json
 │       │   └── ru.json
-│       ├── public/fonts/           # PDF uchun kirill shriftlar
 │       └── next.config.ts
 ├── packages/
 │   ├── server/                     # BACKEND yadrosi (faqat serverda ishlaydi: `server-only`)
 │   │   ├── scripts/                # CLI (faqat I/O): reset-password.ts → `pnpm user:reset-password`
+│   │   ├── assets/fonts/           # PDF uchun Noto Sans (lotin + kirill, OFL) — T-804
 │   │   └── src/
 │   │       ├── modules/
 │   │       │   ├── auth/           # login, logout, session, parol hash
@@ -162,7 +167,7 @@ drinks_trade/
 │   │       │   ├── stock-counts/
 │   │       │   ├── cash/
 │   │       │   ├── debts/          # open/cancel/repay (ichki) + qarzlar sahifasi (T-704)
-│   │       │   ├── reports/        # stock, sales, pnl + eksport
+│   │       │   ├── reports/        # stock, sales, pnl + eksport (export/: ReportDocument → pdf.tsx / xlsx.ts)
 │       │   ├── dashboard/      # bosh sahifa xulosasi (T-902), faqat o'qish
 │   │       │   └── audit/
 │   │       ├── core/
@@ -261,6 +266,13 @@ Xato matnlari serverda emas, **UI'da `code` bo'yicha tarjima qilinadi** (`messag
 ### 4.3 Eksport
 `GET /api/reports/{stock|sales|pnl}/export?format=pdf|xlsx&from=&to=` → session + RBAC → `reportsService` → fayl stream. STAFF uchun savdo hisobotida tannarx/foyda ustunlari umuman generatsiya qilinmaydi; P&L uchun 403.
 
+Amalda (T-804, ADR-010, ADR-012) — `apps/web/src/app/api/reports/[report]/export/route.ts`:
+1. Sessiya yo'q → 401; noma'lum hisobot → 404; `format` `pdf`/`xlsx` emas → 400; sahifaning o'z ruxsati (`canOpenSection` — `stockReport` / `salesReport` / `pnlReport`, `lib/nav.ts`) yo'q → 403 (STAFF P&L'ni ololmaydi, servis chaqirilmaydi).
+2. Filtrlar — sahifa URL'ining o'zi (`?warehouse=&sub=&category=&brand=&low=&archived=`, `?from=&to=`, `?day=` / `?month=` / `?year=` / `?from=&to=`): route ularni sahifaning parser'i bilan o'qiydi (`parseStockReportParams`, `parseSalesReportParams`, `parsePnlParams` — bir xil sukut va almashtirishlar), servis yana `parseInput` bilan tekshiradi. Til — `?locale=` (sahifa tili), bo'lmasa `user.locale` (OQ-41).
+3. `features/reports/export/report-exports.ts` → `reports.stock/sales/pnl(ctx, …)` (qoldiq filtrlari nomlari uchun kerak bo'lsa `warehouses.options`, `categories.list`, `brands.list`) → `{stock,sales,pnl}-document.ts` DTO'ni tarjima qilingan `ReportDocument` ga aylantiradi (`exportTranslator(locale)` — `createTranslator` + `messages/*.json`, ekran bilan bir katalog; `reports.export.*` kalitlari). Tannarx/foyda ustunlari faqat DTO'da bo'lsa (`totals.value` / `totals.cost`) — ekrandagi jadval qoidasi; STAFF DTO'sida bu kalitlar yo'q, shuning uchun faylga tusha olmaydi (CLAUDE.md 6-qoida).
+4. `@drinks/server` `renderReportPdf` / `renderReportXlsx` (`modules/reports/export/`, dinamik import): PDF — A4, Noto Sans, sarlavha + davr/filtrlar + tuzilgan vaqti, har sahifada takrorlanadigan ustun sarlavhasi, qator sahifaga bo'linmaydi, jami, izoh, "1 / N"; Excel — sarlavha qatorlari, muzlatilgan va filtrli ustun sarlavhasi, raqamli katakchalar (`#,##0`, `#,##0 "soʻm"`, foydada `[Red]`), jami — `SUM()` (OQ-42).
+5. Javob: `Content-Type`, `Content-Disposition: attachment; filename="sales_2026-10-01_2026-10-23.xlsx"; filename*=UTF-8''savdo_…` (OQ-43), `Cache-Control: private, no-store`. Domen xatosi: `FORBIDDEN` → 403, boshqasi → 400.
+
 ## 5. Backend dizayni (`packages/server`)
 
 ### 5.1 Modul tuzilmasi
@@ -344,7 +356,8 @@ Tekshiruv **3 joyda**: (1) servis (`assertCan`) — majburiy; (2) mapper — max
   - Kassa (T-701, faqat OWNER — `requireSection('cash')`, servis ham `cash.read` bilan rad etadi): `/cash` — ikki kassa balansi kartalari, jurnal (filtrlar URL'da — `?from=&to=&cashbox=&type=&direction=&page=`, `features/cash/list-params.ts`), Σ kirim/chiqim, `balance_after` ustuni, sahifalash. T-702 amallar tugmalarini `PageHeader` `actions` ga qo'shadi.
   - Qoldiq hisoboti (T-801): `/reports/stock` (`stockReport` bo'limi, `report.stock` — ikkala rol) — `reports.stock(ctx, filters)` (`modules/reports`), filtrlar URL'da (`?warehouse=&sub=&category=&brand=&low=1&archived=0|1`, `features/reports/stock-params.ts`). `StockReportFiltersBar` (ombor → uning sub-omborlari, toifa, brend, mahsulot holati, "Kam qolganlar"), `StockReportTable` — tannarx ustunlari faqat javobda `totals.value` bo'lsa (server STAFF uchun kalitlarni umuman qo'shmaydi). `reports` obyekti `modules/reports/index.ts` da yig'iladi (`stock`, `sales`, `pnl`); mahsulot bloki (select, tartib, DTO) — `report-product.ts`, jadvaldagi mahsulot katakchasi — `ReportProductCell`.
   - Savdo hisoboti (T-802): `/reports/sales` (`salesReport` bo'limi, `report.sales` — ikkala rol) — `reports.sales(ctx, { from, to })`, davr URL'da (`?from=&to=`, `features/reports/sales-params.ts`; parametrsiz — joriy oy, OQ-35; teskari oraliq almashtiriladi). `SalesReportFiltersBar` (ikki sana, "Bugun", "Shu oy"), jami bloki, `SalesReportTable` — tannarx va yalpi foyda ustunlari faqat javobda `totals.cost` bo'lsa. URL parametrlarini o'qish yordamchilari — `lib/search-params.ts` (`firstParam`, `uuidParam`, `dateParam`).
-  - P&L (T-803): `/reports/pnl` (`pnlReport` bo'limi, `report.pnl` — faqat OWNER; STAFF menyuda ko'rmaydi, sahifa 403, servis `FORBIDDEN`) — `reports.pnl(ctx, { from, to })`. Davr URL'da — `?day=` / `?month=YYYY-MM` / `?year=YYYY` / `?from=&to=` (`features/reports/pnl-params.ts`: birinchi to'g'ri tur ustun, parametrsiz — joriy oy, OQ-36; `pnlPeriodRange` davrni Toshkent kunlari oralig'iga aylantiradi, `shiftPnlPeriod` — ‹ › qadami, kelajakka emas, `switchPnlPeriodKind` — tur almashganda joy saqlanadi). `PnlPeriodFilter` (Kun / Oy / Yil / Oraliq, kun va oraliq sana maydonlari bilan), `PnlStatement` (BR-11 qatorlari, chiqimlar ishorasi bilan, manfiy foyda qizil), oy nomlari tarjimadan (`pnlReport.period.month`, Intl emas — hydration).
+  - P&L (T-803): `/reports/pnl` (`pnlReport` bo'limi, `report.pnl` — faqat OWNER; STAFF menyuda ko'rmaydi, sahifa 403, servis `FORBIDDEN`) — `reports.pnl(ctx, { from, to })`. Davr URL'da — `?day=` / `?month=YYYY-MM` / `?year=YYYY` / `?from=&to=` (`features/reports/pnl-params.ts`: birinchi to'g'ri tur ustun, parametrsiz — joriy oy, OQ-36; `pnlPeriodRange` davrni Toshkent kunlari oralig'iga aylantiradi, `shiftPnlPeriod` — ‹ › qadami, kelajakka emas, `switchPnlPeriodKind` — tur almashganda joy saqlanadi). `PnlPeriodFilter` (Kun / Oy / Yil / Oraliq, kun va oraliq sana maydonlari bilan), `PnlStatement` (BR-11 qatorlari, chiqimlar ishorasi bilan, manfiy foyda qizil), oy nomlari tarjimadan (`pnlReport.period.month`, Intl emas — hydration). Davr matni — `pnlPeriodLabel(t, period)` (sof funksiya; `usePnlPeriodLabel` va eksport ham shuni ishlatadi).
+  - Eksport (T-804): uchala hisobot sahifasida `PageHeader` `actions` da `ReportExportButtons` (**PDF** / **Excel** — `<a download>`, `reportExportHref(report, format, locale, search)`; `search` — sahifaning joriy filtrlari: `stockReportSearch(filters)`, `{ from, to }`, `pnlPeriodSearch(period)`, `stockReportHref` / `pnlReportHref` ham shulardan). Oqim — §4.3.
   - Umumiy UI: `packages/ui` — `DataTable` (TanStack Table v9, `dataTableColumnHelper<T>()`; ustunlar render funksiyasi bo'lgani uchun Client Component modulida e'lon qilinadi; filtr/sahifalash serverda), `PageHeader`, shadcn `alert-dialog`, `sheet`, `separator`. `apps/web/src/components` (tarjima kerak bo'lganlar) — `MoneyText` (`formatSom` + `common.som`), `QtyText` (`formatQty` + `enums.QtyUnit.*`), `ConfirmDialog` (bajarish/storno/o'chirishdan oldin; `onConfirm` tugaguncha ochiq turadi).
 - Hujjat formalari (savdo/xarid): qatorlar jadvali, har qatorda mahsulot (qidiruv/shtrix-kod), sub-ombor, miqdor (dona/blok almashtirgich), narx, summa; pastda to'lov qismlari (Naqd/Karta/Nasiya) va "Qoldiq: N blok M dona" ko'rsatkichi. Tugmalar: **Saqlash (qoralama)** · **Bajarish** · **O'chirish** (faqat qoralama) · **Storno** (faqat bajarilgan).
 - Savdo qatorida qoldiq yetmasa — qator qizil, xabar, "Bajarish" o'chiq (FR-3.3). Bajarishda server yana tekshiradi (BR-7).
@@ -359,7 +372,7 @@ Tekshiruv **3 joyda**: (1) servis (`assertCan`) — majburiy; (2) mapper — max
 - Tarjima kalitlari modul bo'yicha: `products.title`, `errors.INSUFFICIENT_STOCK`, `enums.CashTxType.TRAVEL_EXPENSE`. `apps/web/test/messages.test.ts` tekshiradi: `uz.json` va `ru.json` kalitlari bir xil, bo'sh qiymat yo'q, `errors.*` = `ErrorCode` ro'yxati, `enums.*` = `shared/enums.ts` a'zolari. Yangi xato kodi yoki enum qo'shilsa — ikkala faylga tarjima qo'shilmaguncha test qizil.
 - O'zbekcha matnlarda `oʻ`/`gʻ` uchun U+02BB (ʻ), tutuq belgisi uchun U+02BC (ʼ) ishlatiladi — oddiy `'` ICU formatida maxsus belgi.
 - Foydalanuvchi kiritgan ma'lumot (mahsulot nomi, izohlar) tarjima qilinmaydi.
-- PDF/Excel eksport ham joriy til bo'yicha.
+- PDF/Excel eksport ham joriy til bo'yicha: eksport tugmasi sahifa tilini `?locale=` bilan yuboradi, bo'lmasa `user.locale` (OQ-41); matnlar — o'sha `messages/*.json` (`reports.export.*` va hisobotlarning o'z kalitlari).
 
 ## 8. Docker va muhitlar
 

@@ -15,7 +15,7 @@ Holatlar: `Taklif` (foydalanuvchi tasdig'ini kutmoqda) · `Qabul qilingan` · `A
 | ADR-007 | Qoldiq: joriy balans + o'zgarmas jurnal | Qabul qilingan |
 | ADR-008 | Pul BIGINT so'm, tannarx NUMERIC(20,4) | Qabul qilingan |
 | ADR-009 | Bir vaqtdalik: pessimistik qulf + DB CHECK | Qabul qilingan |
-| ADR-010 | PDF — @react-pdf/renderer, Excel — exceljs | Taklif |
+| ADR-010 | PDF — @react-pdf/renderer, Excel — exceljs | Qabul qilingan (T-804) |
 | ADR-011 | Filialga tayyorlik: organization → store | Qabul qilingan |
 | ADR-012 | Mutatsiyalar — Server Actions, eksport — Route Handlers | Taklif |
 | ADR-013 | Audit — servisda aniq chaqiruv + DB trigger | Qabul qilingan |
@@ -73,6 +73,7 @@ Holatlar: `Taklif` (foydalanuvchi tasdig'ini kutmoqda) · `Qabul qilingan` · `A
 ## ADR-010 — Eksport
 **Qaror.** PDF: `@react-pdf/renderer` (serverda, kirill + lotin shrift — Noto Sans/Inter fayli repoda). Excel: `exceljs` (raqamlar raqam formatida, so'm formati bilan).
 **Oqibat.** − Headless Chrome (Puppeteer) ishlatilmaydi — Docker image yengil. Murakkab dizayn kerak bo'lsa qayta ko'riladi.
+**Amalda (T-804).** `@react-pdf/renderer` 4.9.0 + `exceljs` 4.4.0 — `packages/server/src/modules/reports/export/` (`pdf.tsx`, `xlsx.ts`), ikkalasi bitta tarjima qilingan `ReportDocument` ni chizadi; birinchi chaqiruvda dinamik import qilinadi (boshqa sahifalar yuklamaydi). Shrift — Noto Sans Regular/Bold (OFL, `packages/server/assets/fonts/`, PDF'ga faqat ishlatilgan glif'lar kiradi — fayl ~12 KB): lotin, kirill (o'zbek kirilli ham), `ʻ ʼ — № −`; "→" yo'q, shuning uchun eksportda "Ombor / Sub-ombor". Shrift yo'li `new URL(…, import.meta.url)` — Turbopack faylni `.next/server/assets/` ga chiqaradi (standalone'ga ham tushadi), `next build` + `next start` da tekshirildi; `serverExternalPackages` kerak bo'lmadi. Excel: `#,##0 "soʻm"` / `"сум"` (foydada `[Red]` manfiy), dona — `#,##0`, jami — `SUM()` + server natijasi. Holat: **Qabul qilingan**.
 
 ## ADR-011 — Filialga tayyorlik
 **Qaror.** `organization → store`. Katalog (mahsulot, toifa, brend, foydalanuvchi) — organization darajasida; omborlar, hujjatlar, kassa, qarz, tannarx, audit — `store_id` bilan. v1 da bitta store, UI'da tanlov yo'q.

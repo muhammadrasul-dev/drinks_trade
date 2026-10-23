@@ -66,20 +66,24 @@ export function pnlPeriodRange(period: PnlPeriod): PnlReportQuery {
   }
 }
 
-/** Period → `/reports/pnl?…`; the current month is the bare href. */
-export function pnlReportHref(period: PnlPeriod, today: string = storeToday()): string {
+/** Period → its search params (`?day=` / `?month=` / `?year=` / `?from=&to=`). */
+export function pnlPeriodSearch(period: PnlPeriod): Record<string, string | undefined> {
   switch (period.kind) {
     case 'day':
-      return hrefWith(PNL_REPORT_HREF, { day: period.day });
+      return { day: period.day };
     case 'month':
-      return period.month === monthOf(today)
-        ? PNL_REPORT_HREF
-        : hrefWith(PNL_REPORT_HREF, { month: period.month });
+      return { month: period.month };
     case 'year':
-      return hrefWith(PNL_REPORT_HREF, { year: period.year });
+      return { year: period.year };
     case 'range':
-      return hrefWith(PNL_REPORT_HREF, { from: period.from, to: period.to });
+      return { from: period.from, to: period.to };
   }
+}
+
+/** Period → `/reports/pnl?…`; the current month is the bare href. */
+export function pnlReportHref(period: PnlPeriod, today: string = storeToday()): string {
+  if (period.kind === 'month' && period.month === monthOf(today)) return PNL_REPORT_HREF;
+  return hrefWith(PNL_REPORT_HREF, pnlPeriodSearch(period));
 }
 
 /**

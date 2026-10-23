@@ -6,7 +6,8 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { PnlPeriodFilter } from '@/features/reports/components/pnl-period-filter';
 import { PnlPeriodDescription } from '@/features/reports/components/pnl-period-label';
 import { PnlStatement } from '@/features/reports/components/pnl-statement';
-import { parsePnlParams, pnlPeriodRange } from '@/features/reports/pnl-params';
+import { ReportExportButtons } from '@/features/reports/components/report-export-buttons';
+import { parsePnlParams, pnlPeriodRange, pnlPeriodSearch } from '@/features/reports/pnl-params';
 import { getServiceContext, requireSection } from '@/lib/session';
 
 // P&L (T-803, BR-11, business-logic §8): OWNER only — requireSection checks
@@ -27,7 +28,11 @@ export default async function ReportsPnlPage({
 
   return (
     <>
-      <PageHeader title={t('title')} description={<PnlPeriodDescription period={period} />} />
+      <PageHeader
+        title={t('title')}
+        description={<PnlPeriodDescription period={period} />}
+        actions={<ReportExportButtons report="pnl" search={pnlPeriodSearch(period)} />}
+      />
       <PnlPeriodFilter period={period} />
       <PnlStatement report={report} />
       <p className="max-w-2xl text-xs text-muted-foreground">{t('excluded')}</p>

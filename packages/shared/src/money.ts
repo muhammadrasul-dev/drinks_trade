@@ -2,6 +2,9 @@
 // and DTOs. Source of truth: .claude/docs/business-logic.md §1.2.
 import { divRoundHalfUp, groupDigits, parseDecimal, toSafeNumber } from './decimal';
 
+/** Thousands grouped with a no-break space: 1250000 → "1 250 000" (counts in exports). */
+export { groupDigits };
+
 /**
  * Whole som → display text, thousands grouped with a no-break space:
  * `formatSom(1250000)` → "1 250 000 soʻm". The UI passes the translated unit.
