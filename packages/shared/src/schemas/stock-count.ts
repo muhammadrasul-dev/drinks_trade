@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import { StockCountStatus } from '../enums';
 
-// Stock count (T-601, FR-5.1, business-logic §6.1, §6.3). The same schemas
+// Stock count (T-601, T-602, FR-5.1–5.2, business-logic §6). The same schemas
 // validate the form in the browser and the input in packages/server.
 
 /** Counted (sub-warehouse, product) pairs one count may hold. */
@@ -72,6 +72,10 @@ export const stockCountCancelInputSchema = z.object({
   version: z.number().int().min(0),
 });
 export type StockCountCancelInput = z.input<typeof stockCountCancelInputSchema>;
+
+/** Posting a draft (§6.2); `version` is the one the user saw. */
+export const stockCountPostInputSchema = stockCountCancelInputSchema;
+export type StockCountPostInput = z.input<typeof stockCountPostInputSchema>;
 
 export const stockCountIdInputSchema = z.object({ id: z.uuid() });
 export type StockCountIdInput = z.input<typeof stockCountIdInputSchema>;
