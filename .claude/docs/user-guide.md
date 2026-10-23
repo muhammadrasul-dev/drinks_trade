@@ -113,10 +113,12 @@ Tushum
 − Sotilgan tovar tannarxi
 = Yalpi foyda
 − Yo'l kira
-− Inventarizatsiya kamomadi (+ ortiqcha)
+− Kamomad (inventarizatsiya)
++ Ortiqcha (inventarizatsiya)
 = SOF FOYDA
 ```
 Xarid summasi, qarzlar, "boshqa chiqim" va o'tkazmalar foydaga kirmaydi.
+Davr yuqoridagi **Kun** / **Oy** / **Yil** / **Oraliq** tugmalari bilan tanlanadi; ochilganda joriy oy (butun oy) ko'rsatiladi. Kun, oy va yilni ‹ › strelkalari bilan oldinga-orqaga surish mumkin (kelajakka emas), kunni sana maydonidan ham tanlash mumkin; **Oraliq** — "dan"/"gacha" sanalari. Kunlar Toshkent vaqti bo'yicha, hujjat sanasiga qarab: o'tgan sana bilan kiritilgan savdo o'sha kunga tushadi. Storno qilingan savdo va storno qilingan yo'l kira o'z sanasidan butunlay chiqadi (storno kunida ham ko'rinmaydi). Nasiya savdo ham tushumga kiradi. Sub-omborlar orasidagi farq (bir joyda kam, boshqasida ortiq) kamomad ham, ortiqcha ham emas. Har qator ostida nechta savdo / yozuv / inventarizatsiya hisoblangani yozilgan. Xodim bu hisobotni menyuda ko'rmaydi va ocholmaydi.
 
 ## 12. Foydalanuvchilar (faqat Egasi)
 Menyu → **Boshqaruv → Foydalanuvchilar**. Ro'yxatda F.I.O, login, rol, til, holat (Faol/Faolsiz) va oxirgi kirish vaqti. Egasining o'z qatorida faqat **Mening akkauntim** havolasi bor.
