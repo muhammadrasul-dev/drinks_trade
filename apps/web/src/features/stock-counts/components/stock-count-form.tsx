@@ -32,7 +32,7 @@ import { ConfirmDialog } from '@/components/confirm-dialog';
 import { MoneyText } from '@/components/money-text';
 import { QtyText } from '@/components/qty-text';
 import { useRouter } from '@/i18n/navigation';
-import { ProductPicker } from '@/features/purchases/components/product-picker';
+import { ProductPicker } from '@/components/product-picker';
 
 import { cancelStockCount, postStockCount, updateStockCount } from '../actions';
 

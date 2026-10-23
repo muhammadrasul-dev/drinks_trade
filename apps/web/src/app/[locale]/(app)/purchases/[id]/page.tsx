@@ -13,7 +13,7 @@ import { notFound } from 'next/navigation';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { z } from 'zod';
 
-import { DocStatusBadge } from '@/features/purchases/components/doc-status-badge';
+import { DocStatusBadge } from '@/components/doc-status-badge';
 import { PurchaseForm } from '@/features/purchases/components/purchase-form';
 import { PurchaseReverseButton } from '@/features/purchases/components/purchase-reverse-button';
 import { PurchaseView } from '@/features/purchases/components/purchase-view';

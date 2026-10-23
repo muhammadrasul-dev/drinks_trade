@@ -44,7 +44,7 @@ import { useFieldArray, useForm, useWatch } from 'react-hook-form';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import { MoneyText } from '@/components/money-text';
 import { QtyText } from '@/components/qty-text';
-import { ProductPicker } from '@/features/purchases/components/product-picker';
+import { ProductPicker } from '@/components/product-picker';
 import { Link, useRouter } from '@/i18n/navigation';
 import { toNumber, toAmount } from '@/lib/number-input';
 

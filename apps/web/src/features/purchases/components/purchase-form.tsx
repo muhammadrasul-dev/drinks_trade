@@ -48,7 +48,7 @@ import { toNumber, toAmount } from '@/lib/number-input';
 
 import { createPurchase, deletePurchase, postPurchase, updatePurchase } from '../actions';
 import { PURCHASES_HREF } from '../list-params';
-import { ProductPicker } from './product-picker';
+import { ProductPicker } from '@/components/product-picker';
 
 type LineValues = PurchaseDraftInput['lines'][number];
 
