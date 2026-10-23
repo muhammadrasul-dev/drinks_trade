@@ -18,6 +18,7 @@ import {
 } from '@drinks/shared/schemas';
 
 import type { ServiceContext } from '../../core/context';
+import { storeDayRange } from '../../core/dates';
 import { assertCan } from '../../core/rbac';
 
 type Db = PrismaClient;
@@ -35,15 +36,6 @@ const ROW_SELECT = {
 } as const satisfies Prisma.AuditLogSelect;
 
 type Row = Prisma.AuditLogGetPayload<{ select: typeof ROW_SELECT }>;
-
-/** Store-zone day range [from, to] → created_at bounds (Asia/Tashkent is UTC+5, no DST). */
-function dayRange(from?: string, to?: string): Prisma.DateTimeFilter | undefined {
-  if (!from && !to) return undefined;
-  return {
-    ...(from && { gte: new Date(`${from}T00:00:00+05:00`) }),
-    ...(to && { lt: new Date(new Date(`${to}T00:00:00+05:00`).getTime() + 86_400_000) }),
-  };
-}
 
 function toEntry(row: Row): AuditEntryDto {
   const { backdated, ...meta } = (redactAuditValue(row.meta) ?? {}) as Record<string, unknown>;
@@ -191,7 +183,7 @@ async function list(ctx: ServiceContext, query: AuditListQuery = {}): Promise<Au
   const { user, entityType, action, entityId, from, to, page = 1 } = parsed.data;
 
   const { prisma } = await import('@drinks/db');
-  const createdAt = dayRange(from, to);
+  const createdAt = storeDayRange(from, to);
   const where: Prisma.AuditLogWhereInput = {
     // Only the current store's rows (OQ-25: store-less LOGIN_FAILED rows are not shown).
     storeId: ctx.storeId,

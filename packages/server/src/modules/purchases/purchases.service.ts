@@ -41,6 +41,7 @@ import {
 import type { z } from 'zod';
 
 import type { ServiceContext } from '../../core/context';
+import { storeDayAt, storeDayRange } from '../../core/dates';
 import { lockCashboxes, lockPurchase, lockWarehouses } from '../../core/locks';
 import { decimalToString, moneyToBigInt, moneyToNumber } from '../../core/money';
 import { nextDocNumber } from '../../core/numbering';
@@ -199,7 +200,7 @@ function resolveDocDate(day: string, keep?: Date): Date {
   const today = storeToday();
   if (day > today) throw new DomainError(ErrorCode.DOC_DATE_IN_FUTURE);
   if (keep && storeDateOf(keep) === day) return keep;
-  return day === today ? new Date() : new Date(`${day}T12:00:00+05:00`);
+  return day === today ? new Date() : storeDayAt(day, '12:00:00');
 }
 
 /**
@@ -336,21 +337,12 @@ async function lockDraft(tx: Tx, ctx: ServiceContext, id: string, version: numbe
   return locked;
 }
 
-/** Day range [from, to] in the store zone → docDate bounds (UTC+5, see resolveDocDate). */
-function dateRange(from?: string, to?: string): Prisma.DateTimeFilter | undefined {
-  if (!from && !to) return undefined;
-  return {
-    ...(from && { gte: new Date(`${from}T00:00:00+05:00`) }),
-    ...(to && { lt: new Date(new Date(`${to}T00:00:00+05:00`).getTime() + 86_400_000) }),
-  };
-}
-
 /** Newest first; filters by status, store-zone date range and part of the number. */
 async function list(ctx: ServiceContext, query: PurchaseListQuery = {}): Promise<PurchaseListPage> {
   assertCan(ctx.user, 'purchase.write');
   const { status, from, to, q, page = 1 } = parse(purchaseListQuerySchema, query);
   const { prisma } = await import('@drinks/db');
-  const docDate = dateRange(from, to);
+  const docDate = storeDayRange(from, to);
   const where: Prisma.PurchaseWhereInput = {
     storeId: ctx.storeId,
     ...(status && { status }),

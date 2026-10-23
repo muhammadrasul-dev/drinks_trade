@@ -18,6 +18,7 @@ import {
 } from '@drinks/shared/schemas';
 
 import type { ServiceContext } from '../../core/context';
+import { storeDayRange } from '../../core/dates';
 import { moneyToNumber } from '../../core/money';
 import { assertCan } from '../../core/rbac';
 
@@ -65,18 +66,6 @@ function toEntry(row: JournalRow): CashJournalEntry {
   };
 }
 
-/**
- * Day range [from, to] in the store zone → tx_date bounds. Asia/Tashkent is
- * UTC+5 all year (same rule as the document lists, business-logic §5.1).
- */
-function dayRange(from?: string, to?: string): Prisma.DateTimeFilter | undefined {
-  if (!from && !to) return undefined;
-  return {
-    ...(from && { gte: new Date(`${from}T00:00:00+05:00`) }),
-    ...(to && { lt: new Date(new Date(`${to}T00:00:00+05:00`).getTime() + 86_400_000) }),
-  };
-}
-
 /** Both cashboxes of the store (CASH, then CARD) with their current balance. */
 async function balances(ctx: ServiceContext): Promise<CashboxBalance[]> {
   assertCan(ctx.user, 'cash.read');
@@ -104,7 +93,7 @@ async function journal(
   if (!parsed.success) throw validationError(parsed.error);
   const { from, to, cashbox, type, direction, page = 1 } = parsed.data;
   const { prisma } = await import('@drinks/db');
-  const txDate = dayRange(from, to);
+  const txDate = storeDayRange(from, to);
   const where: Prisma.CashTransactionWhereInput = {
     storeId: ctx.storeId,
     ...(txDate && { txDate }),
