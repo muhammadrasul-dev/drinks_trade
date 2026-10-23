@@ -10,3 +10,4 @@ export * from './cash';
 export * from './audit';
 export * from './debts';
 export * from './reports';
+export * from './stock-count';

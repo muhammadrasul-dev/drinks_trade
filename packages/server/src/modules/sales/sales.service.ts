@@ -594,8 +594,9 @@ async function post(ctx: ServiceContext, input: SalePostInput): Promise<SaleDeta
     if (paidCredit > 0 && !doc.note?.trim()) throw new DomainError(ErrorCode.NOTE_REQUIRED);
     if (doc.docDate.getTime() > Date.now()) throw new DomainError(ErrorCode.DOC_DATE_IN_FUTURE);
 
-    // 2. Warehouses FOR SHARE, the stock-count block (BR-8, §3) and the archive state.
-    await warehouses.lockActive(
+    // 2. Warehouses FOR SHARE, the stock-count block (BR-8, §3) and the
+    //    archive state under that lock (§9c).
+    await warehouses.lockForPosting(
       tx,
       ctx,
       doc.lines.map((line) => line.subWarehouseId),
@@ -742,7 +743,7 @@ async function reverse(ctx: ServiceContext, input: SaleReverseInput): Promise<Sa
 
     // 3. Warehouses FOR SHARE, the stock-count block (BR-8, §3) and the archive
     //    state: goods must not come back into an archived sub-warehouse (OQ-31).
-    await warehouses.lockActive(
+    await warehouses.lockForPosting(
       tx,
       ctx,
       doc.lines.map((line) => line.subWarehouseId),
