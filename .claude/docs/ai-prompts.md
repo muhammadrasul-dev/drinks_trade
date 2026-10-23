@@ -548,3 +548,11 @@ check one task in '/Users/home/Desktop/Muhammadrasul/drinks_trade/.claude/docs/t
 ```
 T-603 (ochiq inventarizatsiya banneri) va T-802 (savdo hisoboti) start theese tasks in seperate sessions, then refactor  shortly
 ```
+
+---
+
+## Prompt 54 — Main'ga merge qilish va keyin oddiy refactor (2026-10-23)
+
+```
+yes do merge and then simply refactor
+```
