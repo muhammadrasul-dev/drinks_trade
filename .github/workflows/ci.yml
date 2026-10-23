@@ -75,3 +75,54 @@ jobs:
       # Each package's Vitest globalSetup runs `prisma migrate deploy` on
       # DATABASE_URL_TEST; every test file starts on truncated tables.
       - run: pnpm test:int
+
+  e2e:
+    name: E2E tests (Playwright)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: check
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: drinks
+          POSTGRES_PASSWORD: drinks
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U drinks -d postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      # apps/e2e/env.ts holds the rest (owner credentials, port 3911, server env).
+      E2E_DATABASE_URL: postgresql://drinks:drinks@localhost:5432/drinks_trade_e2e
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+      # The browser build matching the pinned @playwright/test, with its system libraries.
+      - run: pnpm --filter @drinks/e2e exec playwright install --with-deps chromium
+      - run: pnpm --filter @drinks/web build
+      # webServer (apps/e2e/playwright.config.ts): re-creates drinks_trade_e2e,
+      # migrates, seeds, then `next start` on the build above (E2E_SKIP_BUILD).
+      - run: pnpm test:e2e
+        env:
+          E2E_SKIP_BUILD: '1'
+
+      - uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: playwright-report
+          path: |
+            apps/e2e/playwright-report/
+            apps/e2e/test-results/
+          retention-days: 14
