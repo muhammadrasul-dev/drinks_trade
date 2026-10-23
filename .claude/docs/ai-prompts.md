@@ -470,3 +470,12 @@ Try again
 oq-24 (A) option is suitable for this section
 oq-26 no, it is not needly function at this time
 ```
+
+---
+
+## Prompt 45 — Qolgan test bazalari va 3 ta worktree'ni o'chirish (2026-10-23)
+
+```
+remove drinks_trade_t204_test, t303_test, t304_test
+and 3 worktree too.
+```
