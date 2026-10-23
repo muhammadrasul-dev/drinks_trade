@@ -24,6 +24,8 @@ SRS'dagi biznes savollar yopilgan. Bu yerda — arxitektura va DB loyihalashda c
 
 **2026-10-23 (T-603):** OQ-34 ochildi — inventarizatsiya banneri boshqa qurilmadagi o'zgarishni qachon ko'rsatadi; tavsiya bo'yicha qilingan, javob kutilmoqda.
 
+**2026-10-23 (T-802):** OQ-35 ochildi — savdo hisobotining standart davri va qatorlar tartibi; tavsiya bo'yicha qilingan, javob kutilmoqda.
+
 | # | Savol | Tavsiya | Holat |
 |---|---|---|---|
 | OQ-01 | Storno qilingan savdo P&L'da qaysi sanada aks etadi? | Asl hujjat sanasida (hujjat davr hisobidan butunlay chiqadi) | Yopilgan — asl sanada (A) |
@@ -60,6 +62,7 @@ SRS'dagi biznes savollar yopilgan. Bu yerda — arxitektura va DB loyihalashda c
 | OQ-33 | Bitta ham qator sanalmagan inventarizatsiyani bajarish mumkinmi? | Yo'q — `STOCK_COUNT_EMPTY`; sanoq ochiq qoladi, kerak bo'lmasa bekor qilinadi | Ochiq — tavsiya bo'yicha qilingan (T-602) |
 | OQ-32 | Inventarizatsiyada arxivlangan mahsulotni sanash mumkinmi? | Faqat shu sub-omborda qoldig'i bor bo'lsa (hisobdan chiqarish uchun); qoldig'i yo'q joyga arxivdagi mahsulotni qo'shish → `ENTITY_ARCHIVED` | Ochiq — tavsiya bo'yicha qilingan (T-601) |
 | OQ-34 | Inventarizatsiya banneri boshqa qurilmada (boshqa xodim) ochilgan yoki yopilgan sanoqni qachon ko'rsatadi? | Keyingi bosishda: banner har sahifa o'tishida va tab qayta ochilganda serverdan qayta o'qiladi (bitta yengil so'rov), taymer bilan so'rov yo'q | Ochiq — tavsiya bo'yicha qilingan (T-603) |
+| OQ-35 | Savdo hisoboti davr tanlanmasdan ochilsa qaysi davrni ko'rsatadi va mahsulot qatorlari qaysi tartibda? | 1) Joriy oy (1-sanadan bugungacha, Toshkent); 2) mahsulot nomi bo'yicha (qoldiq hisoboti kabi) | Ochiq — tavsiya bo'yicha qilingan (T-802) |
 
 ---
 
@@ -233,3 +236,14 @@ T-603. Banner ochiq sanoqlarni server'da, `(app)` layout bilan o'qiydi. Lekin Ne
 - **B:** faqat server render — qo'shimcha so'rov yo'q, lekin boshqa qurilmada banner F5 gacha eskirgan bo'lib qoladi.
 - **C:** davriy so'rov (masalan, 30 soniyada) — ochiq sahifada ham deyarli darhol, lekin har ochiq tab doimiy yuklama beradi.
 B ga o'tish — `open-stock-count-banner.tsx` dagi `useEffect` ni va `app/api/stock-counts/open/route.ts` ni olib tashlash; C ga — o'sha effektga `setInterval` qo'shish.
+
+### OQ-35 — Savdo hisobotining standart davri va qatorlar tartibi
+T-802. SRS §7.2 "sana oralig'i va mahsulot kesimida" deydi; database §7.2 namunasi `from`/`to` ni majburiy oladi, tartibni aytmaydi. Ikki narsa aniq emas:
+1. **Davr tanlanmagan bo'lsa** (menyudan birinchi ochilganda, URL'da `from`/`to` yo'q).
+   - **A (tavsiya, T-802 da shunday):** joriy oy — 1-sanadan bugungacha (Toshkent kunlari). "Bugun" va "Shu oy" tugmalari bor; bir chetini bo'shatsa, o'sha tomoni ochiq (`?to=…` — boshidan shu kungacha, `?from=…` — shu kundan keyin hammasi). Server ham ikkala chetni ixtiyoriy qabul qiladi (`from > to` → `VALIDATION_FAILED`; sahifa URL'dagi teskari oraliqni almashtirib yuboradi).
+   - **B:** bugun (bir kun).
+   - **C:** butun davr (filtrsiz).
+2. **Qatorlar tartibi.**
+   - **A (tavsiya, T-802 da shunday):** mahsulot nomi bo'yicha — qoldiq hisoboti (T-801) va kelgusi eksport (T-804) bilan bir xil, mahsulotni topish oson.
+   - **B:** tushum bo'yicha kamayish tartibida ("eng ko'p sotilganlar" yuqorida).
+1-B/1-C ga o'tish — `apps/web/src/features/reports/sales-params.ts` dagi `currentMonth` sukutini almashtirish (+ `sales-params.test.ts`). 2-B — `sales-report.queries.ts` da `items` ni `revenue` bo'yicha saralash (+ integratsiya testidagi tartib).

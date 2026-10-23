@@ -920,10 +920,12 @@
       "value": "Qiymat"
     }
   },
+  "reports": {
+    "archivedTag": "arxiv"
+  },
   "stockReport": {
     "title": "Mahsulotlar qoldigʻi",
     "empty": "Qoldiq topilmadi.",
-    "archivedTag": "arxiv",
     "lowStock": "Kam qoldi",
     "lowStockTitle": "Minimal qoldiq: {min}",
     "pieces": "= {qty} dona",
@@ -954,6 +956,33 @@
       "qty": "Qoldiq",
       "avgCost": "Oʻrtacha tannarx (1 dona)",
       "value": "Qiymati"
+    }
+  },
+  "salesReport": {
+    "title": "Savdo hisoboti",
+    "empty": "Bu davrda bajarilgan savdo yoʻq.",
+    "pieces": "= {qty} dona",
+    "filters": {
+      "label": "Davr",
+      "from": "dan",
+      "to": "gacha",
+      "today": "Bugun",
+      "thisMonth": "Shu oy"
+    },
+    "totals": {
+      "label": "Davr boʻyicha jami",
+      "sales": "Savdolar:",
+      "products": "Mahsulotlar:",
+      "revenue": "Tushum:",
+      "cost": "Tannarx:",
+      "grossProfit": "Yalpi foyda:"
+    },
+    "columns": {
+      "product": "Mahsulot",
+      "qty": "Sotildi",
+      "revenue": "Tushum",
+      "cost": "Tannarx",
+      "grossProfit": "Yalpi foyda"
     }
   },
   "stockCounts": {

@@ -920,10 +920,12 @@
       "value": "Значение"
     }
   },
+  "reports": {
+    "archivedTag": "архив"
+  },
   "stockReport": {
     "title": "Остатки товаров",
     "empty": "Остатков не найдено.",
-    "archivedTag": "архив",
     "lowStock": "Мало",
     "lowStockTitle": "Минимальный остаток: {min}",
     "pieces": "= {qty} шт.",
@@ -954,6 +956,33 @@
       "qty": "Остаток",
       "avgCost": "Средняя себестоимость (1 шт.)",
       "value": "Стоимость"
+    }
+  },
+  "salesReport": {
+    "title": "Отчёт по продажам",
+    "empty": "За этот период проведённых продаж нет.",
+    "pieces": "= {qty} шт.",
+    "filters": {
+      "label": "Период",
+      "from": "с",
+      "to": "по",
+      "today": "Сегодня",
+      "thisMonth": "Этот месяц"
+    },
+    "totals": {
+      "label": "Итого за период",
+      "sales": "Продаж:",
+      "products": "Товаров:",
+      "revenue": "Выручка:",
+      "cost": "Себестоимость:",
+      "grossProfit": "Валовая прибыль:"
+    },
+    "columns": {
+      "product": "Товар",
+      "qty": "Продано",
+      "revenue": "Выручка",
+      "cost": "Себестоимость",
+      "grossProfit": "Валовая прибыль"
     }
   },
   "stockCounts": {
