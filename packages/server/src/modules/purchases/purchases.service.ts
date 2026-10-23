@@ -44,7 +44,7 @@ import type { z } from 'zod';
 import type { ServiceContext } from '../../core/context';
 import { resolveStoreDate, storeDayRange } from '../../core/dates';
 import { assertLineProductsUnchanged } from '../../core/doc-lines';
-import { lockCashboxes, lockDebt, lockPurchase, lockWarehouses } from '../../core/locks';
+import { lockCashboxes, lockDebt, lockPurchase } from '../../core/locks';
 import { decimalToString, moneyToBigInt, moneyToNumber } from '../../core/money';
 import { nextDocNumber } from '../../core/numbering';
 import { assertCan } from '../../core/rbac';
@@ -502,16 +502,13 @@ async function post(ctx: ServiceContext, input: PurchasePostInput): Promise<Purc
     if (paidCredit > 0 && !doc.note?.trim()) throw new DomainError(ErrorCode.NOTE_REQUIRED);
     if (doc.docDate.getTime() > Date.now()) throw new DomainError(ErrorCode.DOC_DATE_IN_FUTURE);
 
-    // 2. Warehouses FOR SHARE, then the stock-count block (BR-8, §3) and the
-    //    archive state under that lock (§9c). A sub-warehouse never changes its
-    //    warehouse, so the first resolveActive may run before the lock.
-    const subWarehouseIds = doc.lines.map((line) => line.subWarehouseId);
-    const warehouseIds = [
-      ...new Set((await warehouses.resolveActive(tx, ctx, subWarehouseIds)).values()),
-    ];
-    await lockWarehouses(tx, ctx.storeId, warehouseIds);
-    await warehouses.assertNoOpenStockCount(tx, ctx, warehouseIds);
-    await warehouses.resolveActive(tx, ctx, subWarehouseIds);
+    // 2. Warehouses FOR SHARE, the stock-count block (BR-8, §3) and the
+    //    archive state under that lock (§9c).
+    await warehouses.lockForPosting(
+      tx,
+      ctx,
+      doc.lines.map((line) => line.subWarehouseId),
+    );
     assertLineProductsUnchanged(doc.lines);
 
     // 4. Cashboxes of the paid parts. cash.record re-checks the balance; this
@@ -634,7 +631,6 @@ const REVERSE_SELECT = {
       qty: true,
       lineTotal: true,
       unitCost: true,
-      subWarehouse: { select: { warehouseId: true } },
     },
   },
 } as const satisfies Prisma.PurchaseSelect;
@@ -663,9 +659,12 @@ async function reverse(ctx: ServiceContext, input: PurchaseReverseInput): Promis
     // 2. Warehouses FOR SHARE and the stock-count block (BR-8, §3). Archived
     //    sub-warehouses are not an error: one holding these goods cannot be
     //    archived (FR-2.2), so step 6 reports it as short of stock.
-    const warehouseIds = [...new Set(doc.lines.map((line) => line.subWarehouse.warehouseId))];
-    await lockWarehouses(tx, ctx.storeId, warehouseIds);
-    await warehouses.assertNoOpenStockCount(tx, ctx, warehouseIds);
+    await warehouses.lockForPosting(
+      tx,
+      ctx,
+      doc.lines.map((line) => line.subWarehouseId),
+      { requireActive: false },
+    );
 
     // 4. Cashboxes of the paid parts: money comes back IN, so no balance check.
     const paid = [

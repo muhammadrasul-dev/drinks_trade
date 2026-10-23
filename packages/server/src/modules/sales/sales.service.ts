@@ -49,7 +49,7 @@ import type { z } from 'zod';
 import type { ServiceContext } from '../../core/context';
 import { resolveStoreDate, storeDayRange } from '../../core/dates';
 import { assertLineProductsUnchanged } from '../../core/doc-lines';
-import { lockCashboxes, lockSale, lockWarehouses } from '../../core/locks';
+import { lockCashboxes, lockSale } from '../../core/locks';
 import { moneyToBigInt, moneyToNumber } from '../../core/money';
 import { nextDocNumber } from '../../core/numbering';
 import { assertCan } from '../../core/rbac';
@@ -591,16 +591,13 @@ async function post(ctx: ServiceContext, input: SalePostInput): Promise<SaleDeta
     if (paidCredit > 0 && !doc.note?.trim()) throw new DomainError(ErrorCode.NOTE_REQUIRED);
     if (doc.docDate.getTime() > Date.now()) throw new DomainError(ErrorCode.DOC_DATE_IN_FUTURE);
 
-    // 2. Warehouses FOR SHARE, then the stock-count block (BR-8, §3) and the
-    //    archive state under that lock (§9c). A sub-warehouse never changes its
-    //    warehouse, so the first resolveActive may run before the lock.
-    const subWarehouseIds = doc.lines.map((line) => line.subWarehouseId);
-    const warehouseIds = [
-      ...new Set((await warehouses.resolveActive(tx, ctx, subWarehouseIds)).values()),
-    ];
-    await lockWarehouses(tx, ctx.storeId, warehouseIds);
-    await warehouses.assertNoOpenStockCount(tx, ctx, warehouseIds);
-    await warehouses.resolveActive(tx, ctx, subWarehouseIds);
+    // 2. Warehouses FOR SHARE, the stock-count block (BR-8, §3) and the
+    //    archive state under that lock (§9c).
+    await warehouses.lockForPosting(
+      tx,
+      ctx,
+      doc.lines.map((line) => line.subWarehouseId),
+    );
     assertProductsUnchanged(doc.lines);
 
     // 4. Cashboxes of the paid parts: money comes IN, so no balance check.

@@ -214,6 +214,102 @@ async function assertNoOpenStockCount(
   }
 }
 
+/**
+ * Server-side guard for document services (T-404+): every sub-warehouse
+ * must belong to the store (else NOT_FOUND) and it and its warehouse must
+ * be active (else ENTITY_ARCHIVED { entity, name }). Returns
+ * sub-warehouse id → warehouse id — the ids to lock in §2 step 2. Posting
+ * calls it again after that lock, so the archive state it sees is final.
+ */
+async function resolveActive(
+  db: Tx,
+  ctx: ServiceContext,
+  subWarehouseIds: readonly string[],
+): Promise<Map<string, string>> {
+  const wanted = [...new Set(subWarehouseIds)];
+  if (wanted.length === 0) return new Map();
+  const rows = await db.subWarehouse.findMany({
+    where: { id: { in: wanted }, warehouse: { storeId: ctx.storeId } },
+    select: {
+      ...SUB_SELECT,
+      warehouse: { select: { name: true, archivedAt: true } },
+    },
+  });
+  if (rows.length !== wanted.length) {
+    throw new DomainError(ErrorCode.NOT_FOUND, { entity: 'sub_warehouse' });
+  }
+  const byId = new Map(rows.map((row) => [row.id, row]));
+  for (const id of wanted) {
+    const row = byId.get(id)!;
+    if (row.warehouse.archivedAt !== null) {
+      throw new DomainError(ErrorCode.ENTITY_ARCHIVED, {
+        entity: 'warehouse',
+        name: row.warehouse.name,
+      });
+    }
+    if (row.archivedAt !== null) {
+      throw new DomainError(ErrorCode.ENTITY_ARCHIVED, {
+        entity: 'sub_warehouse',
+        name: row.name,
+      });
+    }
+  }
+  return new Map(rows.map((row) => [row.id, row.warehouseId]));
+}
+
+/** Sub-warehouse id → warehouse id, archived ones included; NOT_FOUND when one is not the store's. */
+async function warehouseIdsOf(
+  db: Tx,
+  ctx: ServiceContext,
+  subWarehouseIds: readonly string[],
+): Promise<string[]> {
+  const wanted = [...new Set(subWarehouseIds)];
+  if (wanted.length === 0) return [];
+  const rows = await db.subWarehouse.findMany({
+    where: { id: { in: wanted }, warehouse: { storeId: ctx.storeId } },
+    select: { warehouseId: true },
+  });
+  if (rows.length !== wanted.length) {
+    throw new DomainError(ErrorCode.NOT_FOUND, { entity: 'sub_warehouse' });
+  }
+  return [...new Set(rows.map((row) => row.warehouseId))];
+}
+
+export interface LockForPostingOptions {
+  /**
+   * true (default, posting): the sub-warehouses and their warehouses must be
+   * active (ENTITY_ARCHIVED), checked again under the lock. false (reversal):
+   * archived ones are fine — one holding the goods cannot be archived
+   * (FR-2.2), so the stock check reports it as short instead.
+   */
+  requireActive?: boolean;
+}
+
+/**
+ * §2 step 2 + §3 for every sale/purchase posting and reversal: locks the
+ * warehouses of `subWarehouseIds` FOR SHARE, then fails with
+ * WAREHOUSE_IN_STOCK_COUNT while one of them has an open (DRAFT) stock count
+ * (BR-8). Opening a count takes the same row FOR UPDATE, so it waits for a
+ * running posting, and a posting that starts later sees the new count.
+ * Call it right after the document lock (step 1), inside the transaction.
+ * A sub-warehouse never changes its warehouse, so the ids may be resolved
+ * before the lock.
+ */
+async function lockForPosting(
+  tx: Tx,
+  ctx: ServiceContext,
+  subWarehouseIds: readonly string[],
+  { requireActive = true }: LockForPostingOptions = {},
+): Promise<void> {
+  const warehouseIds = requireActive
+    ? [...new Set((await resolveActive(tx, ctx, subWarehouseIds)).values())]
+    : await warehouseIdsOf(tx, ctx, subWarehouseIds);
+  await lockWarehouses(tx, ctx.storeId, warehouseIds);
+  await assertNoOpenStockCount(tx, ctx, warehouseIds);
+  // The archive state under the lock is final (§9c).
+  if (requireActive) await resolveActive(tx, ctx, subWarehouseIds);
+}
+
 // ── Warehouses ───────────────────────────────────────────────────────────
 
 /** Archive / restore of a warehouse: the row is locked FOR UPDATE first (§2 step 2). */
@@ -305,48 +401,8 @@ export const warehouses = {
     return rows.filter((row) => row.subWarehouses.length > 0);
   },
 
-  /**
-   * Server-side guard for document services (T-404+): every sub-warehouse
-   * must belong to the store (else NOT_FOUND) and it and its warehouse must
-   * be active (else ENTITY_ARCHIVED { entity, name }). Returns
-   * sub-warehouse id → warehouse id — the ids to lock in §2 step 2. Posting
-   * calls it again after that lock, so the archive state it sees is final.
-   */
-  async resolveActive(
-    db: Tx,
-    ctx: ServiceContext,
-    subWarehouseIds: readonly string[],
-  ): Promise<Map<string, string>> {
-    const wanted = [...new Set(subWarehouseIds)];
-    if (wanted.length === 0) return new Map();
-    const rows = await db.subWarehouse.findMany({
-      where: { id: { in: wanted }, warehouse: { storeId: ctx.storeId } },
-      select: {
-        ...SUB_SELECT,
-        warehouse: { select: { name: true, archivedAt: true } },
-      },
-    });
-    if (rows.length !== wanted.length) {
-      throw new DomainError(ErrorCode.NOT_FOUND, { entity: 'sub_warehouse' });
-    }
-    const byId = new Map(rows.map((row) => [row.id, row]));
-    for (const id of wanted) {
-      const row = byId.get(id)!;
-      if (row.warehouse.archivedAt !== null) {
-        throw new DomainError(ErrorCode.ENTITY_ARCHIVED, {
-          entity: 'warehouse',
-          name: row.warehouse.name,
-        });
-      }
-      if (row.archivedAt !== null) {
-        throw new DomainError(ErrorCode.ENTITY_ARCHIVED, {
-          entity: 'sub_warehouse',
-          name: row.name,
-        });
-      }
-    }
-    return new Map(rows.map((row) => [row.id, row.warehouseId]));
-  },
+  resolveActive,
+  lockForPosting,
 
   async create(ctx: ServiceContext, input: WarehouseCreateInput): Promise<WarehouseItem> {
     assertCan(ctx.user, 'warehouse.write');
