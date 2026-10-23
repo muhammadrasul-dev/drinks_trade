@@ -83,12 +83,7 @@ export function CashJournalTable({ items }: { items: readonly CashJournalEntry[]
         col.display({
           id: 'actions',
           header: () => <span className="sr-only">{t('columns.actions')}</span>,
-          cell: (info) => {
-            const entry = info.row.original;
-            return isReversibleCashTxType(entry.type) && !entry.reversedById ? (
-              <CashReverseButton entry={entry} />
-            ) : null;
-          },
+          cell: ActionsCell,
         }),
       ]),
     [t, tCashbox, tType],
@@ -102,6 +97,18 @@ export function CashJournalTable({ items }: { items: readonly CashJournalEntry[]
       emptyMessage={t('empty')}
     />
   );
+}
+
+/**
+ * Module-level on purpose: FlexRender mounts a cell function as a component,
+ * and the columns are rebuilt whenever the action's response re-renders the
+ * page (new `t`), which would remount an open reversal dialog and drop its
+ * error message.
+ */
+function ActionsCell({ row }: { row: { original: CashJournalEntry } }) {
+  const entry = row.original;
+  if (!isReversibleCashTxType(entry.type) || entry.reversedById) return null;
+  return <CashReverseButton entry={entry} />;
 }
 
 /** Report date; a backdated entry also shows when it was booked (its balance_after is of that moment). */
