@@ -495,3 +495,11 @@ start next tasks which don't interfere in separate sessions
 ```
 all as recommended, refactor and merge them
 ```
+
+---
+
+## Prompt 48 — Worktree'larni o'chirish, T-702 va T-502 ni alohida sessiyalarda boshlash (2026-10-23)
+
+```
+remove worktrees and start T-702 and T-502 in separate sessions
+```
