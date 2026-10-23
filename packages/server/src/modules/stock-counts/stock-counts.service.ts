@@ -1,9 +1,9 @@
 // Stock counts (BR-8, FR-5.1–5.2, business-logic §3, §6): open, edit and
-// cancel a count of one warehouse (T-601); posting is T-602. While a count is
+// cancel a count of one warehouse (T-601), post it (T-602). While a count is
 // DRAFT its warehouse is blocked: sale/purchase posting and reversals there
 // fail with WAREHOUSE_IN_STOCK_COUNT (warehouses.lockForPosting); drafts can
-// still be saved. Opening takes the warehouse row FOR UPDATE (§2 step 2), so
-// it waits for postings in flight and later postings see the count.
+// still be saved. Opening and posting take the warehouse row FOR UPDATE (§2
+// step 2), so they wait for postings in flight and later postings see the count.
 //
 // Only counted rows are stored (OQ-13): a row left empty keeps its system qty,
 // an explicit 0 is a count. Quantities are visible to both roles; costs and
@@ -13,6 +13,7 @@ import {
   can,
   type CostString,
   costAmount,
+  countTotals,
   DocType,
   DomainError,
   ErrorCode,
@@ -36,6 +37,8 @@ import {
   stockCountListQuerySchema,
   type StockCountOpenInput,
   stockCountOpenInputSchema,
+  type StockCountPostInput,
+  stockCountPostInputSchema,
   type StockCountUpdateInput,
   stockCountUpdateInputSchema,
 } from '@drinks/shared/schemas';
@@ -43,7 +46,7 @@ import {
 import type { ServiceContext } from '../../core/context';
 import { resolveStoreDate } from '../../core/dates';
 import { lockStockCount, lockWarehouses, type StockKey } from '../../core/locks';
-import { moneyToNumber } from '../../core/money';
+import { decimalToString, moneyToBigInt, moneyToNumber } from '../../core/money';
 import { nextDocNumber } from '../../core/numbering';
 import { assertCan } from '../../core/rbac';
 import { type Tx, withTransaction } from '../../core/tx';
@@ -79,6 +82,8 @@ const DETAIL_SELECT = {
   lines: {
     select: { subWarehouseId: true, productId: true, countedQty: true, systemQty: true },
   },
+  /** Posted: the average each product was adjusted at (§6.2 step 5). */
+  results: { select: { productId: true, avgCost: true } },
 } as const satisfies Prisma.StockCountSelect;
 
 type ListRow = Prisma.StockCountGetPayload<{ select: typeof LIST_SELECT }>;
@@ -133,6 +138,7 @@ async function loadRow(db: Tx, ctx: ServiceContext, id: string): Promise<DetailR
  */
 async function toDetail(db: Tx, ctx: ServiceContext, row: DetailRow): Promise<StockCountDetail> {
   const draft = row.status === StockCountStatus.DRAFT;
+  const posted = row.status === StockCountStatus.POSTED;
   const counted = new Map(row.lines.map((line) => [keyOf(line), line]));
 
   const keys: StockKey[] = row.lines.map(({ subWarehouseId, productId }) => ({
@@ -170,12 +176,17 @@ async function toDetail(db: Tx, ctx: ServiceContext, row: DetailRow): Promise<St
       where: { warehouseId: row.warehouse.id },
       select: { id: true, name: true, archivedAt: true },
     }),
-    showAmounts(ctx) ? inventory.getProductTotals(db, ctx, productIds) : Promise.resolve([]),
+    showAmounts(ctx) && !posted
+      ? inventory.getProductTotals(db, ctx, productIds)
+      : Promise.resolve([]),
   ]);
   const productById = new Map(products.map((p) => [p.id, p]));
   const subById = new Map(subs.map((s) => [s.id, s]));
+  // A posted count shows the average it was adjusted at; otherwise the current one.
   const avgById = new Map<string, CostString>(
-    totals.map((t) => [t.productId, t.avgCost ?? '0.0000']),
+    posted
+      ? row.results.map((r) => [r.productId, decimalToString(r.avgCost)])
+      : totals.map((t) => [t.productId, t.avgCost ?? '0.0000']),
   );
 
   const rows: StockCountRow[] = keys.map((key) => {
@@ -224,31 +235,17 @@ async function toDetail(db: Tx, ctx: ServiceContext, row: DetailRow): Promise<St
     rows,
     countedCount: row.lines.length,
   };
-  if (draft && showAmounts(ctx)) detail.estimate = estimate(rows);
+  // What posting would write now (§6.2 steps 5–6 on the current rows).
+  if (draft && showAmounts(ctx)) {
+    detail.estimate = countTotals(
+      rows.flatMap((r) =>
+        r.diffQty === null
+          ? []
+          : [{ productId: r.product.id, diffQty: r.diffQty, avgCost: r.avgCost! }],
+      ),
+    );
+  }
   return detail;
-}
-
-/**
- * BR-8 / §6.2 step 5–6 on the current rows: the difference is summed per
- * product over the whole warehouse, so a move between sub-warehouses
- * (−2 here, +2 there) costs nothing.
- */
-function estimate(rows: readonly StockCountRow[]) {
-  const byProduct = new Map<string, { diff: number; avgCost: CostString }>();
-  for (const row of rows) {
-    if (row.diffQty === null) continue;
-    const entry = byProduct.get(row.product.id) ?? { diff: 0, avgCost: row.avgCost ?? '0.0000' };
-    entry.diff += row.diffQty;
-    byProduct.set(row.product.id, entry);
-  }
-  let shortageAmount = 0;
-  let surplusAmount = 0;
-  for (const { diff, avgCost } of byProduct.values()) {
-    const amount = costAmount(diff, avgCost);
-    if (amount < 0) shortageAmount -= amount;
-    else surplusAmount += amount;
-  }
-  return { shortageAmount, surplusAmount };
 }
 
 /**
@@ -543,4 +540,117 @@ async function cancel(
   });
 }
 
-export const stockCounts = { list, get, openCounts, open, update, cancel };
+/**
+ * §6.2: the counted lines become the balance; uncounted pairs keep theirs
+ * (OQ-13). inventory.adjust takes §2 steps 6–7, writes a COUNT_ADJUSTMENT per
+ * changed pair at the current average and moves product_cost.total_qty by the
+ * warehouse total. The system qty under the lock is kept on each line, one
+ * stock_count_result per product (BR-8: priced on the warehouse total, so a
+ * move between sub-warehouses costs nothing — P&L reads these), shortage and
+ * surplus on the header. A count with no counted line → STOCK_COUNT_EMPTY
+ * (OQ-33: cancel it instead). Any user may post (`stockCount.post`); STAFF
+ * gets the result without amounts. Audit POST; the block lifts at commit.
+ */
+async function post(ctx: ServiceContext, input: StockCountPostInput): Promise<StockCountDetail> {
+  assertCan(ctx.user, 'stockCount.post');
+  const { id, version } = parseInput(stockCountPostInputSchema, input);
+
+  return withTransaction(async (tx) => {
+    // 1. The count: still the draft the user saw.
+    const locked = await lockDraft(tx, ctx, id, version);
+    const doc = await tx.stockCount.findUniqueOrThrow({
+      where: { id },
+      select: {
+        number: true,
+        docDate: true,
+        lines: { select: { subWarehouseId: true, productId: true, countedQty: true } },
+      },
+    });
+    if (doc.lines.length === 0) throw new DomainError(ErrorCode.STOCK_COUNT_EMPTY);
+
+    // 2. The warehouse FOR UPDATE: nothing else touches it until commit.
+    await lockWarehouses(tx, ctx.storeId, [locked.warehouseId], { exclusive: true });
+
+    // 3–5. Balances to the count (inventory takes locks 6–7).
+    const adjusted = await inventory.adjust(tx, ctx, {
+      docDate: doc.docDate,
+      stockCountId: id,
+      lines: doc.lines,
+    });
+    await tx.$executeRaw`
+      UPDATE stock_count_line AS l SET system_qty = s.system_qty
+      FROM unnest(
+        ${adjusted.lines.map((line) => line.subWarehouseId)}::uuid[],
+        ${adjusted.lines.map((line) => line.productId)}::uuid[],
+        ${adjusted.lines.map((line) => line.systemQty)}::int[]
+      ) AS s(sub_warehouse_id, product_id, system_qty)
+      WHERE l.stock_count_id = ${id}::uuid
+        AND l.sub_warehouse_id = s.sub_warehouse_id
+        AND l.product_id = s.product_id`;
+    await tx.stockCountResult.createMany({
+      data: adjusted.products.map((product) => ({
+        stockCountId: id,
+        productId: product.productId,
+        systemQty: product.systemQty,
+        countedQty: product.countedQty,
+        diffQty: product.qtyDelta,
+        avgCost: product.avgCost,
+        amount: moneyToBigInt(product.amount),
+      })),
+    });
+
+    // 6–7. Totals, status, audit POST (costs are fine here: audit is OWNER-only).
+    const { shortageAmount, surplusAmount } = countTotals(
+      adjusted.products.map((product) => ({
+        productId: product.productId,
+        diffQty: product.qtyDelta,
+        avgCost: product.avgCost,
+      })),
+    );
+    const postedAt = new Date();
+    await tx.stockCount.update({
+      where: { id },
+      data: {
+        status: StockCountStatus.POSTED,
+        shortageAmount: moneyToBigInt(shortageAmount),
+        surplusAmount: moneyToBigInt(surplusAmount),
+        postedAt,
+        postedById: ctx.user.id,
+        version: { increment: 1 },
+      },
+      select: { id: true },
+    });
+    await audit.log(tx, ctx, {
+      action: 'POST',
+      entityType: 'stock_count',
+      entityId: id,
+      before: { status: StockCountStatus.DRAFT, version },
+      after: {
+        status: StockCountStatus.POSTED,
+        number: doc.number,
+        warehouseId: locked.warehouseId,
+        docDate: doc.docDate,
+        postedAt,
+        shortageAmount,
+        surplusAmount,
+        results: adjusted.products,
+        movements: adjusted.lines.flatMap(({ movement }) =>
+          movement
+            ? [
+                {
+                  productId: movement.productId,
+                  subWarehouseId: movement.subWarehouseId,
+                  qty: movement.qtyDelta,
+                  unitCost: movement.unitCost,
+                },
+              ]
+            : [],
+        ),
+      },
+      backdated: isBackdated(doc.docDate),
+    });
+    return toDetail(tx, ctx, await loadRow(tx, ctx, id));
+  });
+}
+
+export const stockCounts = { list, get, openCounts, open, update, cancel, post };

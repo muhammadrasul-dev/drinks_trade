@@ -16,9 +16,15 @@ SRS'dagi biznes savollar yopilgan. Bu yerda — arxitektura va DB loyihalashda c
 
 **2026-10-23 (T-503):** OQ-31 ochildi — arxivlangan sub-omborga savdo storno'si; tavsiya bo'yicha qilingan, javob kutilmoqda.
 
+**2026-10-23 (T-602):** OQ-33 ochildi — sanalgan qatorsiz inventarizatsiyani bajarish; tavsiya bo'yicha qilingan, javob kutilmoqda.
+
 **2026-10-23:** OQ-25 (T-901) yopildi — B: audit jurnalida faqat joriy do'kon yozuvlari.
 
 **2026-10-23 (T-801):** OQ-28 ochildi — qoldiq hisobotidagi mahsulotlar va tannarx ustunlari; tavsiya bo'yicha qilingan, javob kutilmoqda.
+
+**2026-10-23 (T-603):** OQ-34 ochildi — inventarizatsiya banneri boshqa qurilmadagi o'zgarishni qachon ko'rsatadi; tavsiya bo'yicha qilingan, javob kutilmoqda.
+
+**2026-10-23 (T-802):** OQ-35 ochildi — savdo hisobotining standart davri va qatorlar tartibi; tavsiya bo'yicha qilingan, javob kutilmoqda.
 
 | # | Savol | Tavsiya | Holat |
 |---|---|---|---|
@@ -53,7 +59,10 @@ SRS'dagi biznes savollar yopilgan. Bu yerda — arxitektura va DB loyihalashda c
 | OQ-29 | Savdo qoralamasi saqlangandan keyin mahsulot narxi o'zgarsa, bajarish (T-502) qaysi narx bilan o'tadi? | Bajarish rad etiladi (`SALE_PRICE_CHANGED { lines }`), foydalanuvchi qoralamani qayta saqlaydi — yangi narx va jami ko'rinadi (OQ-06 kabi) | Yopilgan — A (tavsiya, 2026-10-23) |
 | OQ-30 | Qo'lda kiritilgan kassa yozuvi storno'si (T-703) qaysi sana bilan yoziladi: asl yozuv sanasi yoki storno payti? | Asl yozuvning `tx_date` si (OQ-01/OQ-26 kabi: xato yozuv o'z kunida nolga tushadi, jurnalda asl yozuv yonida turadi) | Ochiq — tavsiya bo'yicha qilingan (T-703) |
 | OQ-31 | Savdo storno qilinayotganda tovar qaytadigan sub-ombor (yoki uning ombori) arxivlangan bo'lsa? | Storno bloklanadi (`ENTITY_ARCHIVED`) — avval sub-omborni tiklash kerak | Ochiq — tavsiya bo'yicha qilingan (T-503), javob kutilmoqda |
+| OQ-33 | Bitta ham qator sanalmagan inventarizatsiyani bajarish mumkinmi? | Yo'q — `STOCK_COUNT_EMPTY`; sanoq ochiq qoladi, kerak bo'lmasa bekor qilinadi | Ochiq — tavsiya bo'yicha qilingan (T-602) |
 | OQ-32 | Inventarizatsiyada arxivlangan mahsulotni sanash mumkinmi? | Faqat shu sub-omborda qoldig'i bor bo'lsa (hisobdan chiqarish uchun); qoldig'i yo'q joyga arxivdagi mahsulotni qo'shish → `ENTITY_ARCHIVED` | Ochiq — tavsiya bo'yicha qilingan (T-601) |
+| OQ-34 | Inventarizatsiya banneri boshqa qurilmada (boshqa xodim) ochilgan yoki yopilgan sanoqni qachon ko'rsatadi? | Keyingi bosishda: banner har sahifa o'tishida va tab qayta ochilganda serverdan qayta o'qiladi (bitta yengil so'rov), taymer bilan so'rov yo'q | Ochiq — tavsiya bo'yicha qilingan (T-603) |
+| OQ-35 | Savdo hisoboti davr tanlanmasdan ochilsa qaysi davrni ko'rsatadi va mahsulot qatorlari qaysi tartibda? | 1) Joriy oy (1-sanadan bugungacha, Toshkent); 2) mahsulot nomi bo'yicha (qoldiq hisoboti kabi) | Ochiq — tavsiya bo'yicha qilingan (T-802) |
 
 ---
 
@@ -214,3 +223,27 @@ T-601. OQ-20 (A) qoldig'i bor mahsulotni arxivlashga ruxsat beradi — bunday ma
 - **A (tavsiya, T-601 da shunday):** arxivdagi mahsulot sanoq formasida qoldig'i bor sub-omborlarda chiqadi (belgi bilan) va sanaladi — masalan, singan/yaroqsiz tovarni 0 qilib hisobdan chiqarish shu yo'l bilan. Qoldig'i yo'q sub-omborga arxivdagi mahsulotni qo'shish → `ENTITY_ARCHIVED { entity: 'product', name }` (arxivdagi tovar yangi joyga "kirmaydi"). "Qo'shish" ro'yxatida faqat faol mahsulotlar.
 - **B:** arxivdagi mahsulot umuman sanalmaydi — qoldig'i hisobotda abadiy qoladi, uni tushirish uchun avval arxivdan chiqarish kerak.
 B ga o'tish — `stock-counts.service.ts` `computeLines` da arxivdagi mahsulotni har doim rad etish (+ test).
+
+### OQ-33 — Sanalgan qatorsiz inventarizatsiya
+T-602. §6.2 bo'sh sanoqni aytmaydi. Sanalmagan qator o'zgarmaydi (OQ-13), demak bo'sh sanoqni bajarish hech narsani o'zgartirmaydi — faqat "bajarilgan" hujjat va 0 so'mlik natija qoladi, ombor esa haqiqatda sanalmagan.
+- **A (tavsiya, T-602 da shunday):** rad etiladi — `STOCK_COUNT_EMPTY`; UI'da "Bajarish" o'chiq ("kamida bitta qatorni sanang va saqlang"). Sanoq ochiq qoladi; kerak bo'lmasa "Bekor qilish" — bu ham blokni yechadi.
+- **B:** ruxsat — hujjat `POSTED`, qoldiq o'zgarmaydi, kamomad/ortiqcha 0. Kamchilik: hisobotda "o'tkazilgan" inventarizatsiya, aslida sanoq bo'lmagan.
+B ga o'tish — `stock-counts.service.ts` `post` dagi tekshiruvni olib tashlash (`inventory.adjust` bo'sh ro'yxatni qabul qilmaydi — undan oldin to'xtash kerak) va `stock-count-post.int.test.ts` dagi OQ-33 testi.
+
+### OQ-34 — Inventarizatsiya banneri qachon yangilanadi
+T-603. Banner ochiq sanoqlarni server'da, `(app)` layout bilan o'qiydi. Lekin Next.js layout'ni sahifadan sahifaga (client navigatsiya) o'tganda qayta render qilmaydi: faqat shunga tayansak, bir xodim sanoqni ochsa yoki yopsa, boshqa qurilmadagi xodim buni sahifani qayta yuklaguncha (F5) yoki o'zi biror inventarizatsiya amalini bajarguncha ko'rmaydi (brauzerda tasdiqlandi). BR-8 bannerdan "unutilib savdoni to'xtatib qo'ymaslik"ni kutadi; qanchalik tez yangilanishi aytilmagan.
+- **A (tavsiya, T-603 da shunday):** birinchi ro'yxat layout bilan keladi, keyin banner har sahifa o'tishida va brauzer tabi qayta ko'ringanda `GET /api/stock-counts/open` ni o'qiydi (bitta kichik so'rov, taymer yo'q). Boshqa qurilmadagi o'zgarish keyingi bosishda ko'rinadi; bitta sahifada qimirlamay turgan xodim uni ko'rmaydi (savdoni bajarishda baribir `WAREHOUSE_IN_STOCK_COUNT` xabari chiqadi).
+- **B:** faqat server render — qo'shimcha so'rov yo'q, lekin boshqa qurilmada banner F5 gacha eskirgan bo'lib qoladi.
+- **C:** davriy so'rov (masalan, 30 soniyada) — ochiq sahifada ham deyarli darhol, lekin har ochiq tab doimiy yuklama beradi.
+B ga o'tish — `open-stock-count-banner.tsx` dagi `useEffect` ni va `app/api/stock-counts/open/route.ts` ni olib tashlash; C ga — o'sha effektga `setInterval` qo'shish.
+
+### OQ-35 — Savdo hisobotining standart davri va qatorlar tartibi
+T-802. SRS §7.2 "sana oralig'i va mahsulot kesimida" deydi; database §7.2 namunasi `from`/`to` ni majburiy oladi, tartibni aytmaydi. Ikki narsa aniq emas:
+1. **Davr tanlanmagan bo'lsa** (menyudan birinchi ochilganda, URL'da `from`/`to` yo'q).
+   - **A (tavsiya, T-802 da shunday):** joriy oy — 1-sanadan bugungacha (Toshkent kunlari). "Bugun" va "Shu oy" tugmalari bor; bir chetini bo'shatsa, o'sha tomoni ochiq (`?to=…` — boshidan shu kungacha, `?from=…` — shu kundan keyin hammasi). Server ham ikkala chetni ixtiyoriy qabul qiladi (`from > to` → `VALIDATION_FAILED`; sahifa URL'dagi teskari oraliqni almashtirib yuboradi).
+   - **B:** bugun (bir kun).
+   - **C:** butun davr (filtrsiz).
+2. **Qatorlar tartibi.**
+   - **A (tavsiya, T-802 da shunday):** mahsulot nomi bo'yicha — qoldiq hisoboti (T-801) va kelgusi eksport (T-804) bilan bir xil, mahsulotni topish oson.
+   - **B:** tushum bo'yicha kamayish tartibida ("eng ko'p sotilganlar" yuqorida).
+1-B/1-C ga o'tish — `apps/web/src/features/reports/sales-params.ts` dagi `currentMonth` sukutini almashtirish (+ `sales-params.test.ts`). 2-B — `sales-report.queries.ts` da `items` ni `revenue` bo'yicha saralash (+ integratsiya testidagi tartib).

@@ -878,6 +878,7 @@ WHERE s.store_id = $1 AND s.status = 'POSTED'
   AND s.doc_date >= $2 AND s.doc_date < $3
 GROUP BY sl.product_id;
 ```
+Amalda (T-802): `reports.sales` (`modules/reports/sales-report.queries.ts`) — shu so'rov Prisma `saleLine.groupBy` bilan (`sale` munosabati orqali `store_id`, `POSTED`, `doc_date` — `storeDayRange(from, to)`; ikkala chet ixtiyoriy, kun Toshkent bo'yicha 00:00 dan 24:00 gacha). `cogs` — DTO'da `cost` (qatorda bajarishda muzlatilgan `cost_amount`), `gross_profit` — `grossProfit`; ikkalasi faqat `report.sales.cost` bilan — STAFF uchun `cost_amount` umuman yig'ilmaydi. Jami: mahsulotlar soni, savdolar (hujjatlar) soni, tushum (= Σ `sale.total_amount`), Egasiga tannarx (= Σ `sale.cost_total`) va yalpi foyda. Qatorlar mahsulot nomi bo'yicha; davr tanlanmasa sahifa joriy oyni oladi (OQ-35). `REVERSED` savdo `POSTED` emas — asl sanasidan chiqadi (pastdagi izoh).
 
 ### 7.3 P&L (BR-11)
 ```sql

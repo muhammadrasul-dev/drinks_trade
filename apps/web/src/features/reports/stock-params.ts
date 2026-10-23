@@ -1,5 +1,6 @@
 import type { StockReportQuery } from '@drinks/shared/schemas';
-import { z } from 'zod';
+
+import { firstParam, hrefWith, type SearchParams, uuidParam } from '@/lib/search-params';
 
 // /reports/stock filters live in the URL
 // (?warehouse=&sub=&category=&brand=&low=1&archived=0|1), like /products.
@@ -16,30 +17,17 @@ export interface StockReportFilters {
   archived?: boolean;
 }
 
-type SearchParams = Record<string, string | string[] | undefined>;
-
-function first(value: string | string[] | undefined): string | undefined {
-  return Array.isArray(value) ? value[0] : value;
-}
-
-const uuid = z.uuid();
-
-function id(value: string | string[] | undefined): string | undefined {
-  const raw = first(value);
-  return raw && uuid.safeParse(raw).success ? raw : undefined;
-}
-
 /** URL search params → service query; invalid values are dropped, never an error page. */
 export function parseStockReportParams(
   params: SearchParams,
 ): StockReportFilters & StockReportQuery {
-  const archived = first(params.archived);
+  const archived = firstParam(params.archived);
   const values: StockReportFilters = {
-    warehouseId: id(params.warehouse),
-    subWarehouseId: id(params.sub),
-    categoryId: id(params.category),
-    brandId: id(params.brand),
-    ...(first(params.low) === '1' && { lowStock: true }),
+    warehouseId: uuidParam(params.warehouse),
+    subWarehouseId: uuidParam(params.sub),
+    categoryId: uuidParam(params.category),
+    brandId: uuidParam(params.brand),
+    ...(firstParam(params.low) === '1' && { lowStock: true }),
     ...(archived === '0' && { archived: false }),
     ...(archived === '1' && { archived: true }),
   };
@@ -50,15 +38,15 @@ export function parseStockReportParams(
 
 /** Filters → `/reports/stock?…` (empty values left out). */
 export function stockReportHref(filters: StockReportFilters): string {
-  const params = new URLSearchParams();
-  if (filters.warehouseId) params.set('warehouse', filters.warehouseId);
-  if (filters.subWarehouseId) params.set('sub', filters.subWarehouseId);
-  if (filters.categoryId) params.set('category', filters.categoryId);
-  if (filters.brandId) params.set('brand', filters.brandId);
-  if (filters.lowStock) params.set('low', '1');
-  if (filters.archived !== undefined) params.set('archived', filters.archived ? '1' : '0');
-  const query = params.toString();
-  return query ? `${STOCK_REPORT_HREF}?${query}` : STOCK_REPORT_HREF;
+  return hrefWith(STOCK_REPORT_HREF, {
+    warehouse: filters.warehouseId,
+    sub: filters.subWarehouseId,
+    category: filters.categoryId,
+    brand: filters.brandId,
+    low: filters.lowStock,
+    // false is a filter here (active only), so it is written as "0".
+    archived: filters.archived === undefined ? undefined : filters.archived ? '1' : '0',
+  });
 }
 
 /** True when any filter is set. */

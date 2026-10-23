@@ -7,7 +7,8 @@ import { QtyText } from '@/components/qty-text';
 
 /**
  * A posted or cancelled count, read-only: its counted rows (system qty is the
- * posting snapshot, none for a cancelled one) and who closed it.
+ * posting snapshot, none for a cancelled one) and who closed it. A posted one
+ * shows OWNER the row amounts at the average it was adjusted at.
  */
 export function StockCountView({ count }: { count: StockCountDetail }) {
   const t = useTranslations('stockCounts');
@@ -15,6 +16,8 @@ export function StockCountView({ count }: { count: StockCountDetail }) {
     count.status === 'CANCELLED'
       ? { label: t('view.cancelledAt'), at: count.cancelledAt, by: count.cancelledBy }
       : { label: t('view.postedAt'), at: count.postedAt, by: count.postedBy };
+  // The server leaves amount keys out for STAFF (rule 6); a cancelled count has no difference.
+  const showAmounts = count.status === 'POSTED' && count.shortageAmount !== undefined;
 
   return (
     <div className="flex flex-col gap-6">
@@ -66,6 +69,9 @@ export function StockCountView({ count }: { count: StockCountDetail }) {
                   <th className="px-3 py-2 text-right font-medium">{t('form.system')}</th>
                   <th className="px-3 py-2 text-right font-medium">{t('form.counted')}</th>
                   <th className="px-3 py-2 text-right font-medium">{t('form.diff')}</th>
+                  {showAmounts && (
+                    <th className="px-3 py-2 text-right font-medium">{t('form.diffAmount')}</th>
+                  )}
                 </tr>
               </thead>
               <tbody>
@@ -92,6 +98,11 @@ export function StockCountView({ count }: { count: StockCountDetail }) {
                         <QtyText qty={row.diffQty} unitsPerBlock={row.product.unitsPerBlock} />
                       )}
                     </td>
+                    {showAmounts && (
+                      <td className="px-3 py-2 text-right">
+                        {row.diffAmount == null ? '—' : <MoneyText amount={row.diffAmount} />}
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>

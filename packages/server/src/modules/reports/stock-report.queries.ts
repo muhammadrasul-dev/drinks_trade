@@ -8,27 +8,17 @@ import {
   can,
   costAmount,
   isLowStock,
+  parseInput,
   type StockReport,
   type StockReportLocation,
   type StockReportRow,
-  validationError,
 } from '@drinks/shared';
 import { type StockReportQuery, stockReportQuerySchema } from '@drinks/shared/schemas';
 
 import type { ServiceContext } from '../../core/context';
 import { assertCan } from '../../core/rbac';
 import { getProductTotals } from '../inventory/inventory.service';
-
-const PRODUCT_SELECT = {
-  id: true,
-  name: true,
-  sku: true,
-  unitsPerBlock: true,
-  minStock: true,
-  archivedAt: true,
-  category: { select: { id: true, name: true } },
-  brand: { select: { id: true, name: true } },
-} as const satisfies Prisma.ProductSelect;
+import { REPORT_PRODUCT_ORDER, REPORT_PRODUCT_SELECT, toReportProduct } from './report-product';
 
 /**
  * Products with stock in the store (or in the chosen warehouse /
@@ -36,11 +26,15 @@ const PRODUCT_SELECT = {
  * stock is below their minimum; without a location filter that includes
  * products with no stock at all (OQ-28).
  */
-async function stock(ctx: ServiceContext, query: StockReportQuery = {}): Promise<StockReport> {
+export async function stockReport(
+  ctx: ServiceContext,
+  query: StockReportQuery = {},
+): Promise<StockReport> {
   assertCan(ctx.user, 'report.stock');
-  const parsed = stockReportQuerySchema.safeParse(query);
-  if (!parsed.success) throw validationError(parsed.error);
-  const { warehouseId, subWarehouseId, categoryId, brandId, lowStock, archived } = parsed.data;
+  const { warehouseId, subWarehouseId, categoryId, brandId, lowStock, archived } = parseInput(
+    stockReportQuerySchema,
+    query,
+  );
   const { prisma } = await import('@drinks/db');
 
   const productWhere: Prisma.ProductWhereInput = {
@@ -92,8 +86,8 @@ async function stock(ctx: ServiceContext, query: StockReportQuery = {}): Promise
         ? { OR: [{ id: { in: [...locationsOf.keys()] } }, { minStock: { gt: 0 } }] }
         : { id: { in: [...locationsOf.keys()] } }),
     },
-    select: PRODUCT_SELECT,
-    orderBy: [{ name: 'asc' }, { id: 'asc' }],
+    select: REPORT_PRODUCT_SELECT,
+    orderBy: REPORT_PRODUCT_ORDER,
   });
 
   const totals = await getProductTotals(
@@ -111,16 +105,7 @@ async function stock(ctx: ServiceContext, query: StockReportQuery = {}): Promise
     const locations = locationsOf.get(product.id) ?? [];
     const qty = locations.reduce((sum, location) => sum + location.qty, 0);
     const row: StockReportRow = {
-      product: {
-        id: product.id,
-        name: product.name,
-        sku: product.sku,
-        unitsPerBlock: product.unitsPerBlock,
-        minStock: product.minStock,
-        archived: product.archivedAt !== null,
-        category: product.category,
-        brand: product.brand,
-      },
+      product: { ...toReportProduct(product), minStock: product.minStock },
       qty,
       storeQty,
       lowStock: low,
@@ -142,5 +127,3 @@ async function stock(ctx: ServiceContext, query: StockReportQuery = {}): Promise
     },
   };
 }
-
-export const reports = { stock };

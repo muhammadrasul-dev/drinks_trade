@@ -47,3 +47,41 @@ export interface StockReport {
     value?: number;
   };
 }
+
+/** One product of the sales report (T-802, SRS §7.2, database §7.2). */
+export interface SalesReportRow {
+  product: {
+    id: string;
+    name: string;
+    sku: string | null;
+    /** Current value — qty is shown as blocks + pieces with it. */
+    unitsPerBlock: number;
+    archived: boolean;
+    category: { id: string; name: string } | null;
+    brand: { id: string; name: string } | null;
+  };
+  /** Pieces sold (Σ sale_line.qty). */
+  qty: number;
+  /** Σ sale_line.line_total, whole som. */
+  revenue: number;
+  /** Σ sale_line.cost_amount — the cost frozen at posting (BR-6). OWNER only. */
+  cost?: number;
+  /** revenue − cost. OWNER only. */
+  grossProfit?: number;
+}
+
+export interface SalesReport {
+  /** By product name (OQ-35). */
+  items: SalesReportRow[];
+  totals: {
+    products: number;
+    /** Posted sales (documents) in the period. */
+    sales: number;
+    /** Σ items.revenue = Σ sale.total_amount of those sales. */
+    revenue: number;
+    /** Σ items.cost. OWNER only. */
+    cost?: number;
+    /** Σ items.grossProfit. OWNER only. */
+    grossProfit?: number;
+  };
+}

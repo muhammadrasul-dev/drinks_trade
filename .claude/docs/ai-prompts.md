@@ -532,3 +532,27 @@ T-703 (kassa yozuvi storno’si)
 
 do theese tasks in seperate sessions, in additions refactor during doing tasks and test proccess
 ```
+
+---
+
+## Prompt 52 — Keyingi boshlanmagan vazifani olish, refactor va test bilan (2026-10-23)
+
+```
+check one task in '/Users/home/Desktop/Muhammadrasul/drinks_trade/.claude/docs/tasks.md'. And begin not started task. refactor and do testing during this proccess
+```
+
+---
+
+## Prompt 53 — T-603 va T-802 ni alohida sessiyalarda, keyin qisqa refactor (2026-10-23)
+
+```
+T-603 (ochiq inventarizatsiya banneri) va T-802 (savdo hisoboti) start theese tasks in seperate sessions, then refactor  shortly
+```
+
+---
+
+## Prompt 54 — Main'ga merge qilish va keyin oddiy refactor (2026-10-23)
+
+```
+yes do merge and then simply refactor
+```

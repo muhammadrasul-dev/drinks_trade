@@ -216,6 +216,7 @@
     "PURCHASE_REVERSAL_INSUFFICIENT_STOCK": "Xaridni storno qilib boʻlmaydi: mahsulotning bir qismi allaqachon sotilgan.",
     "WAREHOUSE_IN_STOCK_COUNT": "Omborda inventarizatsiya ketmoqda. Tugaguncha harakatlar bloklangan.",
     "STOCK_COUNT_ALREADY_OPEN": "Bu ombor uchun ochiq inventarizatsiya allaqachon bor.",
+    "STOCK_COUNT_EMPTY": "Inventarizatsiyada sanalgan qator yoʻq — kamida bitta qatorni sanang yoki inventarizatsiyani bekor qiling.",
     "PAYMENT_SPLIT_MISMATCH": "Toʻlov qismlari yigʻindisi hujjat summasiga teng emas.",
     "CASHBOX_INSUFFICIENT": "Kassada mablagʻ yetarli emas.",
     "CASH_TX_NOT_REVERSIBLE": "Bu yozuvni kassadan storno qilib boʻlmaydi — u hujjat yoki qarz orqali bekor qilinadi.",
@@ -919,10 +920,12 @@
       "value": "Qiymat"
     }
   },
+  "reports": {
+    "archivedTag": "arxiv"
+  },
   "stockReport": {
     "title": "Mahsulotlar qoldigʻi",
     "empty": "Qoldiq topilmadi.",
-    "archivedTag": "arxiv",
     "lowStock": "Kam qoldi",
     "lowStockTitle": "Minimal qoldiq: {min}",
     "pieces": "= {qty} dona",
@@ -953,6 +956,33 @@
       "qty": "Qoldiq",
       "avgCost": "Oʻrtacha tannarx (1 dona)",
       "value": "Qiymati"
+    }
+  },
+  "salesReport": {
+    "title": "Savdo hisoboti",
+    "empty": "Bu davrda bajarilgan savdo yoʻq.",
+    "pieces": "= {qty} dona",
+    "filters": {
+      "label": "Davr",
+      "from": "dan",
+      "to": "gacha",
+      "today": "Bugun",
+      "thisMonth": "Shu oy"
+    },
+    "totals": {
+      "label": "Davr boʻyicha jami",
+      "sales": "Savdolar:",
+      "products": "Mahsulotlar:",
+      "revenue": "Tushum:",
+      "cost": "Tannarx:",
+      "grossProfit": "Yalpi foyda:"
+    },
+    "columns": {
+      "product": "Mahsulot",
+      "qty": "Sotildi",
+      "revenue": "Tushum",
+      "cost": "Tannarx",
+      "grossProfit": "Yalpi foyda"
     }
   },
   "stockCounts": {
@@ -1030,7 +1060,6 @@
       "surplus": "Ortiqcha (taxminan)",
       "estimateHint": "Ombor boʻyicha jami farq × oʻrtacha tannarx. Sub-omborlar orasidagi farq summaga taʼsir qilmaydi.",
       "reload": "Sahifani yangilash",
-      "unsaved": "Oʻzgarishlar saqlanmagan",
       "archivedItem": "«{name}» arxivda — uni bu yerda sanab boʻlmaydi."
     },
     "cancel": {
@@ -1039,11 +1068,24 @@
       "description": "Kiritilgan sanoq saqlanadi, lekin qoldiq oʻzgarmaydi. «{warehouse}» omboridagi blok darhol olib tashlanadi.",
       "done": "{number} bekor qilindi"
     },
+    "post": {
+      "button": "Bajarish",
+      "title": "{number} inventarizatsiyasini bajarasizmi?",
+      "description": "Sanalgan qatorlarning qoldigʻi haqiqiy songa tenglashadi, kamomad va ortiqcha yoziladi. «{warehouse}» omboridagi blok olib tashlanadi. Bajarilgan inventarizatsiyani oʻzgartirib ham, bekor qilib ham boʻlmaydi.",
+      "saveFirst": "Oʻzgarishlar saqlanmagan — bajarishdan oldin saqlang.",
+      "empty": "Bajarish uchun kamida bitta qatorni sanang va saqlang.",
+      "done": "{number} bajarildi"
+    },
     "view": {
       "postedAt": "Bajarilgan",
       "cancelledAt": "Bekor qilingan",
       "lines": "Sanalgan qatorlar ({count})",
       "noLines": "Sanalgan qator yoʻq."
+    },
+    "banner": {
+      "single": "«{warehouse}» ombori inventarizatsiyada (<link>{number}</link>) — bu omborda savdo, xarid va storno bajarilmaydi.",
+      "multiple": "Omborlar inventarizatsiyada — ularda savdo, xarid va storno bajarilmaydi:",
+      "item": "«{warehouse}» (<link>{number}</link>)"
     }
   }
 }

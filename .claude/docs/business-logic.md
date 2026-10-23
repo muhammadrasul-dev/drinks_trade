@@ -40,6 +40,7 @@ newAvg = (Q * avg + inCost) / (Q + q)      // inCost — kirim summasi (so'm), q
 - `money.ts`: `formatSom(amount, unit?)` → `"1 250 000 soʻm"` (raqam guruhlari va birlik oldidan **no-break space** U+00A0 — jadvalda qatorga bo'linmaydi); `roundHalfUp(value: string)` → butun so'm, noldan uzoqqa (`"2.5"` → 3, `"-2.5"` → −3).
 - `dates.ts` (T-204): `formatDateTime(date, timeZone = STORE_TIME_ZONE)` → `"23.10.2026 14:05"` (`DD.MM.YYYY HH:mm`, `Asia/Tashkent`) — UI'da sana-vaqt shu bilan chiqadi (locale'li `Intl` formati Node va brauzerda farq qiladi).
 - Birlik so'zlari (`blok`/`dona`/`soʻm`) — standart o'zbekcha; UI tarjima qilingan so'zlarni parametr sifatida beradi (`enums.QtyUnit.*`, `common.som`; `MoneyText` / `QtyText` — T-203).
+- `stock-count.ts` (T-602): `countTotals(diffs)` — §6.2 5–6-qadam: farq mahsulot bo'yicha ombor jami qilinadi, keyin `roundHalfUp(Σ diff × avg)` → `{ shortageAmount, surplusAmount }`. Sanoq formasidagi taxmin, server `estimate` va bajarishdagi `shortage_amount` / `surplus_amount` — hammasi shu funksiyadan.
 - `costing.ts`: `costAmount(qty, unitCost)` = `roundHalfUp(qty × unitCost)` (§1.2, qty ishorali bo'lishi mumkin); `unitCostOf(lineTotal, qty)` (§5.1); `avgOnReceipt({ totalQty, avgCost, inQty, inCost })` (§1.3 — xarid va savdo storno'si); `avgOnPurchaseReversal({ totalQty, avgCost, outQty, outCost })` (§5.3: `Q − q = 0` → 0, manfiy → 0; `q > Q` → `RangeError`, chunki BR-3 tekshiruvi avval to'xtatishi kerak).
 
 ### 1.5 Zaxira servisi (T-401)
@@ -293,7 +294,21 @@ COMMIT
 - **Bekor qilish:** `lockStockCount` + `version` → `CANCELLED`, `cancelledAt/By`, `version + 1`, qoldiq va qatorlar o'zgarmaydi; audit `CANCEL` (`before { status, version }`). Commit'dan keyin blok yechiladi, shu omborda yangi sanoq ochish mumkin.
 - **Maxfiylik (6-qoida):** `stockCount.amount.read` (faqat OWNER) bo'lmasa DTO'da `avgCost`, `diffAmount`, `estimate`, `shortageAmount`, `surplusAmount` kalitlari **yo'q**. OWNER uchun `estimate` — joriy qatorlar bo'yicha §6.2 5–6-qadam (mahsulot bo'yicha ombor jami farqi × avg, sub-omborlar orasidagi farq 0).
 - **Ro'yxat:** ochiq (DRAFT) sanoqlar birinchi (BR-8: yaqqol ko'rinadi), keyin sana/raqam kamayishi; filtr — holat, ombor, raqam qismi; 50 tadan.
-- UI: `/stock-counts` (ro'yxat + "Yangi inventarizatsiya" oynasi — ochiq sanoqli ombor tanlanmaydi), `/stock-counts/[id]` (DRAFT — sanoq formasi: sariq blok ogohlantirishi, sub-ombor bo'yicha guruhlar, qidiruv, blok + dona, jonli farq, "N ta qator sanalmagan", topilgan tovarni qo'shish, OWNER — farq summasi va taxminiy kamomad/ortiqcha; boshqa holat — faqat o'qish). "Bajarish" — T-602.
+- UI: `/stock-counts` (ro'yxat + "Yangi inventarizatsiya" oynasi — ochiq sanoqli ombor tanlanmaydi), `/stock-counts/[id]` (DRAFT — sanoq formasi: sariq blok ogohlantirishi, sub-ombor bo'yicha guruhlar, qidiruv, blok + dona, jonli farq, "N ta qator sanalmagan", topilgan tovarni qo'shish, OWNER — farq summasi va taxminiy kamomad/ortiqcha; boshqa holat — faqat o'qish). "Bajarish" — §6.3b (T-602).
+- **Banner (T-603):** barcha `(app)` sahifalarida, ikkala rol — ochiq (DRAFT) sanoqlar `openCounts` dan (summasiz): "«X» ombori inventarizatsiyada (I-000007)" + sanoqqa havola; sanoqning o'z formasida o'sha sanoq takrorlanmaydi. Boshqa qurilmada ochilgan/yopilgan sanoq keyingi navigatsiyada ko'rinadi (architecture §6, OQ-34).
+
+### 6.3b Amalda: bajarish (T-602)
+`stockCounts.post(ctx, { id, version })` — ruxsat `stockCount.post` (ikkala rol); kiritma `stockCountPostInputSchema`.
+1. `lockStockCount` (1-qadam) + `version` → `DOCUMENT_NOT_DRAFT` / `DOCUMENT_CHANGED`. Sanalgan qator yo'q → `STOCK_COUNT_EMPTY` (OQ-33; sanoq ochiq qoladi — uni bekor qilish kerak).
+2. `lockWarehouses(exclusive)` — 2-qadam, `FOR UPDATE`.
+3–5. `inventory.adjust(tx, ctx, { docDate, stockCountId, lines })` — 6–7-qadam qulflarini o'zi oladi: faqat **sanalgan** (sub-ombor, mahsulot) juftlar (sanalmagan qator o'zgarmaydi, OQ-13 — shuning uchun ularni qulflash shart emas); `delta ≠ 0` → `COUNT_ADJUSTMENT` (joriy avg, `docDate` = sanoq sanasi), `product_cost.total_qty += Σ delta`, avg o'zgarmaydi. Qulf ostidagi `systemQty` har `stock_count_line.system_qty` ga yoziladi (bitta `UPDATE … FROM unnest`).
+   Har sanalgan mahsulot uchun bitta `stock_count_result` (`diff = 0` bo'lsa ham — `amount = 0`): `systemQty` / `countedQty` — shu mahsulotning sanalgan qatorlari yig'indisi, `avgCost` muzlatiladi, `amount = roundHalfUp(Σ delta × avg)`.
+6. `countTotals` → `shortage_amount`, `surplus_amount` (musbat); `POSTED`, `postedAt/By`, `version + 1`.
+7. Audit `POST` (`before { status, version }`, `after`: raqam, ombor, sana, summalar, `results`, `movements`; o'tgan sana → `backdated`). Commit'dan keyin blok yechiladi.
+- Sanoq qatori donada saqlanadi, shuning uchun saqlangandan keyin blokdagi dona soni o'zgarsa ham (OQ-06) bajarish rad etilmaydi — sanalgan dona o'zgarmaydi.
+- Ikki parallel bajarish: bittasi o'tadi, ikkinchisi `DOCUMENT_NOT_DRAFT`.
+- DTO: POSTED — `avgCost` / `diffAmount` muzlatilgan `stock_count_result.avg_cost` bo'yicha (keyingi xarid o'rtachani o'zgartirsa ham hujjat o'zgarmaydi); STAFF uchun summa kalitlari yo'q (6-qoida).
+- UI: sanoq formasida "Bajarish" — o'zgarishlar saqlanmagan yoki sanalgan qator yo'q bo'lsa o'chiq (sababi yonida); tasdiqlash oynasida "N ta qator sanalmagan" ogohlantirishi va (Egasiga) kamomad/ortiqcha. Bajarilgan sanoq sahifasida Egasiga "Farq summasi" ustuni.
 
 ### 6.4 Eslatma: tannarx 0 bo'lgan mahsulot
 Hech qachon xarid qilinmagan mahsulot ortiqcha chiqsa, `avgCost = 0` → ortiqcha summasi 0 so'm. Tovar qoldiqqa qo'shiladi, keyingi xarid o'rtachani to'g'ri hisoblaydi.
@@ -354,6 +369,7 @@ SOF FOYDA         = Yalpi foyda − Yo'l kira + Inventarizatsiya
 P&L ekranida inventarizatsiya ikki qator: "Kamomad" (Σ manfiy) va "Ortiqcha" (Σ musbat).
 Kirmaydi: xarid summasi, qarz amallari, `OTHER_EXPENSE`, o'tkazmalar.
 Filtr: kun / oy / yil / ixtiyoriy oraliq (Toshkent vaqti).
+Savdo hisoboti (T-802, SRS §7.2, database §7.2) tushum va tannarxni shu qoida bilan oladi — `POSTED`, `doc_date` davrda, storno qilingan savdo asl sanasidan chiqadi — faqat mahsulot kesimida (`sale_line` bo'yicha): bir davr uchun hisobot jami = P&L dagi "Tushum" va "Tannarx (COGS)".
 
 ## 9. Kam qoldiq ogohlantirishi (FR-1.3)
 `Σ stock_balance.qty (do'kon bo'yicha) < product.minStock` (va `minStock > 0`) → mahsulotlar ro'yxatida belgi + dashboard'da "Kam qolgan mahsulotlar" bloki. Push/SMS yo'q.
@@ -425,6 +441,7 @@ Amalda (T-303): `isLowStock(stockQty, minStock)` (`@drinks/shared`); `stockQty` 
 | `PURCHASE_REVERSAL_INSUFFICIENT_STOCK` | BR-3 |
 | `WAREHOUSE_IN_STOCK_COUNT` | BR-8; ochiq inventarizatsiyali ombor/sub-omborni arxivlash (OQ-21) |
 | `STOCK_COUNT_ALREADY_OPEN` | BR-8 |
+| `STOCK_COUNT_EMPTY` | sanalgan qatorsiz inventarizatsiyani bajarish (OQ-33) |
 | `PAYMENT_SPLIT_MISMATCH` | BR-9 |
 | `CASHBOX_INSUFFICIENT` | BR-9 (STAFF uchun xabarda balans summasi ko'rsatilmaydi) |
 | `CASH_TX_NOT_REVERSIBLE` | kassadan faqat yo'l kira, boshqa chiqim va o'tkazma storno qilinadi (OQ-08; `{ type }`) |
