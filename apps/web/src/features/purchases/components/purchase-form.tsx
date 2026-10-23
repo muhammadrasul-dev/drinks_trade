@@ -37,12 +37,13 @@ import { toast } from '@drinks/ui/components/sonner';
 import { cn } from '@drinks/ui/lib/utils';
 import { CheckCircle2Icon, PlusIcon, Trash2Icon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { type ChangeEvent, useMemo, useState, useTransition } from 'react';
+import { useMemo, useState, useTransition } from 'react';
 import { useFieldArray, useForm, useWatch } from 'react-hook-form';
 
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import { MoneyText } from '@/components/money-text';
 import { Link, useRouter } from '@/i18n/navigation';
+import { toNumber, toAmount } from '@/lib/number-input';
 
 import { createPurchase, deletePurchase, postPurchase, updatePurchase } from '../actions';
 import { PURCHASES_HREF } from '../list-params';
@@ -99,17 +100,6 @@ function defaults(purchase: PurchaseDetail | undefined, today: string, firstSub:
     paidCard: purchase.paidCard,
     paidCredit: purchase.paidCredit,
   } satisfies PurchaseDraftInput;
-}
-
-/** Digits only → number; empty → undefined (the schema then says "required"). */
-function toNumber(event: ChangeEvent<HTMLInputElement>): number | undefined {
-  const digits = event.target.value.replace(/\D/g, '');
-  return digits === '' ? undefined : Number(digits);
-}
-
-/** Same as toNumber, but an empty payment field means 0. */
-function toAmount(event: ChangeEvent<HTMLInputElement>): number {
-  return toNumber(event) ?? 0;
 }
 
 function lineTotal(line: Partial<LineValues> | undefined): number {
