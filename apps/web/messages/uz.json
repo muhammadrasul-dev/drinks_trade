@@ -985,6 +985,45 @@
       "grossProfit": "Yalpi foyda"
     }
   },
+  "pnlReport": {
+    "title": "P&L (foyda va zarar)",
+    "period": {
+      "label": "Davr",
+      "kinds": {
+        "day": "Kun",
+        "month": "Oy",
+        "year": "Yil",
+        "range": "Oraliq"
+      },
+      "previous": "Oldingi",
+      "next": "Keyingi",
+      "day": "Kun",
+      "from": "dan",
+      "to": "gacha",
+      "month": "{month, select, january {Yanvar} february {Fevral} march {Mart} april {Aprel} may {May} june {Iyun} july {Iyul} august {Avgust} september {Sentabr} october {Oktabr} november {Noyabr} december {Dekabr} other {{month}}} {year}",
+      "year": "{year}-yil",
+      "range": "{from} — {to}",
+      "fromOnly": "{from} dan",
+      "toOnly": "{to} gacha",
+      "all": "Butun davr"
+    },
+    "lines": {
+      "label": "Foyda va zarar hisobi",
+      "revenue": "Tushum",
+      "cogs": "Sotilgan tovar tannarxi",
+      "grossProfit": "Yalpi foyda",
+      "travelExpense": "Yoʻl kira",
+      "stockShortage": "Kamomad",
+      "stockSurplus": "Ortiqcha",
+      "netProfit": "Sof foyda"
+    },
+    "hints": {
+      "sales": "{count} ta savdo, nasiya ham",
+      "travelExpenses": "{count} ta yozuv, storno qilinganlarsiz",
+      "stockCounts": "{count} ta inventarizatsiya"
+    },
+    "excluded": "Xarid, qarz amallari, boshqa chiqim va kassalar orasidagi oʻtkazmalar foyda hisobiga kirmaydi. Storno qilingan hujjatlar oʻz sanasidan chiqadi."
+  },
   "stockCounts": {
     "title": "Inventarizatsiya",
     "description": "Ochiq inventarizatsiya shu ombordagi savdo, xarid va storno bajarilishini bloklaydi.",

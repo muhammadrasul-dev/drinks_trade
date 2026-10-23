@@ -19,11 +19,10 @@ export const stockReportQuerySchema = z.object({
 export type StockReportQuery = z.input<typeof stockReportQuerySchema>;
 
 /**
- * Sales report (T-802, SRS §7.2): an inclusive `YYYY-MM-DD` range of store
- * days (Asia/Tashkent); either end may be open. The page fills in the current
- * month when the URL has no range (OQ-35).
+ * A report period (T-802, T-803): an inclusive `YYYY-MM-DD` range of store
+ * days (Asia/Tashkent, database §7); either end may be open.
  */
-export const salesReportQuerySchema = z
+export const reportPeriodSchema = z
   .object({
     from: z.iso.date().optional(),
     to: z.iso.date().optional(),
@@ -32,4 +31,15 @@ export const salesReportQuerySchema = z
     path: ['to'],
     message: 'to before from',
   });
-export type SalesReportQuery = z.input<typeof salesReportQuerySchema>;
+export type ReportPeriod = z.input<typeof reportPeriodSchema>;
+
+/** Sales report (T-802, SRS §7.2). The page fills in the current month when the URL has no range (OQ-35). */
+export const salesReportQuerySchema = reportPeriodSchema;
+export type SalesReportQuery = ReportPeriod;
+
+/**
+ * P&L (T-803, BR-11, business-logic §8). The page always sends a whole day,
+ * month, year or a picked range (OQ-36).
+ */
+export const pnlReportQuerySchema = reportPeriodSchema;
+export type PnlReportQuery = ReportPeriod;

@@ -371,6 +371,14 @@ Kirmaydi: xarid summasi, qarz amallari, `OTHER_EXPENSE`, o'tkazmalar.
 Filtr: kun / oy / yil / ixtiyoriy oraliq (Toshkent vaqti).
 Savdo hisoboti (T-802, SRS §7.2, database §7.2) tushum va tannarxni shu qoida bilan oladi — `POSTED`, `doc_date` davrda, storno qilingan savdo asl sanasidan chiqadi — faqat mahsulot kesimida (`sale_line` bo'yicha): bir davr uchun hisobot jami = P&L dagi "Tushum" va "Tannarx (COGS)".
 
+Amalda (T-803): `reports.pnl(ctx, { from?, to? })` (`packages/server/src/modules/reports/pnl-report.queries.ts`) — ruxsat `report.pnl` (faqat OWNER; STAFF → `FORBIDDEN`, qisqartirilgan variant yo'q — butun hisobot maxfiy, CLAUDE.md 6-qoida). Kiritma `pnlReportQuerySchema` (= `reportPeriodSchema`, savdo hisoboti bilan umumiy): Toshkent kunlari, ikkala chet kiritiladi va ixtiyoriy (`storeDayRange`), `from > to` → `VALIDATION_FAILED`. O'qish, qulfsiz; har qator — o'z sanasi bo'yicha (BR-13: bajarish/storno payti emas):
+- `revenue`, `cogs` — `POSTED` savdolarning Σ `total_amount` / Σ `cost_total` (`doc_date`); `REVERSED` savdo asl kunidan chiqadi (OQ-01), storno kunida ham ko'rinmaydi. Nasiya savdo ham kiradi.
+- `travelExpense` — Σ `TRAVEL_EXPENSE` (`tx_date`), `MANUAL_REVERSAL` i bo'lganlarsiz (`reversedBy: null`); teskari yozuv ham asl sana bilan (OQ-30), lekin u yo'l kira emas — hisobga kirmaydi.
+- `stockShortage` — `POSTED` sanoqlarning (`doc_date`) Σ |`stock_count_result.amount`| (`amount < 0`), `stockSurplus` — Σ `amount > 0`; ikkalasi musbat. Natija mahsulot bo'yicha ombor jami (§6.2 5-qadam), shuning uchun sub-omborlar orasidagi ko'chish 0 — hech bir qatorga tushmaydi. `DRAFT`/`CANCELLED` sanoq hisoblanmaydi.
+- `grossProfit = revenue − cogs`, `netProfit = grossProfit − travelExpense − stockShortage + stockSurplus`; `counts` — savdolar, yo'l kira yozuvlari va sanoqlar soni (ekranda izoh sifatida).
+- Xarid, qarz amallari, `OTHER_EXPENSE`, o'tkazmalar o'qilmaydi.
+UI: `/reports/pnl` — Kun / Oy / Yil / Oraliq (oy va yil — to'liq kalendar oy/yil), parametrsiz — joriy oy (OQ-36).
+
 ## 9. Kam qoldiq ogohlantirishi (FR-1.3)
 `Σ stock_balance.qty (do'kon bo'yicha) < product.minStock` (va `minStock > 0`) → mahsulotlar ro'yxatida belgi + dashboard'da "Kam qolgan mahsulotlar" bloki. Push/SMS yo'q.
 Qoldiq hisobotida (T-801) ham shu qoida: `lowStock` ombor filtridan qat'i nazar do'kon bo'yicha jamiga qarab; "Kam qolganlar" filtri qoldig'i 0 mahsulotlarni ham ko'rsatadi (OQ-28).

@@ -900,6 +900,8 @@ SELECT revenue, cogs, revenue - cogs AS gross_profit, travel, inventory_diff,
 FROM s, t, i;
 ```
 
+Amalda (T-803): `reports.pnl` (`modules/reports/pnl-report.queries.ts`) — shu so'rov Prisma `aggregate` lari bilan (parallel): `sale` (`_sum` `total_amount`/`cost_total`, `_count`), `cash_transaction` (`TRAVEL_EXPENSE`, `reversedBy: null` — `NOT EXISTS` o'rnida), `stock_count_result` ikki marta (`amount < 0` → kamomad, `amount > 0` → ortiqcha; ekrandagi ikki qator, business-logic §8) va `stock_count.count`. Davr — `storeDayRange(from, to)`, ikkala chet ixtiyoriy. Ishlatilgan indekslar: `sale (store_id, status, doc_date)`, `cash_transaction (store_id, type, tx_date)`, `stock_count (store_id, status, doc_date)`.
+
 > Storno qilingan savdo (`REVERSED`) yuqoridagi so'rovda **asl sanasidan** chiqib ketadi. Bu OQ-01 qaroriga mos (storno qilingan hujjat asl davri hisobidan butunlay chiqadi).
 
 ## 8. Seed (boshlang'ich ma'lumot)
