@@ -25,6 +25,8 @@ storage/
 coverage/
 playwright-report/
 test-results/
+# Playwright signed-in states (apps/e2e)
+.auth/
 
 # logs
 *.log

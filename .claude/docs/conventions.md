@@ -54,6 +54,7 @@ Odam ham, AI ham shu qoidalarga amal qiladi. Qoida o'zgarsa — shu fayl va kera
 - Integratsiya testlari `drinks_trade_test` DB'da; har test tranzaksiyada yoki `TRUNCATE` bilan izolyatsiya.
 - PR'dan oldin: `pnpm lint && pnpm typecheck && pnpm test`.
 - CI (`.github/workflows/ci.yml`, push `main` va har PR): `pnpm install --frozen-lockfile`, `lint`, `format:check`, `typecheck`, `test`, `build`. Integratsiya job'i (Postgres service) T-105 da yoqiladi.
+- E2E (T-1001): `pnpm test:e2e` — Playwright, `apps/e2e`; o'z bazasi (`drinks_trade_e2e`, har ishga tushishda qayta yaratiladi) va 3911-port, `pnpm test` ga kirmaydi. Foydalanuvchi oqimiga tegadigan o'zgarishdan keyin (sahifa, forma, menyu, matn kaliti) ishga tushiriladi; CI'da `e2e` job. Yangi oqim — `apps/e2e/tests/*.spec.ts`, o'z ma'lumotini UI orqali o'z nomi bilan yaratadi, lokatorlar rol/label va `messages/*.json` matnlari bo'yicha. Batafsil — [architecture.md §10](architecture.md).
 
 ## 6. Git
 - Asosiy branch: `main`. Ish: `feat/<qisqa-nom>`, `fix/...`, `docs/...`, `chore/...`.

@@ -1,0 +1,20 @@
+{
+  "name": "@drinks/e2e",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test:e2e": "playwright test",
+    "db:prepare": "tsx scripts/prepare-db.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@drinks/config": "workspace:*",
+    "@playwright/test": "1.56.1",
+    "@types/node": "24.19.2",
+    "@types/pg": "8.23.1",
+    "pg": "8.23.1",
+    "tsx": "4.23.15",
+    "typescript": "6.0.3"
+  }
+}

@@ -30,6 +30,8 @@ SRS'dagi biznes savollar yopilgan. Bu yerda — arxitektura va DB loyihalashda c
 
 **2026-10-23 (T-902):** OQ-39 va OQ-40 ochildi — bosh sahifadagi "Kam qolgan mahsulotlar" blokida arxivlangan mahsulotlar, ro'yxat hajmi va tartibi; tavsiya bo'yicha qilingan, javob kutilmoqda.
 
+**2026-10-23 (T-1001):** OQ-44, OQ-45 va OQ-46 ochildi — E2E testlar ma'lumotni qayerdan oladi, qaysi server ustida ishlaydi va qaysi brauzer/versiyada; tavsiya bo'yicha qilingan, javob kutilmoqda.
+
 | # | Savol | Tavsiya | Holat |
 |---|---|---|---|
 | OQ-01 | Storno qilingan savdo P&L'da qaysi sanada aks etadi? | Asl hujjat sanasida (hujjat davr hisobidan butunlay chiqadi) | Yopilgan — asl sanada (A) |
@@ -70,6 +72,9 @@ SRS'dagi biznes savollar yopilgan. Bu yerda — arxitektura va DB loyihalashda c
 | OQ-36 | P&L davri tanlanmasdan ochilsa qaysi davr? "Oy" va "Yil" — to'liq kalendar oy/yilmi yoki bugungacha? | 1) Joriy oy; 2) to'liq kalendar oy/yil (kelajakdagi kunlar bo'sh — summa bugungacha bilan bir xil), ‹ › bilan qo'shni davrga, kelajakka emas | Ochiq — tavsiya bo'yicha qilingan (T-803) |
 | OQ-39 | Bosh sahifadagi "Kam qolgan mahsulotlar" blokida arxivlangan mahsulotlar ko'rinadimi? | Yo'q — faqat faol mahsulotlar; "Qoldiq hisobotida ko'rish" havolasi ham faqat faollarni ochadi (`?low=1&archived=0`), son bir xil | Ochiq — tavsiya bo'yicha qilingan (T-902) |
 | OQ-40 | Blokda nechta mahsulot va qaysi tartibda ko'rsatiladi? | Jami soni + eng ko'p kamaygan 10 tasi (`qoldiq / minimal` o'sish tartibida — qoldig'i 0 lar birinchi; teng bo'lsa nom bo'yicha); qolganlari — "Yana N ta" va hisobotga havola | Ochiq — tavsiya bo'yicha qilingan (T-902) |
+| OQ-44 | E2E testlar uchun ma'lumot qayerdan olinadi: dev seed, to'g'ridan-to'g'ri DB'ga yozuvchi skript yoki UI? | Har ishga tushishda baza qayta yaratiladi + faqat minimal prod seed (Egasi, do'kon, 2 kassa); xodimlar, omborlar, mahsulotlar va hujjatlar — UI orqali, har oqim o'z nomi bilan | Ochiq — tavsiya bo'yicha qilingan (T-1001) |
+| OQ-45 | E2E qaysi server ustida ishlaydi va testlar qayerda turadi? | Alohida workspace `apps/e2e`; `next build` + `next start` (3911-port, production rejim), `next dev` emas | Ochiq — tavsiya bo'yicha qilingan (T-1001) |
+| OQ-46 | Qaysi brauzerlar va qaysi Playwright versiyasi? | Faqat Chromium, desktop (1280×720); `@playwright/test` 1.56.1 — lokal keshdagi `chromium-1194` bilan mos (eng yangisi 1.64.1); CI brauzerni o'zi o'rnatadi | Ochiq — tavsiya bo'yicha qilingan (T-1001) |
 
 ---
 
@@ -279,3 +284,24 @@ T-902. Necha mahsulot ko'rsatilishi va tartibi aytilmagan; mahsulotlar soni o'si
 - **B:** nom bo'yicha (qoldiq hisoboti kabi), shu 10 ta.
 - **C:** hammasi, cheklovsiz.
 B ga o'tish — `dashboard.queries.ts` dagi `low.sort(compareStockShortage)` ni olib tashlash; C — `slice` ni olib tashlash (+ `dashboard.int.test.ts` dagi OQ-40 testi).
+
+### OQ-44 — E2E testlar uchun ma'lumot
+T-1001. architecture §10 faqat oqimlarni aytadi; testdagi xodim, ombor va mahsulotlar qayerdan kelishi aytilmagan. Oqimlar takrorlanuvchi (deterministik) va bir-biridan mustaqil bo'lishi kerak.
+- **A (tavsiya, T-1001 da shunday):** `drinks_trade_e2e` har ishga tushishda o'chirib qayta yaratiladi (`apps/e2e/scripts/prepare-db.ts`), migratsiya va **faqat minimal prod seed** (`seed.ts`: Egasi, do'kon, 2 kassa). Qolgan hammasi UI orqali: `setup` loyihasi Egasi bilan kirib "Foydalanuvchilar" sahifasida 2 xodim yaratadi; har oqim o'z ombori/mahsuloti/hujjatini o'z nomi bilan (`E2E-A …`) yaratadi. Afzalligi: testlar foydalanuvchi qiladigan yo'ldan o'tadi va namunaviy ma'lumot o'zgarsa buzilmaydi; xarid nasiya bilan to'lanadi (yangi do'konda kassa bo'sh — naqd xarid `CASHBOX_INSUFFICIENT`).
+- **B:** `seed.dev.ts` (omborlar, 13 mahsulot, `staff1`/`staff1234`) — qadamlar kamroq, lekin testlar dev namunaviy ma'lumotiga bog'lanadi va `NODE_ENV=production` da ishlamaydi.
+- **C:** to'g'ridan-to'g'ri DB'ga yozuvchi fixture skript (`@drinks/db`) — tez, lekin servis qoidalari va audit chetlab o'tiladi.
+B ga o'tish — `prepare-db.ts` da `run('seed')` o'rniga `run('seed:dev')`, `tests/auth.setup.ts` dagi xodim yaratishni olib tashlash va `env.ts` dagi `STAFF` ni `staff1` ga almashtirish.
+
+### OQ-45 — E2E serveri va joylashuvi
+T-1001. Testlar ilovaning qaysi rejimida ishlashi va kodi qayerda turishi aytilmagan.
+- **A (tavsiya, T-1001 da shunday):** alohida workspace `apps/e2e` (`@drinks/e2e`; `apps/*` globiga tushadi, `apps/web` ning Prisma chegarasiga aralashmaydi). Server — `next build` + `next start --port 3911` (production rejim: secure cookie, haqiqiy 403, kompilyatsiya kutilmaydi). `next start` `output: 'standalone'` bilan ogohlantirish beradi, lekin ishlaydi.
+- **B:** `node .next/standalone/apps/web/server.js` (production Docker'dagi kabi, T-1003) — `.next/static` va `public` ni nusxalash kerak; T-1003 dan keyin o'tish mumkin.
+- **C:** `next dev` — build kerak emas, lekin birinchi ochilishda sahifa kompilyatsiyasi sekin va production'dan farq qiladi (flaky).
+B ga o'tish — `playwright.config.ts` dagi `serverCommand` ning oxirgi qadamini almashtirish (va build'dan keyin static fayllarni nusxalash).
+
+### OQ-46 — E2E brauzerlari va Playwright versiyasi
+T-1001. Brauzerlar ro'yxati va versiya aytilmagan; loyiha qoidasi — versiyalar aniq qotiriladi.
+- **A (tavsiya, T-1001 da shunday):** faqat Chromium (desktop, 1280×720 — sidebar ko'rinadigan layout). `@playwright/test` **1.56.1** — lokal keshdagi `chromium-1194` bilan mos, ishlab chiquvchi mashinasida brauzer yuklab olinmaydi; CI `playwright install --with-deps chromium` bilan o'zi o'rnatadi. npm'dagi eng yangisi — 1.64.1.
+- **B:** eng yangi Playwright (1.64.x) — lokal ham bir marta `pnpm --filter @drinks/e2e exec playwright install chromium` talab qiladi.
+- **C:** qo'shimcha Firefox/WebKit va telefon viewport (390px) loyihalari — CI vaqti ~2–3 barobar.
+B ga o'tish — `apps/e2e/package.json` dagi versiyani ko'tarish (+ architecture §2 jadvali); C — `playwright.config.ts` ga `projects` qo'shish.
