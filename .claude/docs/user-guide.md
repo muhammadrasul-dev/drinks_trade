@@ -1,6 +1,8 @@
 # Foydalanuvchi qo'llanmasi
 
-Versiya: 0.1 (qoralama — interfeys tayyor bo'lgach skrinshotlar bilan to'ldiriladi) · Sana: 2026-10-22
+Versiya: 1.0 · Sana: 2026-10-23
+
+Skrinshotlardagi do'kon namunaviy (Coca-Cola, Red Bull va h.k.), summalar so'mda. Rasmlar `pnpm docs:screenshots` bilan qayta olinadi (interfeys o'zgarsa).
 Kim uchun: do'kon **Egasi** va **Xodim**.
 
 ---
@@ -19,10 +21,18 @@ Kim uchun: do'kon **Egasi** va **Xodim**.
 
 Parolni unutsangiz — Egasiga murojaat qiling, u yangi parol o'rnatadi.
 
+![Kirish sahifasi](images/user-guide/01-login.png)
+
 **Bosh sahifa** (kirgandan keyin ochiladi, Egasi ham, Xodim ham) — uchta blok, faqat miqdor va sonlar (pul yo'q):
 - **Kam qolgan mahsulotlar** — do'kondagi jami qoldig'i minimal qoldiqdan kam faol mahsulotlar soni va eng kam qolgan 10 tasi (umuman qolmaganlari birinchi): qoldiq / minimal, blok va donada. Nom bosilsa — mahsulot kartochkasi; "Qoldiq hisobotida ko'rish" — to'liq ro'yxat (qoldiq hisoboti, "Kam qolganlar", faqat faol). Minimal qoldig'i 0 bo'lgan va arxivlangan mahsulotlar bu yerda chiqmaydi.
 - **Ochiq inventarizatsiyalar** — qaysi omborda sanoq ochiq (raqami bosilsa — sanoq sahifasi).
 - **Bajarilmagan qoralamalar** — savdo va xarid qoralamalari soni; bosilsa — o'sha ro'yxat, "Qoralama" holati bo'yicha.
+
+![Bosh sahifa: kam qolgan mahsulotlar, ochiq inventarizatsiya va qoralamalar](images/user-guide/02-dashboard.png)
+
+Telefonda menyu chap yuqoridagi ☰ tugmasi ostida yashiringan, bloklar bir ustunda:
+
+![Telefonda bosh sahifa (Xodim)](images/user-guide/19-mobile-dashboard.png)
 
 ## 3. Rollar — kim nimani ko'radi
 
@@ -40,6 +50,10 @@ Parolni unutsangiz — Egasiga murojaat qiling, u yangi parol o'rnatadi.
 
 Xodim menyusida unga yopiq bo'limlar ko'rinmaydi. Bunday bo'lim manzilini qo'lda ochsa — **Ruxsat yo'q** (403) sahifasi chiqadi.
 
+![Xodim ko'radigan savdo hisoboti: qisqa menyu, tannarx va foyda ustunlarisiz](images/user-guide/17-staff-sales-report.png)
+
+![Xodim Kassa manzilini ochganda — Ruxsat yo'q](images/user-guide/18-staff-forbidden.png)
+
 
 ## 4. Asosiy tushunchalar
 - **Dona / Blok.** Har mahsulotda "blokdagi dona soni" bor. Masalan, Cola 0.5 L — blokda 12 dona. 27 dona = **2 blok 3 dona**.
@@ -53,6 +67,10 @@ Xodim menyusida unga yopiq bo'limlar ko'rinmaydi. Bunday bo'lim manzilini qo'lda
 1. **Omborlar** → "Ombor qo'shish" → nom. Ombor kartochkasida → "Sub-ombor qo'shish" (faqat 2 daraja: sub-ombor ichida yana sub-ombor bo'lmaydi). Ombor nomi takrorlanmaydi; sub-ombor nomi bitta ombor ichida takrorlanmaydi (katta-kichik harf farq qilmaydi). Kerak bo'lmay qolgan ombor/sub-omborni **arxivlang** — faqat u **bo'sh** bo'lsa (qoldiq 0) va omborda ochiq inventarizatsiya bo'lmasa. Arxivdagi ombor/sub-ombor hujjatlarda tanlanmaydi; "Arxiv" ro'yxatidan qaytarish mumkin (arxivdagi ombor ichidagi sub-omborni qaytarish uchun avval omborni qaytaring).
 2. **Mahsulotlar** → **Toifalar** / **Brendlar** → "Toifa qo'shish" / "Brend qo'shish" (nom takrorlanmaydi, katta-kichik harf farq qilmaydi). Kerak bo'lmay qolganini **arxivlang** — u yangi mahsulotlarda tanlanmaydi, mavjud mahsulotlarda saqlanib qoladi; "Arxiv" ro'yxatidan qaytarish mumkin.
 3. **Mahsulotlar** → "Mahsulot qo'shish": nom, blokdagi dona soni, sotuv narxi (1 dona), toifa, brend, SKU, shtrix-kod, rasm, minimal qoldiq, yaroqlilik muddati (ixtiyoriy, faqat ma'lumot). Batafsil — 5.1-bo'lim.
+4. **Foydalanuvchilar** → "Xodim qo'shish": F.I.O, login, parol. Xodimlar soni cheklanmagan, har biriga alohida login bering (umumiy akkaunt ishlatmang, aks holda audit kim nima qilganini ko'rsata olmaydi).
+5. Boshlang'ich qoldiqni kiritish uchun — **Xarid** hujjati orqali (alohida import yo'q).
+
+![Omborlar va ularning sub-omborlari](images/user-guide/03-warehouses.png)
 
 ### 5.1. Mahsulotlar (Egasi ham, Xodim ham)
 - **Ro'yxat:** qidiruv maydoni nom, SKU yoki shtrix-kod bo'yicha qidiradi; yonida toifa va brend filtri; **Faol / Arxiv** almashtirgichi. Har qatorda rasm, nom (ostida SKU · shtrix-kod), toifa, brend, 1 dona narxi va blok narxi, qoldiq (blok + dona). Qoldiq minimaldan kam bo'lsa — qizil **"Kam qoldi"** belgisi (sichqonchani olib borsangiz minimal qoldiq ko'rinadi). Ro'yxat 50 tadan sahifalanadi.
@@ -62,17 +80,21 @@ Xodim menyusida unga yopiq bo'limlar ko'rinmaydi. Bunday bo'lim manzilini qo'lda
 - **Rasm:** JPG, PNG yoki WEBP, 2 MB gacha; tizim uni 512 px gacha kichraytiradi. "Rasmni olib tashlash" — rasmni o'chiradi. Rasm **Saqlash** bosilganda yuklanadi.
 - **Blokdagi dona sonini o'zgartirish:** saqlashda ogohlantirish oynasi chiqadi — qoldiq donada saqlangani uchun miqdor o'zgarmaydi, faqat blok ko'rinishi qayta hisoblanadi (masalan, 20 dona: "3 blok 2 dona" → "1 blok 8 dona"). Blokda kiritilgan qoralamalar bajarishda qayta tekshiriladi.
 - **Arxivlash** (o'chirish yo'q): mahsulot yangi hujjatlarda tanlanmaydi, eski hujjat va hisobotlarda qoladi. Omborda qoldig'i bo'lsa ham arxivlash mumkin — oynada qolgan miqdor ko'rsatiladi, arxivdagi mahsulotni sotib bo'lmaydi. **Arxiv** ro'yxatidan "Arxivdan chiqarish" bilan qaytariladi. Arxivlangan toifa/brend mahsulotda "(arxiv)" belgisi bilan ko'rinib turadi.
-4. **Foydalanuvchilar** → "Xodim qo'shish": F.I.O, login, parol. Xodimlar soni cheklanmagan, har biriga alohida login bering (umumiy akkaunt ishlatmang, aks holda audit kim nima qilganini ko'rsata olmaydi).
-5. Boshlang'ich qoldiqni kiritish uchun — **Xarid** hujjati orqali (alohida import yo'q).
+
+![Mahsulotlar ro'yxati: narx, blok narxi, qoldiq va «Kam qoldi» belgisi](images/user-guide/05-products.png)
+
+![Mahsulot qo'shish formasi](images/user-guide/04-product-form.png)
 
 ## 6. Xarid (tovar kirimi)
 1. **Xarid** → "Yangi xarid".
 2. Sana (default — bugun; o'tgan sanani tanlash mumkin, kelajak sanani — yo'q). Izohga yetkazib beruvchini yozing — nasiya bo'lsa izoh majburiy.
 3. Qator qo'shish: mahsulot (nomi, SKU yoki shtrix-kod bilan qidiring; skaner bilan ham bo'ladi) → **qaysi sub-omborga** → birlik (dona yoki blok) → soni → narx (tanlangan birlik uchun). Blokda kiritilsa ostida "= N dona" chiqadi. Bonus (tekin) tovarni alohida qatorda 0 narx bilan kiriting.
 4. Pastda to'lov: **Naqd + Karta + Nasiya** — yig'indi jami summaga teng bo'lishi kerak. Forma farqni ko'rsatadi; "Qolganini naqdga" tugmasi qolgan summani naqdga yozadi.
-5. **Saqlash** — qoralama (raqam beriladi, masalan `P-000012`; ro'yxatdan qayta ochib tahrirlash yoki **O'chirish** mumkin). Ikki kishi bir qoralamani bir vaqtda tahrirlasa, ikkinchisiga "Hujjat boshqa foydalanuvchi tomonidan o'zgartirilgan" chiqadi — sahifani yangilang. **Bajarish** — tovar omborga kiradi, kassadan pul chiqadi, nasiya qismi "Mendan qarz"ga tushadi.
+5. **Saqlash** — qoralama (raqam beriladi, masalan `P-000012`; ro'yxatdan qayta ochib tahrirlash yoki **O'chirish** mumkin). Ikki kishi bir qoralamani bir vaqtda tahrirlasa, ikkinchisiga "Hujjat boshqa foydalanuvchi tomonidan o'zgartirilgan" chiqadi — sahifani yangilang. **Bajarish** — tovar omborga kiradi, kassadan pul chiqadi, nasiya qismi qarzlarda "Bizning qarzimiz" bo'lib yoziladi.
 
 Kassada pul yetmasa bajarilmaydi ("Kassada mablag' yetarli emas").
+
+![Bajarilgan xarid: qatorlar, to'lov (nasiya) va holat](images/user-guide/06-purchase.png)
 
 ## 7. Savdo
 1. **Savdolar** → "Yangi savdo".
@@ -80,6 +102,10 @@ Kassada pul yetmasa bajarilmaydi ("Kassada mablag' yetarli emas").
 3. Qatorda shu sub-ombordagi qoldiq ko'rinadi. Yetmasa qator **qizil** bo'ladi va **Bajarish** tugmasi o'chadi (bir mahsulot bir sub-ombordan bir necha qatorda bo'lsa, qatorlar qo'shib hisoblanadi). Bunday qoralamani **saqlash mumkin** — keyin qoldiq kelganda yoki miqdorni kamaytirib bajarasiz.
 4. To'lov: Naqd + Karta + Nasiya = jami.
 5. Avval **Saqlash**, keyin **Bajarish** → tasdiqlang. Tovar chiqadi, naqd va karta qismi kassaga tushadi, nasiya "Bizga qarzdor"ga tushadi (nasiya bo'lsa izohga mijozni yozing — izohsiz bajarilmaydi). Bajarilgan savdoni o'zgartirib bo'lmaydi.
+
+![Savdo formasi: qoldiq yetmagan qator qizil, «Bajarish» o'chiq](images/user-guide/07-sale-form.png)
+
+![Bajarilgan savdo](images/user-guide/08-sale.png)
 
 Bir vaqtda boshqa xodim shu tovarni sotib yuborgan bo'lsa, bajarishda tizim qayta tekshiradi va xatoni **o'sha qator ostida** ko'rsatadi — qatorni to'g'irlang. Qoralama saqlangandan keyin mahsulot narxi yoki blokdagi dona soni o'zgargan bo'lsa ham bajarilmaydi: qoralamani qayta saqlang (yangi narx va jami ko'rinadi, to'lovni moslang).
 
@@ -90,17 +116,21 @@ Bir vaqtda boshqa xodim shu tovarni sotib yuborgan bo'lsa, bajarishda tizim qayt
 4. **Bajarish** (avval **Saqlash**; kamida bitta qator sanalgan bo'lishi kerak) — tasdiqlash oynasida nechta qator sanalmagani ko'rsatiladi. Bajarilganda sanalgan qatorlarning qoldig'i haqiqiy songa tenglashadi (sanalmaganlari o'zgarmaydi). Ombor bo'yicha kamomad — yo'qotish, ortiqcha — daromad sifatida P&L'ga tushadi. Bir sub-omborda kam, boshqasida ortiq (jami teng) bo'lsa — faqat joylashuv tuzatiladi, foydaga ta'sir yo'q. (Tovarni bir joydan boshqasiga ko'chirish ham shu yo'l bilan qilinadi.)
 5. Kerak bo'lmasa — **Bekor qilish** (blok yechiladi). Bajarilgan inventarizatsiyani o'zgartirib ham, bekor qilib ham bo'lmaydi — xato topilsa, yangi inventarizatsiya o'tkazing.
 
+![Inventarizatsiya: tizimdagi va sanalgan son, farq va taxminiy kamomad](images/user-guide/09-stock-count.png)
+
 ## 9. Kassa (faqat Egasi)
 Ikkita kassa: **Naqd** va **Karta**, balanslari alohida. Kassa manfiy bo'lmaydi.
 
 | Amal | Qayerda | Foydaga ta'siri |
 |---|---|---|
-| Yo'l kira | Kassa → "Chiqim" → Yo'l kira | Xarajat (foydani kamaytiradi) |
-| Boshqa chiqim (masalan, egasi pul oldi) | Kassa → "Chiqim" → Boshqa (izoh majburiy) | Yo'q |
+| Yo'l kira | Kassa → **Yo'l kira** | Xarajat (foydani kamaytiradi) |
+| Boshqa chiqim (masalan, egasi pul oldi) | Kassa → **Boshqa chiqim** (izoh majburiy) | Yo'q |
 | Qarz berish / olish | Qarzlar → "Qarz berish" / "Qarz olish" (izoh majburiy) | Yo'q |
-| Kassalar orasida o'tkazma | Kassa → "O'tkazma" | Yo'q |
+| Kassalar orasida o'tkazma | Kassa → **O'tkazma** | Yo'q |
 
 Xato kiritilgan yozuv (masalan, yo'l kira summasi noto'g'ri) o'chirilmaydi: jurnalda yozuv yonidagi **Storno** → tasdiqlang (sabab ixtiyoriy). Teskari yozuv asl yozuv sanasi bilan yaratiladi, ikkalasi ham jurnalda qoladi, asl summa chizib qo'yiladi va "Storno qilingan" belgisi chiqadi. Storno faqat yo'l kira, boshqa chiqim va o'tkazmada bor; o'tkazma ikkala tomoni bilan birga bekor bo'ladi. Savdo, xarid va qarz yozuvlari o'z hujjati yoki qarzi orqali storno qilinadi. Storno qilingan yo'l kira foydadan chiqadi.
+
+![Kassa: balanslar, amal tugmalari va jurnal (yo'l kira yonida «Storno»)](images/user-guide/10-cash.png)
 
 ## 10. Qarzlar (faqat Egasi)
 - Tepada ikki karta: **Bizga qarzdor** (nasiya savdo, berilgan qarz) va **Bizning qarzimiz** (nasiya xarid, olingan qarz) — ochiq qarzlar bo'yicha jami qoldiq.
@@ -108,10 +138,16 @@ Xato kiritilgan yozuv (masalan, yo'l kira summasi noto'g'ri) o'chirilmaydi: jurn
 - **Qarz berish** — pul tanlangan kassadan chiqadi (kassada yetarli bo'lishi kerak); **Qarz olish** — pul tanlangan kassaga kiradi. Izoh majburiy: kontragent ro'yxati yo'q, kim va nima uchun ekanini izohga yozing.
 - Ochiq qarz yonidagi **Qaytarish** → summa (qisman ham mumkin, qoldiqdan ko'p emas) → kassani va sanani tanlang (qarz sanasidan oldin emas). To'liq qaytsa qarz yopiladi. Qaytarishlar tarixi qator yonidagi strelka bilan ochiladi.
 
+![Qarzlar: nasiya xaridlardan tushgan «Bizning qarzimiz»](images/user-guide/11-debts.png)
+
 ## 11. Hisobotlar
 Hammasi **PDF** va **Excel**ga yuklab olinadi.
 1. **Mahsulotlar qoldig'i** — har mahsulot blok/donada, ombor → sub-ombor bo'yicha. Filtrlar: ombor va uning sub-ombori, toifa, brend, mahsulot holati (faol va arxiv / faqat faol / faqat arxiv), **"Kam qolganlar"** — do'kon bo'yicha jami minimal qoldiqdan kam bo'lganlar, umuman qolmaganlari ham. Ombor tanlansa, "Qoldiq" ustuni shu ombordagini, ostida do'kondagi jamini ko'rsatadi. Egasi qo'shimcha ravishda o'rtacha tannarx (1 dona) va qoldiq qiymatini (jami bilan) ko'radi; Xodimga bu ustunlar yuborilmaydi.
+
+![Qoldiq hisoboti (Egasi)](images/user-guide/12-stock-report.png)
 2. **Savdo hisoboti** — sana oralig'i, mahsulot kesimida: soni, tushum (+ Egasi uchun tannarx va yalpi foyda). Faqat bajarilgan savdolar; storno qilingan savdo o'z sanasidan chiqib ketadi, qoralamalar hisoblanmaydi. Ochilganda joriy oy (1-sanadan bugungacha) ko'rsatiladi; "dan"/"gacha" sanalari yoki **Bugun** / **Shu oy** tugmalari bilan o'zgartiriladi (kunlar Toshkent vaqti bo'yicha). Yuqorida jami: savdolar va mahsulotlar soni, tushum, Egasiga tannarx va yalpi foyda. Soni blok va donada; tannarx — savdo bajarilgan paytdagi o'rtacha tannarx. Xodimga tannarx va foyda umuman yuborilmaydi.
+
+![Savdo hisoboti (Egasi): tannarx va yalpi foyda bilan](images/user-guide/13-sales-report.png)
 3. **P&L** (faqat Egasi) — kun / oy / yil / ixtiyoriy oraliq:
 ```
 Tushum
@@ -125,6 +161,8 @@ Tushum
 Xarid summasi, qarzlar, "boshqa chiqim" va o'tkazmalar foydaga kirmaydi.
 Davr yuqoridagi **Kun** / **Oy** / **Yil** / **Oraliq** tugmalari bilan tanlanadi; ochilganda joriy oy (butun oy) ko'rsatiladi. Kun, oy va yilni ‹ › strelkalari bilan oldinga-orqaga surish mumkin (kelajakka emas), kunni sana maydonidan ham tanlash mumkin; **Oraliq** — "dan"/"gacha" sanalari. Kunlar Toshkent vaqti bo'yicha, hujjat sanasiga qarab: o'tgan sana bilan kiritilgan savdo o'sha kunga tushadi. Storno qilingan savdo va storno qilingan yo'l kira o'z sanasidan butunlay chiqadi (storno kunida ham ko'rinmaydi). Nasiya savdo ham tushumga kiradi. Sub-omborlar orasidagi farq (bir joyda kam, boshqasida ortiq) kamomad ham, ortiqcha ham emas. Har qator ostida nechta savdo / yozuv / inventarizatsiya hisoblangani yozilgan. Xodim bu hisobotni menyuda ko'rmaydi va ocholmaydi.
 
+![P&L: oy bo'yicha, yo'l kira va kamomad bilan](images/user-guide/14-pnl.png)
+
 ## 12. Foydalanuvchilar (faqat Egasi)
 Menyu → **Boshqaruv → Foydalanuvchilar**. Ro'yxatda F.I.O, login, rol, til, holat (Faol/Faolsiz) va oxirgi kirish vaqti. Egasining o'z qatorida faqat **Mening akkauntim** havolasi bor.
 - **Xodim qo'shish** — F.I.O, login (lotin kichik harflar, raqamlar, `. _ -`; 3–32 belgi; katta harf bilan yozilsa ham kichik harfda saqlanadi), parol (kamida 8 belgi, ikki marta), interfeys tili. Yangi akkaunt doim **Xodim** rolida — Egasi tizimda bitta.
@@ -134,8 +172,12 @@ Menyu → **Boshqaruv → Foydalanuvchilar**. Ro'yxatda F.I.O, login, rol, til, 
 - Xodimning logini yoki paroli o'zgarganda u barcha qurilmalarda tizimdan chiqariladi va qayta kirishi kerak bo'ladi.
 - **Mening akkauntim** (foydalanuvchi menyusi) — Egasi o'z F.I.O sini, loginini va parolini o'zgartiradi. Login va parol uchun **joriy parol** kiritiladi; boshqa qurilmalardagi sessiyalar yopiladi, shu qurilmada tizimda qolasiz. Egasi parolini unutsa, tizimni o'rnatgan dasturchi uni serverda tiklaydi.
 
+![Foydalanuvchilar ro'yxati](images/user-guide/15-users.png)
+
 ## 13. Audit jurnali (faqat Egasi)
 Kim, qachon, nimani o'zgartirgani (eski va yangi qiymat). O'tgan sana bilan kiritilgan hujjatlar alohida belgilanadi. Jurnal o'zgartirilmaydi va o'chirilmaydi.
+
+![Audit jurnali](images/user-guide/16-audit.png)
 
 ## 14. Tez-tez uchraydigan xabarlar
 

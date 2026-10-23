@@ -16,6 +16,7 @@
     "test": "turbo run test",
     "test:int": "pnpm -r --workspace-concurrency=1 --if-present run test:int",
     "test:e2e": "pnpm --filter @drinks/e2e test:e2e",
+    "docs:screenshots": "pnpm --filter @drinks/e2e docs:screenshots",
     "db:up": "docker compose -f docker/compose.dev.yml up -d --wait postgres",
     "db:down": "docker compose -f docker/compose.dev.yml down",
     "db:logs": "docker compose -f docker/compose.dev.yml logs -f postgres",

@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "test:e2e": "playwright test",
+    "docs:screenshots": "playwright test -c playwright.docs.config.ts",
     "db:prepare": "tsx scripts/prepare-db.ts",
     "typecheck": "tsc --noEmit"
   },

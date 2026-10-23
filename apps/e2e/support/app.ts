@@ -72,6 +72,11 @@ export interface NewProduct {
   unitsPerBlock: number;
   /** Per piece, whole som. */
   salePrice: number;
+  sku?: string;
+  category?: string;
+  brand?: string;
+  /** Pieces. */
+  minStock?: number;
 }
 
 /** Product card (name, pieces per block, sale price), back on the product list. */
@@ -84,6 +89,16 @@ export async function createProduct(page: Page, product: NewProduct): Promise<vo
   await page
     .getByLabel(msg('products.form.salePrice'), { exact: true })
     .fill(String(product.salePrice));
+  if (product.sku) {
+    await page.getByLabel(msg('products.form.sku'), { exact: true }).fill(product.sku);
+  }
+  if (product.category) await choose(page, msg('products.form.category'), product.category);
+  if (product.brand) await choose(page, msg('products.form.brand'), product.brand);
+  if (product.minStock !== undefined) {
+    await page
+      .getByLabel(msg('products.form.minStock'), { exact: true })
+      .fill(String(product.minStock));
+  }
   await page.getByRole('button', { name: msg('common.save'), exact: true }).click();
   await expect(page).toHaveURL(/\/uz\/products$/);
   await expect(page.getByRole('link', { name: product.name, exact: true })).toBeVisible();
