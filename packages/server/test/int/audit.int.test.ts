@@ -113,41 +113,29 @@ describe('auditLog.list', () => {
     expect(page.refs[category.id]).toBe('Sharbatlar 1L');
   });
 
-  it('keeps other stores out and store-less login events of this organization in', async () => {
+  it('lists only the current store: other stores and store-less rows stay out (OQ-26)', async () => {
     const other = await makeStoreFixture(prisma);
     const mine = await insertRow({ entityId: 'mine' });
     await insertRow({ storeId: other.store.id, userId: other.owner.id, entityId: 'theirs' });
-    const failedOwn = await insertRow({
+    await insertRow({
       storeId: null,
       userId: null,
       action: 'LOGIN_FAILED',
       entityType: 'user',
       entityId: f.staff.id,
     });
-    const failedUnknown = await insertRow({
-      storeId: null,
-      userId: null,
-      action: 'LOGIN_FAILED',
-      entityType: 'user',
-      entityId: 'nobody',
-      // Visible to every organization: kept out of the other tests' date ranges.
-      createdAt: new Date('2020-01-01T00:00:00Z'),
-    });
     await insertRow({
       storeId: null,
       userId: null,
       action: 'LOGIN_FAILED',
       entityType: 'user',
-      entityId: other.staff.id,
+      entityId: 'nobody',
     });
 
     const page = await auditLog.list(owner);
-    expect(page.items.map((item) => item.id).sort()).toEqual(
-      [mine, failedOwn, failedUnknown].map((row) => row.id.toString()).sort(),
-    );
-    const own = page.items.find((item) => item.id === failedOwn.id.toString());
-    expect(own?.user).toBeNull();
-    expect(page.refs[f.staff.id]).toBe(f.staff.fullName);
+    expect(page.items.map((item) => item.id)).toEqual([mine.id.toString()]);
+    expect(page.total).toBe(1);
+    expect((await auditLog.list(owner, { action: 'LOGIN_FAILED' })).items).toEqual([]);
   });
 
   it('pages newest first', async () => {

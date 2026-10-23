@@ -45,30 +45,6 @@ function dayRange(from?: string, to?: string): Prisma.DateTimeFilter | undefined
   };
 }
 
-/**
- * Rows the store's OWNER may read: the store's own rows, plus store-less
- * account events (failed logins, CLI password resets) unless they are about
- * another organization's user (OQ-26).
- */
-async function scopeOf(db: Db, ctx: ServiceContext): Promise<Prisma.AuditLogWhereInput> {
-  const foreignUsers = await db.user.findMany({
-    where: { organizationId: { not: ctx.organizationId } },
-    select: { id: true },
-  });
-  return {
-    OR: [
-      { storeId: ctx.storeId },
-      {
-        storeId: null,
-        entityType: 'user',
-        ...(foreignUsers.length > 0 && {
-          entityId: { notIn: foreignUsers.map((user) => user.id) },
-        }),
-      },
-    ],
-  };
-}
-
 function toEntry(row: Row): AuditEntryDto {
   const { backdated, ...meta } = (redactAuditValue(row.meta) ?? {}) as Record<string, unknown>;
   return {
@@ -217,16 +193,13 @@ async function list(ctx: ServiceContext, query: AuditListQuery = {}): Promise<Au
   const { prisma } = await import('@drinks/db');
   const createdAt = dayRange(from, to);
   const where: Prisma.AuditLogWhereInput = {
-    AND: [
-      await scopeOf(prisma, ctx),
-      {
-        ...(user && { userId: user === AUDIT_SYSTEM_USER ? null : user }),
-        ...(entityType && { entityType }),
-        ...(action && { action }),
-        ...(entityId && { entityId }),
-        ...(createdAt && { createdAt }),
-      },
-    ],
+    // Only the current store's rows (OQ-26: store-less LOGIN_FAILED rows are not shown).
+    storeId: ctx.storeId,
+    ...(user && { userId: user === AUDIT_SYSTEM_USER ? null : user }),
+    ...(entityType && { entityType }),
+    ...(action && { action }),
+    ...(entityId && { entityId }),
+    ...(createdAt && { createdAt }),
   };
   const [total, rows] = await Promise.all([
     prisma.auditLog.count({ where }),

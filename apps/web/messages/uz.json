@@ -530,7 +530,6 @@
       "REVERSE": "Storno",
       "CANCEL": "Bekor qilindi",
       "LOGIN": "Tizimga kirdi",
-      "LOGIN_FAILED": "Kirish xatosi",
       "PASSWORD_RESET": "Parol oʻrnatildi",
       "USER_CREATE": "Akkaunt yaratildi",
       "USER_UPDATE": "Akkaunt oʻzgartirildi",
@@ -602,8 +601,6 @@
       "requestId": "Soʻrov ID",
       "sessionsRevoked": "Yopilgan sessiyalar",
       "attemptsCleared": "Tozalangan urinishlar",
-      "failedCount": "Xatolar soni",
-      "lockedUntil": "Blok tugaydi",
       "value": "Qiymat"
     }
   }

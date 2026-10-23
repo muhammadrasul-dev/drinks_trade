@@ -14,6 +14,8 @@ SRS'dagi biznes savollar yopilgan. Bu yerda — arxitektura va DB loyihalashda c
 
 **2026-10-23 (Prompt 41):** OQ-23 yopildi — tavsiya bo'yicha (A). **Ochiq savol qolmadi.**
 
+**2026-10-23:** OQ-26 (T-901) yopildi — B: audit jurnalida faqat joriy do'kon yozuvlari.
+
 | # | Savol | Tavsiya | Holat |
 |---|---|---|---|
 | OQ-01 | Storno qilingan savdo P&L'da qaysi sanada aks etadi? | Asl hujjat sanasida (hujjat davr hisobidan butunlay chiqadi) | Yopilgan — asl sanada (A) |
@@ -39,7 +41,7 @@ SRS'dagi biznes savollar yopilgan. Bu yerda — arxitektura va DB loyihalashda c
 | OQ-22 | Egasi o'z login/parolini o'zgartirsa, shu o'zgarishni qilgan (joriy) sessiya ham o'chadimi? | Yo'q — joriy sessiya qoladi, boshqa barcha sessiyalari o'chiriladi | Yopilgan — A: joriy sessiya qoladi |
 | OQ-23 | Xarid qatorida narx 0 bo'lishi mumkinmi (bonus/aksiya tovari)? | Ha — `inputPrice ≥ 0`; tannarx 0 bilan kiradi va o'rtacha tannarxni pasaytiradi | Yopilgan — A: 0 narx ruxsat |
 | OQ-20 | Omborda qoldig'i bor mahsulotni arxivlash mumkinmi? | Ha — ruxsat, tasdiqlash oynasida qolgan miqdor va "sotib bo'lmaydi" ogohlantirishi; arxivdan istalgan payt chiqariladi | Yopilgan — A: ruxsat, ogohlantirish bilan |
-| OQ-26 | Audit jurnalida do'konga bog'lanmagan (`store_id IS NULL`) yozuvlar — muvaffaqiyatsiz kirish (`LOGIN_FAILED`) — Egasiga ko'rinadimi? | Ha — o'z tashkilotidagi foydalanuvchi haqidagilari va noma'lum login bilan urinishlar; boshqa tashkilot foydalanuvchilari haqidagilari ko'rinmaydi | Ochiq — tavsiya bo'yicha qilingan (T-901) |
+| OQ-26 | Audit jurnalida do'konga bog'lanmagan (`store_id IS NULL`) yozuvlar — muvaffaqiyatsiz kirish (`LOGIN_FAILED`) — Egasiga ko'rinadimi? | Ha — o'z tashkilotidagi foydalanuvchi haqidagilari va noma'lum login bilan urinishlar | Yopilgan — B (foydalanuvchi, 2026-10-23) |
 
 ---
 
@@ -142,7 +144,8 @@ FR-4.1 xarid narxini so'raydi, lekin 0 ga ruxsat bor-yo'qligini aytmaydi. Ichiml
 B ga o'tish — `packages/shared/src/schemas/purchase.ts` da `.min(0)` → `.min(1)` (+ test).
 
 ### OQ-26 — Audit jurnalida do'konsiz yozuvlar
+**Javob (2026-10-23): B** — tavsiyadan farqli. Audit sahifasi faqat joriy do'kon yozuvlarini ko'rsatadi (`store_id = ctx.storeId`); `store_id IS NULL` bo'lgan muvaffaqiyatsiz kirishlar hozircha kerak emas. `audit.queries.ts` va `audit.int.test.ts` shunga moslandi, `LOGIN_FAILED` filtr/tarjimalardan olib tashlandi (yozuvchi o'zgarmadi — yozuvlar bazada qoladi).
 T-901. `audit_log.store_id` ixtiyoriy: `LOGIN_FAILED` (`auth.service`) sessiyasiz yoziladi va `store_id = NULL`, `entity_id` — topilgan foydalanuvchi id'si yoki noma'lum bo'lsa terilgan login. Jurnal "do'kon darajasida" (database §2), lekin bu yozuvlar hech bir do'konga tegishli emas. BR-12 "har o'zgarish… faqat Egasi ko'radi" deydi, kirish urinishlari haqida aniq aytmaydi.
-- **A (tavsiya, T-901 da shunday):** Egasi o'z do'koni yozuvlarini **va** `store_id IS NULL`, `entity_type = 'user'` bo'lgan yozuvlarni ko'radi — boshqa tashkilot foydalanuvchisi haqidagilari bundan mustasno. Noma'lum login bilan urinishlar ham ko'rinadi (v1 da bitta tashkilot, ular kimga tegishli ekanini aniqlab bo'lmaydi). Egasi parolni taxmin qilish urinishlarini ko'ra oladi.
-- **B:** faqat `store_id = joriy do'kon` — muvaffaqiyatsiz kirishlar jurnalda ko'rinmaydi (faqat `login_attempt` blokida ishlaydi).
-B ga o'tish — `packages/server/src/modules/audit/audit.queries.ts` dagi `scopeOf` ni `{ storeId: ctx.storeId }` ga almashtirish (+ `audit.int.test.ts` dagi tegishli test).
+- **A (tavsiya):** Egasi o'z do'koni yozuvlarini **va** `store_id IS NULL`, `entity_type = 'user'` bo'lgan yozuvlarni ko'radi — boshqa tashkilot foydalanuvchisi haqidagilari bundan mustasno. Noma'lum login bilan urinishlar ham ko'rinadi (v1 da bitta tashkilot, ular kimga tegishli ekanini aniqlab bo'lmaydi). Egasi parolni taxmin qilish urinishlarini ko'ra oladi.
+- **B (tanlandi, T-901 da shunday):** faqat `store_id = joriy do'kon` — muvaffaqiyatsiz kirishlar jurnalda ko'rinmaydi (faqat `login_attempt` blokida ishlaydi).
+A ga qaytish — `audit.queries.ts` dagi `where` ga `store_id IS NULL`, `entity_type = 'user'` (o'z tashkiloti foydalanuvchilari) shartini `OR` bilan qo'shish, `LOGIN_FAILED` ni `AUDIT_ACTIONS` va tarjimalarga qaytarish (+ test).

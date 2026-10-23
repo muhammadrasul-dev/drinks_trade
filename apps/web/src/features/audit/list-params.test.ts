@@ -37,14 +37,14 @@ describe('audit list params', () => {
     const filters = {
       user: 'system',
       entityType: 'user',
-      action: 'LOGIN_FAILED',
+      action: 'PASSWORD_RESET',
       entityId: 'admin',
       from: '2026-10-01',
       to: '2026-10-23',
     };
     const href = listHref({ ...filters, page: 2 });
     expect(href).toBe(
-      '/audit?user=system&type=user&action=LOGIN_FAILED&entity=admin&from=2026-10-01&to=2026-10-23&page=2',
+      '/audit?user=system&type=user&action=PASSWORD_RESET&entity=admin&from=2026-10-01&to=2026-10-23&page=2',
     );
     expect(parseListParams(Object.fromEntries(new URL(href, 'http://x').searchParams))).toEqual({
       ...filters,

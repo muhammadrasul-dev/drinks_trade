@@ -30,7 +30,6 @@ export const AUDIT_ACTIONS = [
   'REVERSE',
   'CANCEL',
   'LOGIN',
-  'LOGIN_FAILED',
   'PASSWORD_RESET',
   'USER_CREATE',
   'USER_UPDATE',

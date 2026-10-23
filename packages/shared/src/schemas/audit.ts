@@ -19,7 +19,7 @@ export const auditListQuerySchema = z.object({
     .string()
     .regex(/^[A-Z_]{1,40}$/)
     .optional(),
-  /** Exact entity id (uuid, bigint id or a typed login for LOGIN_FAILED). */
+  /** Exact entity id (uuid or bigint id). */
   entityId: z.string().trim().min(1).max(64).optional(),
   /** Inclusive `YYYY-MM-DD` range of created_at in the store zone. */
   from: z.iso.date().optional(),

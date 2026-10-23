@@ -162,7 +162,7 @@ describe('auditListQuerySchema', () => {
     expect(
       auditListQuerySchema.safeParse({
         user: 'system',
-        action: 'LOGIN_FAILED',
+        action: 'PASSWORD_RESET',
         entityType: 'sub_warehouse',
         entityId: ' P-1 ',
         from: '2026-10-01',
@@ -170,7 +170,7 @@ describe('auditListQuerySchema', () => {
       }).data,
     ).toEqual({
       user: 'system',
-      action: 'LOGIN_FAILED',
+      action: 'PASSWORD_RESET',
       entityType: 'sub_warehouse',
       entityId: 'P-1',
       from: '2026-10-01',

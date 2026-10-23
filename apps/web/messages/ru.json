@@ -530,7 +530,6 @@
       "REVERSE": "Сторно",
       "CANCEL": "Отмена",
       "LOGIN": "Вход",
-      "LOGIN_FAILED": "Неудачный вход",
       "PASSWORD_RESET": "Установка пароля",
       "USER_CREATE": "Создание аккаунта",
       "USER_UPDATE": "Изменение аккаунта",
@@ -602,8 +601,6 @@
       "requestId": "ID запроса",
       "sessionsRevoked": "Закрыто сессий",
       "attemptsCleared": "Сброшено попыток",
-      "failedCount": "Число ошибок",
-      "lockedUntil": "Блокировка до",
       "value": "Значение"
     }
   }
