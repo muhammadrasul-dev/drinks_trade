@@ -40,6 +40,7 @@ Odam ham, AI ham shu qoidalarga amal qiladi. Qoida o'zgarsa — shu fayl va kera
 - `apps/web` Prisma'ni import qilmaydi.
 - `packages/shared` Prisma va Node API'ni import qilmaydi.
 - Modul boshqa modulning `*.repo.ts` siga kirmaydi.
+- Joylashuv: hisob-kitob formulalari (qatordagi dona `unitPieces`, `toPieces`, to'lov yig'indisi `paymentSum`, ombor kaliti `stockKeyOf`) — `packages/shared`, server va forma bir xil funksiyani ishlatadi; Prisma xatosini aniqlash (`isUniqueViolation`) va hujjat qatori mahsulotlarini yuklash/tekshirish (`loadActiveProducts`, `assertLineProductsUnchanged`) — `packages/server/src/core`; bir nechta feature ishlatadigan UI — `apps/web/src/components` yoki `apps/web/src/lib`, feature'lar bir-birining `components/` papkasiga kirmaydi (faqat `list-params` kabi havola yordamchilari mumkin).
 
 ## 4. Servis yozish qoidalari
 - Imzo: `fn(ctx: ServiceContext, input: z.infer<typeof Schema>)` yoki tranzaksiya ichida `fn(tx, ctx, input)`.
