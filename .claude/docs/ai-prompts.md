@@ -556,3 +556,11 @@ T-603 (ochiq inventarizatsiya banneri) va T-802 (savdo hisoboti) start theese ta
 ```
 yes do merge and then simply refactor
 ```
+
+---
+
+## Prompt 55 — T-803 va T-902 ni alohida sessiyalarda, keyin refactor (2026-10-23)
+
+```
+T-803 va T-902 theese test should do seperate sessions, then do refactor
+```
