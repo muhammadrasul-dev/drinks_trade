@@ -102,6 +102,9 @@ Aniq versiyalar loyiha `init` qilinganda `package.json` da qotiriladi (pin) va s
 | prisma (CLI) / @prisma/client / @prisma/adapter-pg | 7.10.1 | `packages/db` (`prisma-client` generator → `src/generated/prisma`, gitignore'da; `postinstall` da generatsiya). npm `latest` tegi 8.0.0-rc — RC, shuning uchun 7.x barqaror |
 | dotenv | 18.0.8 | `packages/db` (`prisma.config.ts` root `.env` ni o'qiydi) |
 | next-intl | 4.14.9 | `apps/web` (plugin `next.config.ts` da, `src/i18n/request.ts`) |
+| @playwright/test | 1.56.1 | `apps/e2e` (Chromium `chromium-1194`; npm `latest` 1.64.1 — OQ-46) |
+| pg / @types/pg | 8.23.1 | `apps/e2e` (`scripts/prepare-db.ts`: E2E bazasini qayta yaratish), `packages/db` |
+| tsx | 4.23.15 | `apps/e2e`, `packages/db`, `packages/server` |
 
 ## 3. Monorepo tuzilmasi
 
@@ -111,6 +114,7 @@ drinks_trade/
 ├── .claude/
 │   └── docs/                       # Barcha hujjatlar: SRS (01-srs.md), texnik hujjatlar, vazifalar
 ├── apps/
+│   ├── e2e/                        # Playwright E2E (T-1001, §10): playwright.config.ts, env.ts, tests/, support/, scripts/prepare-db.ts
 │   └── web/                        # Next.js ilova (UI + server actions + route handlers)
 │       ├── src/
 │       │   ├── app/
@@ -391,7 +395,7 @@ SEED_OWNER_PASSWORD=change-me
 | `pnpm db:studio` | Prisma Studio |
 | `pnpm user:reset-password <login>` | parolni tiklash (Egasi unutsa; business-logic §11): yangi parol ikki marta yashirin so'raladi, sessiyalar va login bloki o'chiriladi, audit `PASSWORD_RESET`. `packages/server/scripts/reset-password.ts` (`tsx`), root `.env` dagi `DATABASE_URL` ga ulanadi |
 | `pnpm dev` | Next.js dev |
-| `pnpm test` / `test:int` / `test:e2e` | testlar (`test` — DB'siz unit; `test:int` — `@drinks/db` va `@drinks/server` integratsiya testlari `DATABASE_URL_TEST` bazasida, `*.int.test.ts`) |
+| `pnpm test` / `test:int` / `test:e2e` | testlar (`test` — DB'siz unit; `test:int` — `@drinks/db` va `@drinks/server` integratsiya testlari `DATABASE_URL_TEST` bazasida, `*.int.test.ts`; `test:e2e` — Playwright, `drinks_trade_e2e` bazasi va 3911-port, §10) |
 | `pnpm lint` | root `eslint .` (butun repo, bitta config) |
 | `pnpm format` / `format:check` | Prettier (yozish / tekshirish) |
 | `pnpm typecheck` / `build` | turbo orqali |
@@ -414,7 +418,7 @@ Amalda (T-303):
 |---|---|---|
 | Unit | `shared`: birliklar, tannarx formulasi, P&L formulasi, zod sxemalar | Vitest |
 | Integratsiya | `server` servislari haqiqiy Postgres'da (`drinks_trade_test`): savdo/xarid/storno/inventarizatsiya, kassa manfiy bo'lmasligi, **parallel savdo bajarish** (BR-7) | Vitest + Docker DB |
-| E2E | Asosiy oqimlar: login → xarid → savdo → hisobot; STAFF foyda ko'rmasligi | Playwright |
+| E2E | Asosiy oqimlar: login → mahsulot → xarid → savdo → qoldiq hisoboti; STAFF foyda/kassani ko'rmasligi; inventarizatsiya bloki; til almashtirish | Playwright (`apps/e2e`) |
 
 Vitest sozlamasi: har paketda `vitest.config.ts` (`defineProject`, testlar `src/**/*.test.ts`, paket ichida `test` skripti `vitest run`); `pnpm test` turbo orqali paketlar bo'yicha ishlaydi. Root `vitest.config.ts` barcha paketlarni `projects` sifatida bitta jarayonda ishga tushiradi (`pnpm exec vitest`).
 
@@ -425,6 +429,15 @@ Integratsiya testlari (`pnpm test:int`): har paketda `vitest.int.config.ts` (`te
 - `assertInvariants(db)` — `stock_balance.qty = Σ stock_movement.qty_delta`, `product_cost.total_qty = Σ stock_balance.qty` (do'kon bo'yicha), `cashbox.balance = Σ IN − Σ OUT`. Zaxira yoki kassaga tegadigan **har bir integratsiya testi oxirida** chaqiriladi (odatda `afterEach`).
 
 CI'da `integration` job Postgres 17 service (`drinks_trade_test`) bilan `pnpm test:int` ni ishga tushiradi.
+
+**E2E (`pnpm test:e2e`, T-1001)** — alohida workspace `apps/e2e` (`@drinks/e2e`, faqat Chromium, desktop 1280×720; OQ-45, OQ-46). `pnpm test` ga kirmaydi; `pnpm typecheck` va `pnpm lint` uni ham tekshiradi.
+- **Muhit** (`apps/e2e/env.ts`): baza `E2E_DATABASE_URL` (sukut `postgresql://drinks:drinks@localhost:5433/drinks_trade_e2e`; nomi `*_e2e` bo'lishi shart), port `E2E_PORT` (sukut `3911`), seed Egasi `E2E_OWNER_USERNAME` / `E2E_OWNER_PASSWORD` (sukut `owner` / `e2e-owner-password`). Server va seed muhiti (`DATABASE_URL`, `SESSION_SECRET`, `APP_TIMEZONE`, `UPLOAD_DIR`, `SEED_OWNER_*`) shu yerdan aniq beriladi — root `.env` (dev baza) ishlatilmaydi (dotenv mavjud o'zgaruvchilarni almashtirmaydi).
+- **Har ishga tushishda** Playwright `webServer` buyrug'i: `pnpm --filter @drinks/e2e db:prepare` (`scripts/prepare-db.ts`: `DROP DATABASE … WITH (FORCE)` + `CREATE DATABASE` → `prisma migrate deploy` → `pnpm db:seed` — faqat minimal prod seed) → `pnpm --filter @drinks/web build` (`E2E_SKIP_BUILD=1` bo'lsa o'tkazib yuboriladi) → `next start --port 3911`. Mavjud serverga ulanmaydi (`reuseExistingServer: false`); tugagach Playwright serverni to'xtatadi. Server loglari: `E2E_SERVER_LOG=1`.
+- **Ma'lumot faqat UI orqali** (OQ-44): `setup` loyihasi (`tests/auth.setup.ts`) Egasi bilan kiradi, "Foydalanuvchilar" sahifasida `e2e-staff` va `e2e-lang` xodimlarini yaratadi, kirgan holatlarni `apps/e2e/.auth/` ga saqlaydi (gitignore). Har oqim o'z ombori, mahsuloti va hujjatlarini o'z nomi bilan yaratadi (`E2E-A …`, `E2E-B …`) — oqimlar bir-biriga bog'liq emas, lokal 2 worker'da parallel, CI'da 1 worker.
+- **Oqimlar** (`tests/*.spec.ts`): `owner-flow` — login → ombor → mahsulot → xarid (qoralama → bajarish, nasiya) → savdo (dona bilan, naqd) → qoldiq hisoboti (`1 blok 1 dona`, o'rtacha tannarx va qiymat); `staff-visibility` — menyuda Kassa/Qarzlar/P&L/Foydalanuvchilar/Audit yo'q, URL'lari 403, savdo va qoldiq hisobotida tannarx/foyda/qiymat ustunlari yo'q, bosh sahifada summa yo'q; `stock-count-block` — ochiq inventarizatsiya: banner, savdoni bajarish `sales.post.stockCount` xabari bilan rad etiladi, sanoq bekor qilingach o'sha qoralama bajariladi; `locale-switch` — uz → ru sahifa, menyu, qayta yuklash va `/` da saqlanadi, qayta kirishda `user.locale` bo'yicha ochiladi, ru → uz.
+- **Lokatorlar** — rol va label bo'yicha, matnlar `apps/web/messages/*.json` dan (`support/i18n.ts` → `msg('sales.post.button')`), `sleep` yo'q (Playwright auto-wait). Umumiy UI qadamlari — `support/app.ts`.
+- **Lokal:** `pnpm db:up` → `pnpm test:e2e` (birinchi marta brauzer yo'q bo'lsa: `pnpm --filter @drinks/e2e exec playwright install chromium`). Bitta fayl: `pnpm test:e2e tests/owner-flow.spec.ts`; hisobot: `pnpm --filter @drinks/e2e exec playwright show-report`. Xato bo'lsa trace va skrinshot `apps/e2e/test-results/` da.
+- **CI** (`e2e` job, `check` dan keyin): Postgres 17 service, `playwright install --with-deps chromium`, `pnpm --filter @drinks/web build`, `E2E_SKIP_BUILD=1 pnpm test:e2e` (migratsiya va seed `webServer` ichida); xato bo'lsa `playwright-report/` va `test-results/` artefakt sifatida yuklanadi.
 
 Biznes qoidalar uchun har bir BR-xx ga kamida bitta integratsiya testi bo'lishi shart; test nomida BR raqami yoziladi (`it('BR-7: qoldiq yetmasa savdo bajarilmaydi')`).
 
