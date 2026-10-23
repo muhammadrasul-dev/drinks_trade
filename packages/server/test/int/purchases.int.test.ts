@@ -7,11 +7,12 @@ import {
   makeStoreFixture,
   type StoreFixture,
 } from '@drinks/db/test-utils';
-import { ErrorCode, storeToday } from '@drinks/shared';
+import { ErrorCode } from '@drinks/shared';
 import type { PurchaseDraftInput } from '@drinks/shared/schemas';
 import { afterAll, afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { purchases, type ServiceContext } from '../../src/index';
+import { day } from './helpers';
 
 let f: StoreFixture;
 let owner: ServiceContext;
@@ -38,12 +39,6 @@ afterEach(async () => {
 afterAll(async () => {
   await prisma.$disconnect();
 });
-
-/** `YYYY-MM-DD` `days` days from today in the store zone. */
-function day(days: number): string {
-  const [y, m, d] = storeToday().split('-').map(Number);
-  return new Date(Date.UTC(y!, m! - 1, d! + days)).toISOString().slice(0, 10);
-}
 
 function draft(patch: Partial<PurchaseDraftInput> = {}): PurchaseDraftInput {
   return {
