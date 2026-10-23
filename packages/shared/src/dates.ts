@@ -57,8 +57,13 @@ export function storeToday(now: Date = new Date(), timeZone: string = STORE_TIME
   return storeDateOf(now, timeZone);
 }
 
+/** `YYYY-MM-DD` store day → "23.10.2026". */
+export function formatStoreDay(day: string): string {
+  const [year, month, date] = day.split('-');
+  return `${date}.${month}.${year}`;
+}
+
 /** "23.10.2026" — the date part of formatDateTime. */
 export function formatDate(date: Date, timeZone: string = STORE_TIME_ZONE): string {
-  const [year, month, day] = storeDateOf(date, timeZone).split('-');
-  return `${day}.${month}.${year}`;
+  return formatStoreDay(storeDateOf(date, timeZone));
 }
