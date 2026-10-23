@@ -941,7 +941,33 @@
     }
   },
   "reports": {
-    "archivedTag": "arxiv"
+    "archivedTag": "arxiv",
+    "export": {
+      "label": "Eksport",
+      "pdf": "PDF",
+      "xlsx": "Excel",
+      "pdfTitle": "Hisobotni PDF faylda yuklab olish",
+      "xlsxTitle": "Hisobotni Excel faylda yuklab olish",
+      "generatedAt": "Tuzilgan vaqti: {at}",
+      "totalProducts": "Jami: {count} ta mahsulot",
+      "fileName": {
+        "stock": "qoldiq",
+        "sales": "savdo",
+        "pnl": "foyda-zarar"
+      },
+      "columns": {
+        "category": "Toifa",
+        "brand": "Brend",
+        "sku": "SKU",
+        "pieces": "{column}, dona",
+        "locations": "Joylashuv (ombor / sub-ombor)",
+        "storeQty": "Doʻkonda jami, dona",
+        "minStock": "Minimal qoldiq, dona",
+        "line": "Koʻrsatkich",
+        "hint": "Izoh",
+        "amount": "Summa"
+      }
+    }
   },
   "stockReport": {
     "title": "Mahsulotlar qoldigʻi",
