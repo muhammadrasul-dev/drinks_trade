@@ -354,6 +354,7 @@ SOF FOYDA         = Yalpi foyda − Yo'l kira + Inventarizatsiya
 P&L ekranida inventarizatsiya ikki qator: "Kamomad" (Σ manfiy) va "Ortiqcha" (Σ musbat).
 Kirmaydi: xarid summasi, qarz amallari, `OTHER_EXPENSE`, o'tkazmalar.
 Filtr: kun / oy / yil / ixtiyoriy oraliq (Toshkent vaqti).
+Savdo hisoboti (T-802, SRS §7.2, database §7.2) tushum va tannarxni shu qoida bilan oladi — `POSTED`, `doc_date` davrda, storno qilingan savdo asl sanasidan chiqadi — faqat mahsulot kesimida (`sale_line` bo'yicha): bir davr uchun hisobot jami = P&L dagi "Tushum" va "Tannarx (COGS)".
 
 ## 9. Kam qoldiq ogohlantirishi (FR-1.3)
 `Σ stock_balance.qty (do'kon bo'yicha) < product.minStock` (va `minStock > 0`) → mahsulotlar ro'yxatida belgi + dashboard'da "Kam qolgan mahsulotlar" bloki. Push/SMS yo'q.

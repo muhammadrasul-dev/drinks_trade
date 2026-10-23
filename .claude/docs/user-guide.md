@@ -106,7 +106,7 @@ Xato kiritilgan yozuv (masalan, yo'l kira summasi noto'g'ri) o'chirilmaydi: jurn
 ## 11. Hisobotlar
 Hammasi **PDF** va **Excel**ga yuklab olinadi.
 1. **Mahsulotlar qoldig'i** — har mahsulot blok/donada, ombor → sub-ombor bo'yicha. Filtrlar: ombor va uning sub-ombori, toifa, brend, mahsulot holati (faol va arxiv / faqat faol / faqat arxiv), **"Kam qolganlar"** — do'kon bo'yicha jami minimal qoldiqdan kam bo'lganlar, umuman qolmaganlari ham. Ombor tanlansa, "Qoldiq" ustuni shu ombordagini, ostida do'kondagi jamini ko'rsatadi. Egasi qo'shimcha ravishda o'rtacha tannarx (1 dona) va qoldiq qiymatini (jami bilan) ko'radi; Xodimga bu ustunlar yuborilmaydi.
-2. **Savdo hisoboti** — sana oralig'i, mahsulot kesimida: soni, tushum (+ Egasi uchun tannarx va yalpi foyda).
+2. **Savdo hisoboti** — sana oralig'i, mahsulot kesimida: soni, tushum (+ Egasi uchun tannarx va yalpi foyda). Faqat bajarilgan savdolar; storno qilingan savdo o'z sanasidan chiqib ketadi, qoralamalar hisoblanmaydi. Ochilganda joriy oy (1-sanadan bugungacha) ko'rsatiladi; "dan"/"gacha" sanalari yoki **Bugun** / **Shu oy** tugmalari bilan o'zgartiriladi (kunlar Toshkent vaqti bo'yicha). Yuqorida jami: savdolar va mahsulotlar soni, tushum, Egasiga tannarx va yalpi foyda. Soni blok va donada; tannarx — savdo bajarilgan paytdagi o'rtacha tannarx. Xodimga tannarx va foyda umuman yuborilmaydi.
 3. **P&L** (faqat Egasi) — kun / oy / yil / ixtiyoriy oraliq:
 ```
 Tushum

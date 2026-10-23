@@ -20,6 +20,8 @@ SRS'dagi biznes savollar yopilgan. Bu yerda — arxitektura va DB loyihalashda c
 
 **2026-10-23 (T-801):** OQ-28 ochildi — qoldiq hisobotidagi mahsulotlar va tannarx ustunlari; tavsiya bo'yicha qilingan, javob kutilmoqda.
 
+**2026-10-23 (T-802):** OQ-35 ochildi — savdo hisobotining standart davri va qatorlar tartibi; tavsiya bo'yicha qilingan, javob kutilmoqda.
+
 | # | Savol | Tavsiya | Holat |
 |---|---|---|---|
 | OQ-01 | Storno qilingan savdo P&L'da qaysi sanada aks etadi? | Asl hujjat sanasida (hujjat davr hisobidan butunlay chiqadi) | Yopilgan — asl sanada (A) |
@@ -54,6 +56,7 @@ SRS'dagi biznes savollar yopilgan. Bu yerda — arxitektura va DB loyihalashda c
 | OQ-30 | Qo'lda kiritilgan kassa yozuvi storno'si (T-703) qaysi sana bilan yoziladi: asl yozuv sanasi yoki storno payti? | Asl yozuvning `tx_date` si (OQ-01/OQ-26 kabi: xato yozuv o'z kunida nolga tushadi, jurnalda asl yozuv yonida turadi) | Ochiq — tavsiya bo'yicha qilingan (T-703) |
 | OQ-31 | Savdo storno qilinayotganda tovar qaytadigan sub-ombor (yoki uning ombori) arxivlangan bo'lsa? | Storno bloklanadi (`ENTITY_ARCHIVED`) — avval sub-omborni tiklash kerak | Ochiq — tavsiya bo'yicha qilingan (T-503), javob kutilmoqda |
 | OQ-32 | Inventarizatsiyada arxivlangan mahsulotni sanash mumkinmi? | Faqat shu sub-omborda qoldig'i bor bo'lsa (hisobdan chiqarish uchun); qoldig'i yo'q joyga arxivdagi mahsulotni qo'shish → `ENTITY_ARCHIVED` | Ochiq — tavsiya bo'yicha qilingan (T-601) |
+| OQ-35 | Savdo hisoboti davr tanlanmasdan ochilsa qaysi davrni ko'rsatadi va mahsulot qatorlari qaysi tartibda? | 1) Joriy oy (1-sanadan bugungacha, Toshkent); 2) mahsulot nomi bo'yicha (qoldiq hisoboti kabi) | Ochiq — tavsiya bo'yicha qilingan (T-802) |
 
 ---
 
@@ -214,3 +217,14 @@ T-601. OQ-20 (A) qoldig'i bor mahsulotni arxivlashga ruxsat beradi — bunday ma
 - **A (tavsiya, T-601 da shunday):** arxivdagi mahsulot sanoq formasida qoldig'i bor sub-omborlarda chiqadi (belgi bilan) va sanaladi — masalan, singan/yaroqsiz tovarni 0 qilib hisobdan chiqarish shu yo'l bilan. Qoldig'i yo'q sub-omborga arxivdagi mahsulotni qo'shish → `ENTITY_ARCHIVED { entity: 'product', name }` (arxivdagi tovar yangi joyga "kirmaydi"). "Qo'shish" ro'yxatida faqat faol mahsulotlar.
 - **B:** arxivdagi mahsulot umuman sanalmaydi — qoldig'i hisobotda abadiy qoladi, uni tushirish uchun avval arxivdan chiqarish kerak.
 B ga o'tish — `stock-counts.service.ts` `computeLines` da arxivdagi mahsulotni har doim rad etish (+ test).
+
+### OQ-35 — Savdo hisobotining standart davri va qatorlar tartibi
+T-802. SRS §7.2 "sana oralig'i va mahsulot kesimida" deydi; database §7.2 namunasi `from`/`to` ni majburiy oladi, tartibni aytmaydi. Ikki narsa aniq emas:
+1. **Davr tanlanmagan bo'lsa** (menyudan birinchi ochilganda, URL'da `from`/`to` yo'q).
+   - **A (tavsiya, T-802 da shunday):** joriy oy — 1-sanadan bugungacha (Toshkent kunlari). "Bugun" va "Shu oy" tugmalari bor; bir chetini bo'shatsa, o'sha tomoni ochiq (`?to=…` — boshidan shu kungacha, `?from=…` — shu kundan keyin hammasi). Server ham ikkala chetni ixtiyoriy qabul qiladi (`from > to` → `VALIDATION_FAILED`; sahifa URL'dagi teskari oraliqni almashtirib yuboradi).
+   - **B:** bugun (bir kun).
+   - **C:** butun davr (filtrsiz).
+2. **Qatorlar tartibi.**
+   - **A (tavsiya, T-802 da shunday):** mahsulot nomi bo'yicha — qoldiq hisoboti (T-801) va kelgusi eksport (T-804) bilan bir xil, mahsulotni topish oson.
+   - **B:** tushum bo'yicha kamayish tartibida ("eng ko'p sotilganlar" yuqorida).
+1-B/1-C ga o'tish — `apps/web/src/features/reports/sales-params.ts` dagi `currentMonth` sukutini almashtirish (+ `sales-params.test.ts`). 2-B — `sales-report.queries.ts` da `items` ni `revenue` bo'yicha saralash (+ integratsiya testidagi tartib).
