@@ -541,6 +541,25 @@ export async function adjust(
   return { lines, products };
 }
 
+/**
+ * Movements as a document's POST / REVERSE audit row records them: one per
+ * line, in line order, with the average before and after (audit is OWNER-only).
+ */
+export function auditMovements(
+  movements: readonly Movement[],
+  lines: readonly { lineNo: number }[],
+) {
+  return movements.map((movement, index) => ({
+    lineNo: lines[index]!.lineNo,
+    productId: movement.productId,
+    subWarehouseId: movement.subWarehouseId,
+    qty: movement.qtyDelta,
+    unitCost: movement.unitCost,
+    avgCostBefore: movement.avgCostBefore,
+    avgCostAfter: movement.avgCostAfter,
+  }));
+}
+
 // ── Queries (no locks) ───────────────────────────────────────────────────
 
 /**

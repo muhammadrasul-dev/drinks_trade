@@ -96,9 +96,12 @@ export type PurchaseListQuery = z.input<typeof purchaseListQuerySchema>;
 
 export const REVERSE_REASON_MAX = 500;
 
-/** Reversal (T-406, BR-3): OWNER only; the reason is required (database purchase.reverse_reason). */
+/** A document reversal's required reason (database purchase/sale.reverse_reason). */
+export const reverseReasonSchema = z.string().trim().min(1).max(REVERSE_REASON_MAX);
+
+/** Reversal (T-406, BR-3): OWNER only; the reason is required. */
 export const purchaseReverseInputSchema = z.object({
   id: z.uuid(),
-  reason: z.string().trim().min(1).max(REVERSE_REASON_MAX),
+  reason: reverseReasonSchema,
 });
 export type PurchaseReverseInput = z.input<typeof purchaseReverseInputSchema>;

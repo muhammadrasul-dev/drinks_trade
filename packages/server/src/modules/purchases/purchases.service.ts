@@ -5,7 +5,7 @@
 // caught by the `version` column.
 import type { Prisma } from '@drinks/db';
 import {
-  CashboxType,
+  CashDirection,
   CashTxType,
   DebtSource,
   DocStatus,
@@ -44,7 +44,7 @@ import type { z } from 'zod';
 import type { ServiceContext } from '../../core/context';
 import { resolveStoreDate, storeDayRange } from '../../core/dates';
 import { assertLineProductsUnchanged } from '../../core/doc-lines';
-import { lockCashboxes, lockDebt, lockPurchase, lockWarehouses } from '../../core/locks';
+import { lockDebt, lockPurchase, lockWarehouses } from '../../core/locks';
 import { decimalToString, moneyToBigInt, moneyToNumber } from '../../core/money';
 import { nextDocNumber } from '../../core/numbering';
 import { assertCan } from '../../core/rbac';
@@ -502,35 +502,17 @@ async function post(ctx: ServiceContext, input: PurchasePostInput): Promise<Purc
     if (paidCredit > 0 && !doc.note?.trim()) throw new DomainError(ErrorCode.NOTE_REQUIRED);
     if (doc.docDate.getTime() > Date.now()) throw new DomainError(ErrorCode.DOC_DATE_IN_FUTURE);
 
-    // 2. Warehouses FOR SHARE, then the stock-count block (BR-8, §3) and the
-    //    archive state under that lock (§9c). A sub-warehouse never changes its
-    //    warehouse, so the first resolveActive may run before the lock.
-    const subWarehouseIds = doc.lines.map((line) => line.subWarehouseId);
-    const warehouseIds = [
-      ...new Set((await warehouses.resolveActive(tx, ctx, subWarehouseIds)).values()),
-    ];
-    await lockWarehouses(tx, ctx.storeId, warehouseIds);
-    await warehouses.assertNoOpenStockCount(tx, ctx, warehouseIds);
-    await warehouses.resolveActive(tx, ctx, subWarehouseIds);
+    // 2. Warehouses FOR SHARE, the stock-count block (BR-8, §3) and the archive state.
+    await warehouses.lockActive(
+      tx,
+      ctx,
+      doc.lines.map((line) => line.subWarehouseId),
+    );
     assertLineProductsUnchanged(doc.lines);
 
-    // 4. Cashboxes of the paid parts. cash.record re-checks the balance; this
-    //    pre-check just fails before any stock moves. No amounts in the error.
-    const paid = [
-      { type: CashboxType.CASH, amount: paidCash },
-      { type: CashboxType.CARD, amount: paidCard },
-    ].filter((part) => part.amount > 0);
-    const locked = await lockCashboxes(
-      tx,
-      ctx.storeId,
-      paid.map((part) => part.type),
-    );
-    const cashboxes = new Map(locked.map((box) => [box.type, box]));
-    for (const part of paid) {
-      if (cashboxes.get(part.type)!.balance < part.amount) {
-        throw new DomainError(ErrorCode.CASHBOX_INSUFFICIENT, { cashbox: part.type });
-      }
-    }
+    // 4. Cashboxes of the paid parts; money goes OUT, so each part must fit
+    //    (CASHBOX_INSUFFICIENT before any stock moves, no amounts in the error).
+    const paid = await cash.lockPaidParts(tx, ctx, { paidCash, paidCard }, CashDirection.OUT);
 
     // 5–6. Stock and average cost per product (inventory takes locks 6–7 itself).
     const movements = await inventory.receive(tx, ctx, {
@@ -547,17 +529,12 @@ async function post(ctx: ServiceContext, input: PurchasePostInput): Promise<Purc
     });
 
     // 7. Cash OUT for the cash and card parts.
-    const cashTransactionIds: string[] = [];
-    for (const part of paid) {
-      const entry = await cash.record(tx, ctx, cashboxes.get(part.type)!, {
-        type: CashTxType.PURCHASE_PAYMENT,
-        amount: part.amount,
-        txDate: doc.docDate,
-        note: doc.note,
-        purchaseId: id,
-      });
-      cashTransactionIds.push(entry.id.toString());
-    }
+    const cashTransactionIds = await cash.recordPaidParts(tx, ctx, paid, {
+      type: CashTxType.PURCHASE_PAYMENT,
+      txDate: doc.docDate,
+      note: doc.note,
+      purchaseId: id,
+    });
 
     // 8. Credit part → PAYABLE debt; its note is the document note (OQ-19).
     const debt =
@@ -597,15 +574,7 @@ async function post(ctx: ServiceContext, input: PurchasePostInput): Promise<Purc
         paidCash,
         paidCard,
         paidCredit,
-        movements: movements.map((movement, index) => ({
-          lineNo: doc.lines[index]!.lineNo,
-          productId: movement.productId,
-          subWarehouseId: movement.subWarehouseId,
-          qty: movement.qtyDelta,
-          unitCost: movement.unitCost,
-          avgCostBefore: movement.avgCostBefore,
-          avgCostAfter: movement.avgCostAfter,
-        })),
+        movements: inventory.auditMovements(movements, doc.lines),
         cashTransactionIds,
         debtId: debt?.id ?? null,
       },
@@ -668,19 +637,7 @@ async function reverse(ctx: ServiceContext, input: PurchaseReverseInput): Promis
     await warehouses.assertNoOpenStockCount(tx, ctx, warehouseIds);
 
     // 4. Cashboxes of the paid parts: money comes back IN, so no balance check.
-    const paid = [
-      { type: CashboxType.CASH, amount: paidCash },
-      { type: CashboxType.CARD, amount: paidCard },
-    ].filter((part) => part.amount > 0);
-    const cashboxes = new Map(
-      (
-        await lockCashboxes(
-          tx,
-          ctx.storeId,
-          paid.map((part) => part.type),
-        )
-      ).map((box) => [box.type, box]),
-    );
+    const paid = await cash.lockPaidParts(tx, ctx, { paidCash, paidCard }, CashDirection.IN);
 
     // 3/5. The credit debt (§2 step 5, after the cashboxes): cancelled here so
     //      DEBT_HAS_REPAYMENTS (OQ-04) fails before any stock moves.
@@ -703,17 +660,12 @@ async function reverse(ctx: ServiceContext, input: PurchaseReverseInput): Promis
     });
 
     // 8. Cash IN for the parts paid at posting.
-    const cashTransactionIds: string[] = [];
-    for (const part of paid) {
-      const entry = await cash.record(tx, ctx, cashboxes.get(part.type)!, {
-        type: CashTxType.PURCHASE_REFUND,
-        amount: part.amount,
-        txDate: doc.docDate,
-        note: reason,
-        purchaseId: id,
-      });
-      cashTransactionIds.push(entry.id.toString());
-    }
+    const cashTransactionIds = await cash.recordPaidParts(tx, ctx, paid, {
+      type: CashTxType.PURCHASE_REFUND,
+      txDate: doc.docDate,
+      note: reason,
+      purchaseId: id,
+    });
 
     // 9. Status, then audit REVERSE (costs are fine here: audit is OWNER-only).
     const reversedAt = new Date();
@@ -739,15 +691,7 @@ async function reverse(ctx: ServiceContext, input: PurchaseReverseInput): Promis
         docDate: doc.docDate,
         reversedAt,
         reverseReason: reason,
-        movements: movements.map((movement, index) => ({
-          lineNo: doc.lines[index]!.lineNo,
-          productId: movement.productId,
-          subWarehouseId: movement.subWarehouseId,
-          qty: movement.qtyDelta,
-          unitCost: movement.unitCost,
-          avgCostBefore: movement.avgCostBefore,
-          avgCostAfter: movement.avgCostAfter,
-        })),
+        movements: inventory.auditMovements(movements, doc.lines),
         cashTransactionIds,
         cancelledDebtId: debtId,
       },
