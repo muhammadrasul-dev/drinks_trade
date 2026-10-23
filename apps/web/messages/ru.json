@@ -305,6 +305,60 @@
       "STOCK_COUNT": "Инвентаризация"
     }
   },
+  "cash": {
+    "title": "Касса",
+    "journal": "Журнал кассы",
+    "empty": "Записи не найдены.",
+    "entered": "Внесено: {date}",
+    "balances": {
+      "label": "Балансы касс",
+      "updatedAt": "Последнее изменение: {date}"
+    },
+    "filters": {
+      "label": "Фильтры",
+      "from": "с",
+      "to": "по",
+      "cashbox": "Касса",
+      "allCashboxes": "Все кассы",
+      "type": "Тип",
+      "allTypes": "Все типы",
+      "direction": "Направление",
+      "allDirections": "Приход и расход",
+      "reset": "Сбросить"
+    },
+    "totals": {
+      "label": "Итого по выбранным записям",
+      "in": "Приход:",
+      "out": "Расход:",
+      "count": "Записей:"
+    },
+    "columns": {
+      "id": "№",
+      "date": "Дата",
+      "cashbox": "Касса",
+      "type": "Тип",
+      "amount": "Сумма",
+      "balanceAfter": "Баланс",
+      "reference": "Основание",
+      "note": "Комментарий",
+      "author": "Автор"
+    },
+    "reference": {
+      "purchase": "Закупка {number}",
+      "sale": "Продажа {number}",
+      "debt": "Долг: {direction}",
+      "transferTo": "→ {cashbox}",
+      "transferFrom": "← {cashbox}",
+      "reversalOf": "Сторно записи #{id}",
+      "reversedBy": "Сторнировано (#{id})"
+    },
+    "pagination": {
+      "label": "Страницы",
+      "range": "{from}–{to} из {total}",
+      "prev": "Назад",
+      "next": "Вперёд"
+    }
+  },
   "products": {
     "title": "Товары",
     "add": "Добавить товар",

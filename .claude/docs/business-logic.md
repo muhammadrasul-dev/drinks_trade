@@ -283,6 +283,8 @@ Amalga oshirilishi (T-403, `packages/server/src/modules/debts`): yagona yozish n
 - `debts.cancel(tx, ctx, debt, { cashbox? })` — `debt` = `lockDebt` (5-qadam) natijasi (`direction`, `source`, `status`, `amount`, `repaidAmount`). `CANCELLED` → `DEBT_CANCELLED`; `repaidAmount > 0` (shu jumladan `CLOSED`) → `DEBT_HAS_REPAYMENTS` (OQ-04; params'da summa yo'q). `MANUAL`: asl `DEBT_GIVEN`/`DEBT_TAKEN` yozuvi teskari `MANUAL_REVERSAL` bilan qaytariladi (OQ-08; `reversal_of_id`, `debt_id`) — shu yozuvning kassasi 4-qadamda qulflangan va `cashbox` sifatida berilgan bo'lishi shart; olingan qarzni bekor qilish — chiqim, balans yetmasa `CASHBOX_INSUFFICIENT`. `SALE`/`PURCHASE`: kassa harakatisiz (§5.3 8-qadam). `status = CANCELLED`, audit `CANCEL debt`.
 - Qaytarish (`debt_repayment`, `repaidAmount`, `CLOSED`) — T-704 da (shu bo'limdagi jadval qoidalari bo'yicha).
 
+O'qish (T-701, `cash.queries.ts`): `cashQueries.balances(ctx)` — do'konning ikki kassasi (CASH, keyin CARD) joriy balansi bilan; `cashQueries.journal(ctx, query)` — `cash_transaction` jurnali: `from`/`to` (Toshkent kuni, `tx_date`), `cashbox`, `type`, `direction`, `page` (50 tadan); tartib — `tx_date` ↓, `id` ↓ (OQ-24); `totals` — barcha filtrlangan yozuvlar bo'yicha Σ kirim / Σ chiqim. Ikkalasi `cash.read` (faqat OWNER) — STAFF `FORBIDDEN` (CLAUDE.md 6-qoida).
+
 ## 8. P&L (BR-11)
 
 ```
