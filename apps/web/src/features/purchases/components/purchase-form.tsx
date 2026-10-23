@@ -3,6 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   type ActionError,
+  paymentSum,
   type ProductOption,
   type PurchaseDetail,
   QtyUnit,
@@ -186,7 +187,7 @@ export function PurchaseForm({ purchase, products, warehouses, today }: Purchase
 
   const { isDirty } = form.formState;
   const total = (lines ?? []).reduce((sum, line) => sum + lineTotal(line), 0);
-  const paid = (paidCash ?? 0) + (paidCard ?? 0) + (paidCredit ?? 0);
+  const paid = paymentSum({ paidCash, paidCard, paidCredit });
   const difference = total - paid;
 
   function errorMessage(error: ActionError): string {

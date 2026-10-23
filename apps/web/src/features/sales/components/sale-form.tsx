@@ -5,6 +5,7 @@ import {
   type ActionError,
   formatSom,
   lineStock,
+  paymentSum,
   QtyUnit,
   type SaleDetail,
   type SaleProductOption,
@@ -237,7 +238,7 @@ export function SaleForm({ sale, products, warehouses, today }: SaleFormProps) {
 
   const { isDirty } = form.formState;
   const total = computed.reduce((sum, c) => sum + c.lineTotal, 0);
-  const paid = (paidCash ?? 0) + (paidCard ?? 0) + (paidCredit ?? 0);
+  const paid = paymentSum({ paidCash, paidCard, paidCredit });
   const difference = total - paid;
 
   function errorMessage(error: ActionError): string {

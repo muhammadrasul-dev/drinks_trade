@@ -25,3 +25,15 @@ export function roundHalfUp(value: string): number {
   const { units, scale } = parseDecimal(value);
   return toSafeNumber(divRoundHalfUp(units, 10n ** BigInt(scale)), 'Money value');
 }
+
+/** The cash / card / credit parts of a sale or purchase payment (BR-4). */
+export interface PaymentParts {
+  paidCash?: number | undefined;
+  paidCard?: number | undefined;
+  paidCredit?: number | undefined;
+}
+
+/** Sum of the payment parts; a part not entered yet counts as 0. Must equal the document total to post. */
+export function paymentSum({ paidCash = 0, paidCard = 0, paidCredit = 0 }: PaymentParts): number {
+  return paidCash + paidCard + paidCredit;
+}

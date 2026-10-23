@@ -4,8 +4,7 @@
 // credit debt (debts) in one transaction, and reversal undoes all three. Any user may edit any draft (OQ-14); concurrent edits are
 // caught by the `version` column.
 import type { Prisma } from '@drinks/db';
-import type {
-  QtyUnit} from '@drinks/shared';
+import type { QtyUnit } from '@drinks/shared';
 import {
   CashDirection,
   CashTxType,
@@ -22,6 +21,7 @@ import {
   storeDateOf,
   unitCostOf,
   parseInput,
+  paymentSum,
   unitPieces,
 } from '@drinks/shared';
 import {
@@ -490,7 +490,7 @@ async function post(ctx: ServiceContext, input: PurchasePostInput): Promise<Purc
     const paidCredit = moneyToNumber(doc.paidCredit);
 
     // 3. Header rules need no further lock, so they fail first (OQ-19: before other work).
-    if (paidCash + paidCard + paidCredit !== totalAmount) {
+    if (paymentSum({ paidCash, paidCard, paidCredit }) !== totalAmount) {
       throw new DomainError(ErrorCode.PAYMENT_SPLIT_MISMATCH);
     }
     if (paidCredit > 0 && !doc.note?.trim()) throw new DomainError(ErrorCode.NOTE_REQUIRED);
