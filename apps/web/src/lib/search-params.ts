@@ -1,8 +1,9 @@
 import { z } from 'zod';
 
-// Reading filters from Next.js `searchParams` (filters live in the URL): a
+// Filters live in the URL. Reading them from Next.js `searchParams`: a
 // repeated key gives an array, and a hand-edited value may be anything, so
-// these return undefined instead of throwing.
+// the readers return undefined instead of throwing (never an error page).
+// `hrefWith` writes them back.
 
 export type SearchParams = Record<string, string | string[] | undefined>;
 
@@ -24,4 +25,44 @@ export function uuidParam(value: string | string[] | undefined): string | undefi
 export function dateParam(value: string | string[] | undefined): string | undefined {
   const raw = firstParam(value);
   return raw && isoDate.safeParse(raw).success ? raw : undefined;
+}
+
+/** A value `schema` accepts (its parsed output), or undefined. */
+export function schemaParam<T extends z.ZodType>(
+  schema: T,
+  value: string | string[] | undefined,
+): z.output<T> | undefined {
+  const raw = firstParam(value);
+  if (!raw) return undefined;
+  const parsed = schema.safeParse(raw);
+  return parsed.success ? parsed.data : undefined;
+}
+
+/** Free text, trimmed and cut to `max` characters; empty → undefined. */
+export function textParam(value: string | string[] | undefined, max: number): string | undefined {
+  return firstParam(value)?.trim().slice(0, max) || undefined;
+}
+
+/** A page number above 1, or undefined (page 1 is the default). */
+export function pageParam(value: string | string[] | undefined): number | undefined {
+  const page = Number(firstParam(value));
+  return Number.isSafeInteger(page) && page > 1 ? page : undefined;
+}
+
+/**
+ * `base?…` from `params`, in their order. Left out: undefined, empty and
+ * false values, and numbers below 2 (page 1 is the default); true → "1".
+ */
+export function hrefWith(
+  base: string,
+  params: Record<string, string | number | boolean | undefined>,
+): string {
+  const search = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value === undefined || value === '' || value === false) continue;
+    if (typeof value === 'number' && value < 2) continue;
+    search.set(key, value === true ? '1' : String(value));
+  }
+  const query = search.toString();
+  return query ? `${base}?${query}` : base;
 }

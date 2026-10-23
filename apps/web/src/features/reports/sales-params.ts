@@ -1,7 +1,7 @@
 import { storeToday } from '@drinks/shared';
 import type { SalesReportQuery } from '@drinks/shared/schemas';
 
-import { dateParam, type SearchParams } from '@/lib/search-params';
+import { dateParam, hrefWith, type SearchParams } from '@/lib/search-params';
 
 // /reports/sales filters live in the URL (?from=&to=, inclusive store days).
 // No range at all → the current month up to today (OQ-35); one end alone
@@ -39,9 +39,5 @@ export function parseSalesReportParams(
 export function salesReportHref(filters: SalesReportFilters, today: string = storeToday()): string {
   const month = currentMonth(today);
   if (filters.from === month.from && filters.to === month.to) return SALES_REPORT_HREF;
-  const params = new URLSearchParams();
-  if (filters.from) params.set('from', filters.from);
-  if (filters.to) params.set('to', filters.to);
-  const query = params.toString();
-  return query ? `${SALES_REPORT_HREF}?${query}` : SALES_REPORT_HREF;
+  return hrefWith(SALES_REPORT_HREF, { from: filters.from, to: filters.to });
 }
