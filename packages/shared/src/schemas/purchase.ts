@@ -71,6 +71,13 @@ export const purchaseDeleteInputSchema = z.object({
 });
 export type PurchaseDeleteInput = z.input<typeof purchaseDeleteInputSchema>;
 
+/** Posting (T-405): the draft and the version the user saw (optimistic lock). */
+export const purchasePostInputSchema = z.object({
+  id: z.uuid(),
+  version: z.number().int().min(0),
+});
+export type PurchasePostInput = z.input<typeof purchasePostInputSchema>;
+
 export const purchaseIdInputSchema = z.object({ id: z.uuid() });
 export type PurchaseIdInput = z.input<typeof purchaseIdInputSchema>;
 

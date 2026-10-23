@@ -53,6 +53,8 @@ export interface PurchaseDetail extends Omit<PurchaseListItem, 'lineCount'> {
   version: number;
   createdAt: Date;
   postedAt: Date | null;
+  /** Who posted it (T-405); null for a draft. */
+  postedBy: DocumentAuthor | null;
   reversedAt: Date | null;
   reverseReason: string | null;
   lines: PurchaseLine[];

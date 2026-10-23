@@ -193,6 +193,8 @@ BEGIN
 COMMIT
 ```
 
+Amalga oshirilishi (T-405, `purchases.post`): ikkala rol (OQ-02). Hujjat qulfi va `version` dan keyin sarlavha qoidalari (yig'indi → `PAYMENT_SPLIT_MISMATCH`, OQ-19, kelajak sana) qo'shimcha qulfsiz birinchi tekshiriladi; so'ng `lockWarehouses` (FOR SHARE) → `warehouses.assertNoOpenStockCount(ids)` → sub-ombor/mahsulot arxivi (`ENTITY_ARCHIVED`) → `BLOCK` qatorda `qty ≠ inputQty × joriy unitsPerBlock` → `UNITS_PER_BLOCK_CHANGED { lines: [{ lineNo, productId, product, qty, unitsPerBlock }] }`. 4-qadam oldindan tekshiruvi `CASHBOX_INSUFFICIENT { cashbox }` (summasiz); 5–6 — `inventory.receive(PURCHASE)` (`costAmount = lineTotal`); 7 — `cash.record` har to'langan qism uchun (`tx_date = doc_date`); 8 — `debts.open(PURCHASE)`. Audit `POST`: `before { status, version }`, `after` — summalar, harakatlar (avg oldin/keyin), kassa yozuvlari id'lari, `debtId`.
+
 ### 5.3 Storno (BR-3)
 ```
 BEGIN

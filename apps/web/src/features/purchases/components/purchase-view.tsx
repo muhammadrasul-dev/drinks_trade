@@ -39,6 +39,7 @@ export async function PurchaseView({ purchase }: { purchase: PurchaseDetail }) {
             <p>
               <span className="text-muted-foreground">{t('view.postedAt')}: </span>
               {formatDateTime(purchase.postedAt)}
+              {purchase.postedBy && ` · ${purchase.postedBy.fullName}`}
             </p>
           )}
           {purchase.reversedAt && (

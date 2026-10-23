@@ -4,14 +4,16 @@ import { purchases } from '@drinks/server';
 import {
   purchaseDeleteInputSchema,
   purchaseDraftInputSchema,
+  purchasePostInputSchema,
   purchaseUpdateInputSchema,
 } from '@drinks/shared/schemas';
 import { revalidatePath } from 'next/cache';
 
 import { action } from '@/lib/action';
 
-// Purchase drafts (T-404). The service checks permissions, re-validates and
-// takes the locks; every write refreshes the purchases pages.
+// Purchase drafts (T-404) and posting (T-405). The service checks
+// permissions, re-validates and takes the locks; every write refreshes the
+// purchases pages.
 function refresh(): void {
   revalidatePath('/[locale]/purchases', 'layout');
 }
@@ -32,4 +34,10 @@ export const deletePurchase = action(purchaseDeleteInputSchema, async (input, { 
   await purchases.remove(ctx, input);
   refresh();
   return null;
+});
+
+export const postPurchase = action(purchasePostInputSchema, async (input, { ctx }) => {
+  const purchase = await purchases.post(ctx, input);
+  refresh();
+  return { id: purchase.id, number: purchase.number };
 });

@@ -196,17 +196,22 @@ async function loadSubItem(tx: Tx, ctx: ServiceContext, id: string): Promise<Sub
 }
 
 /**
- * BR-8 / OQ-21: while a stock count is open in the warehouse, neither it nor
- * its sub-warehouses can be archived — the count may still add stock there.
+ * BR-8 (business-logic §3): an open (DRAFT) stock count in any of the
+ * warehouses blocks posting and reversals there, and (OQ-21) archiving the
+ * warehouse or its sub-warehouses — the count may still add stock there.
+ * Callers hold the warehouse lock (§2 step 2), so a count opened later waits.
  */
 async function assertNoOpenStockCount(
   tx: Tx,
   ctx: ServiceContext,
-  warehouseId: string,
+  warehouseIds: string | readonly string[],
 ): Promise<void> {
+  const ids = typeof warehouseIds === 'string' ? [warehouseIds] : [...new Set(warehouseIds)];
+  if (ids.length === 0) return;
   const open = await tx.stockCount.findFirst({
-    where: { storeId: ctx.storeId, warehouseId, status: 'DRAFT' },
+    where: { storeId: ctx.storeId, warehouseId: { in: ids }, status: 'DRAFT' },
     select: { number: true, warehouse: { select: { name: true } } },
+    orderBy: { number: 'asc' },
   });
   if (open) {
     throw new DomainError(ErrorCode.WAREHOUSE_IN_STOCK_COUNT, {
@@ -262,6 +267,8 @@ async function setWarehouseArchived(
 }
 
 export const warehouses = {
+  assertNoOpenStockCount,
+
   /**
    * The warehouses page: warehouses sorted by name, each with all of its
    * sub-warehouses (archived ones flagged) and stock flags.
