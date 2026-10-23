@@ -596,3 +596,19 @@ yes merge to main when done
 ```
 start T-804 task in this session, then begin siply refactoring proccess for checking done works.
 ```
+
+---
+
+## Prompt 60 — tasks.md dagi boshlanmagan vazifalar haqida ma'lumot (2026-10-23)
+
+```
+check @.claude/docs/tasks.md and are where has not started tasks respond me informations
+```
+
+---
+
+## Prompt 61 — Nomuvofiqliklarni tuzatish, T-1003 ni boshqa sessiyada boshlash, keyin refactor (2026-10-23)
+
+```
+yes there is some inconsistencies. Fix theese and start you said task in other session, and then refoctor
+```
