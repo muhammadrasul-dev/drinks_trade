@@ -70,30 +70,11 @@ function openManual(direction: 'RECEIVABLE' | 'PAYABLE', amount: number) {
   );
 }
 
-/** Books a repayment the way T-704 will: cash entry + debt_repayment + repaid_amount. */
+/** A committed repayment into CASH (debts.repay, T-704). */
 async function repay(debtId: string, amount: number) {
   await withTransaction(async (tx) => {
     const box = await lockOne(tx, 'CASH');
-    const debt = await lockDebt(tx, f.store.id, debtId);
-    const entry = await cash.record(tx, ctx, box, {
-      type: debt.direction === 'RECEIVABLE' ? 'DEBT_REPAID_TO_ME' : 'DEBT_REPAID_BY_ME',
-      amount,
-      debtId,
-    });
-    await tx.debtRepayment.create({
-      data: {
-        debtId,
-        amount: BigInt(amount),
-        repaidAt: new Date(),
-        cashTransactionId: entry.id,
-        createdById: f.owner.id,
-      },
-    });
-    const repaid = debt.repaidAmount + amount;
-    await tx.debt.update({
-      where: { id: debtId },
-      data: { repaidAmount: BigInt(repaid), status: repaid === debt.amount ? 'CLOSED' : 'OPEN' },
-    });
+    await debts.repay(tx, ctx, await lockDebt(tx, f.store.id, debtId), { cashbox: box, amount });
   });
 }
 

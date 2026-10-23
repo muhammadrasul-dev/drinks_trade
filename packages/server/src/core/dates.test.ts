@@ -1,6 +1,7 @@
+import { DomainError, ErrorCode } from '@drinks/shared';
 import { describe, expect, it } from 'vitest';
 
-import { storeDayAt, storeDayRange } from './dates';
+import { resolveStoreDate, storeDayAt, storeDayRange } from './dates';
 
 describe('storeDayAt', () => {
   it('reads the day in the store zone (UTC+5)', () => {
@@ -23,5 +24,28 @@ describe('storeDayRange', () => {
       lt: new Date('2026-10-23T19:00:00.000Z'),
     });
     expect(storeDayRange()).toBeUndefined();
+  });
+});
+
+describe('resolveStoreDate', () => {
+  // 2026-10-23 10:00 in Tashkent.
+  const now = new Date('2026-10-23T05:00:00.000Z');
+
+  it('today → now, a past day → noon of that day', () => {
+    expect(resolveStoreDate('2026-10-23', undefined, now)).toBe(now);
+    expect(resolveStoreDate('2026-10-20', undefined, now).toISOString()).toBe(
+      '2026-10-20T07:00:00.000Z',
+    );
+  });
+
+  it('keeps a stored timestamp of the same day', () => {
+    const keep = new Date('2026-10-20T03:00:00.000Z');
+    expect(resolveStoreDate('2026-10-20', keep, now)).toBe(keep);
+  });
+
+  it('OQ-07: a future day is refused', () => {
+    expect(() => resolveStoreDate('2026-10-24', undefined, now)).toThrow(
+      new DomainError(ErrorCode.DOC_DATE_IN_FUTURE),
+    );
   });
 });

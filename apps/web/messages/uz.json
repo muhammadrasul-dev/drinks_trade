@@ -359,6 +359,94 @@
       "next": "Keyingi"
     }
   },
+  "debts": {
+    "title": "Qarzlar",
+    "description": "Bizga qarzdorlar va bizning qarzlarimiz. Kontragent oʻrniga izoh yoziladi.",
+    "list": "Qarzlar roʻyxati",
+    "empty": "Qarz topilmadi.",
+    "showRepayments": "Qaytarishlarni koʻrsatish",
+    "hideRepayments": "Qaytarishlarni yashirish",
+    "totals": {
+      "label": "Ochiq qarzlar qoldigʻi",
+      "hint": "Ochiq qarzlar boʻyicha qoldiq"
+    },
+    "filters": {
+      "label": "Filtrlar",
+      "search": "Izoh boʻyicha qidirish",
+      "direction": "Yoʻnalish",
+      "allDirections": "Barcha yoʻnalishlar",
+      "status": "Holati",
+      "allStatuses": "Barcha holatlar",
+      "source": "Manba",
+      "allSources": "Barcha manbalar",
+      "from": "dan",
+      "to": "gacha",
+      "reset": "Tozalash"
+    },
+    "columns": {
+      "date": "Sana",
+      "direction": "Yoʻnalish",
+      "note": "Izoh",
+      "amount": "Summa",
+      "repaid": "Qaytarilgan",
+      "remaining": "Qoldiq",
+      "status": "Holati",
+      "source": "Manba",
+      "actions": "Amallar"
+    },
+    "source": {
+      "manual": "Qoʻlda",
+      "sale": "Savdo {number}",
+      "purchase": "Xarid {number}"
+    },
+    "repayments": {
+      "title": "Qaytarishlar"
+    },
+    "form": {
+      "note": "Izoh (kim, nima uchun)",
+      "notePlaceholder": "Masalan: Aziz aka, doʻkon ijarasi uchun",
+      "amount": "Summa, soʻm",
+      "date": "Sana",
+      "repayNote": "Izoh (ixtiyoriy)"
+    },
+    "give": {
+      "button": "Qarz berish",
+      "title": "Qarz berish",
+      "description": "Pul tanlangan kassadan chiqadi, qarz \"Bizga qarzdor\" roʻyxatiga yoziladi.",
+      "cashbox": "Qaysi kassadan",
+      "submit": "Qarz berish",
+      "done": "Qarz berildi."
+    },
+    "take": {
+      "button": "Qarz olish",
+      "title": "Qarz olish",
+      "description": "Pul tanlangan kassaga kiradi, qarz \"Bizning qarzimiz\" roʻyxatiga yoziladi.",
+      "cashbox": "Qaysi kassaga",
+      "submit": "Qarz olish",
+      "done": "Qarz olindi."
+    },
+    "repay": {
+      "button": "Qaytarish",
+      "submit": "Saqlash",
+      "done": "Qaytarish saqlandi.",
+      "closed": "Qarz toʻliq qaytarildi va yopildi.",
+      "beforeDebtDate": "Qaytarish sanasi qarz sanasidan oldin boʻlishi mumkin emas.",
+      "toMe": {
+        "title": "Bizga qarz qaytarildi",
+        "cashbox": "Qaysi kassaga"
+      },
+      "byMe": {
+        "title": "Qarzimizni qaytarish",
+        "cashbox": "Qaysi kassadan"
+      }
+    },
+    "pagination": {
+      "label": "Sahifalar",
+      "range": "{from}–{to} / {total}",
+      "prev": "Oldingi",
+      "next": "Keyingi"
+    }
+  },
   "products": {
     "title": "Mahsulotlar",
     "add": "Mahsulot qoʻshish",
