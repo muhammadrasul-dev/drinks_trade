@@ -43,6 +43,7 @@ SRS'dagi biznes savollar yopilgan. Bu yerda — arxitektura va DB loyihalashda c
 | OQ-20 | Omborda qoldig'i bor mahsulotni arxivlash mumkinmi? | Ha — ruxsat, tasdiqlash oynasida qolgan miqdor va "sotib bo'lmaydi" ogohlantirishi; arxivdan istalgan payt chiqariladi | Yopilgan — A: ruxsat, ogohlantirish bilan |
 | OQ-24 | Kassa jurnali qaysi tartibda ko'rsatiladi: hisobot sanasi (`tx_date`) yoki kiritilgan vaqt bo'yicha? | `tx_date` bo'yicha, yangisi tepada (teng bo'lsa — keyin kiritilgani tepada); o'tgan sana bilan kiritilgan yozuvlarda `balance_after` ketma-ket bo'lmasligi mumkin | Yopilgan — A (2026-10-23) |
 | OQ-25 | Audit jurnalida do'konga bog'lanmagan (`store_id IS NULL`) yozuvlar — muvaffaqiyatsiz kirish (`LOGIN_FAILED`) — Egasiga ko'rinadimi? | Ha — o'z tashkilotidagi foydalanuvchi haqidagilari va noma'lum login bilan urinishlar | Yopilgan — B (foydalanuvchi, 2026-10-23) |
+| OQ-26 | Xarid storno'sida tovar harakati va kassa qaytimi (`PURCHASE_REFUND`) qaysi sana bilan yoziladi: asl hujjat sanasi yoki storno payti? | Asl `doc_date` (OQ-01 kabi: storno qilingan hujjat o'z davrida nolga tushadi; bajarishdagi `tx_date = doc_date` bilan simmetrik) | Ochiq — tavsiya bo'yicha qilingan (T-406) |
 
 ---
 
@@ -155,3 +156,10 @@ T-901. `audit_log.store_id` ixtiyoriy: `LOGIN_FAILED` (`auth.service`) sessiyasi
 - **A (tavsiya):** Egasi o'z do'koni yozuvlarini **va** `store_id IS NULL`, `entity_type = 'user'` bo'lgan yozuvlarni ko'radi — boshqa tashkilot foydalanuvchisi haqidagilari bundan mustasno. Noma'lum login bilan urinishlar ham ko'rinadi (v1 da bitta tashkilot, ular kimga tegishli ekanini aniqlab bo'lmaydi). Egasi parolni taxmin qilish urinishlarini ko'ra oladi.
 - **B (tanlandi, T-901 da shunday):** faqat `store_id = joriy do'kon` — muvaffaqiyatsiz kirishlar jurnalda ko'rinmaydi (faqat `login_attempt` blokida ishlaydi).
 A ga qaytish — `audit.queries.ts` dagi `where` ga `store_id IS NULL`, `entity_type = 'user'` (o'z tashkiloti foydalanuvchilari) shartini `OR` bilan qo'shish, `LOGIN_FAILED` ni `AUDIT_ACTIONS` va tarjimalarga qaytarish (+ test).
+
+### OQ-26 — Xarid storno'sidagi yozuvlar sanasi
+T-406. §5.3 storno yozuvlarining (`stock_movement.doc_date`, `cash_transaction.tx_date`) sanasini aytmaydi. Bajarishda ikkalasi ham hujjat sanasi bilan yoziladi (§5.2, BR-13). Qo'lda kiritilgan qarzni bekor qilish (`MANUAL_REVERSAL`, OQ-08) esa joriy vaqt bilan yoziladi.
+- **A (tavsiya, T-406 da shunday):** asl `doc_date`. Storno qilingan xarid har qanday sana bo'yicha filtrlangan hisobot va kassa jurnalida o'z kunida nolga tushadi — OQ-01 ("hujjat go'yo bo'lmagan") bilan bir xil mantiq. Kamchilik: o'tgan kunning kassa jurnali storno qilingan paytda o'zgaradi (jurnal `tx_date` bo'yicha tartiblangani uchun qaytim o'sha kunda ko'rinadi, OQ-24), `balance_after` ketma-ketligi "sakraydi".
+- **B:** storno payti (`now()`). Pul haqiqatda bugun qaytadi — bugungi kassa sanog'i bilan mos; o'tgan kunlar jurnali o'zgarmaydi. Kamchilik: xarid kuni chiqim, storno kuni kirim bo'lib qoladi (sana bo'yicha hisobotlarda ikki kun bo'yicha "yoyiladi").
+B ga o'tish — `purchases.reverse` da `inventory.issue({ docDate })` va `cash.record({ txDate })` ga `new Date()` (+ testdagi sana tekshiruvlari). T-503 (savdo storno'si) ham shu javobga ergashadi.
+

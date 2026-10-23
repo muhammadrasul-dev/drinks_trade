@@ -5,13 +5,14 @@ import {
   purchaseDeleteInputSchema,
   purchaseDraftInputSchema,
   purchasePostInputSchema,
+  purchaseReverseInputSchema,
   purchaseUpdateInputSchema,
 } from '@drinks/shared/schemas';
 import { revalidatePath } from 'next/cache';
 
 import { action } from '@/lib/action';
 
-// Purchase drafts (T-404) and posting (T-405). The service checks
+// Purchase drafts (T-404), posting (T-405) and reversal (T-406). The service checks
 // permissions, re-validates and takes the locks; every write refreshes the
 // purchases pages.
 function refresh(): void {
@@ -38,6 +39,12 @@ export const deletePurchase = action(purchaseDeleteInputSchema, async (input, { 
 
 export const postPurchase = action(purchasePostInputSchema, async (input, { ctx }) => {
   const purchase = await purchases.post(ctx, input);
+  refresh();
+  return { id: purchase.id, number: purchase.number };
+});
+
+export const reversePurchase = action(purchaseReverseInputSchema, async (input, { ctx }) => {
+  const purchase = await purchases.reverse(ctx, input);
   refresh();
   return { id: purchase.id, number: purchase.number };
 });

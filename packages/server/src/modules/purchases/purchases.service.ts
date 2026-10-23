@@ -1,7 +1,7 @@
-// Purchases (FR-4.1–4.2, business-logic §5): drafts (T-404) and posting
-// (T-405). A draft does not touch stock or cash; posting moves stock and the
-// average cost (inventory), cash (cash) and opens the credit debt (debts) in
-// one transaction. Any user may edit any draft (OQ-14); concurrent edits are
+// Purchases (FR-4.1–4.2, business-logic §5): drafts (T-404), posting
+// (T-405) and reversal (T-406). A draft does not touch stock or cash; posting
+// moves stock and the average cost (inventory), cash (cash) and opens the
+// credit debt (debts) in one transaction, and reversal undoes all three. Any user may edit any draft (OQ-14); concurrent edits are
 // caught by the `version` column.
 import type { Prisma } from '@drinks/db';
 import {
@@ -35,6 +35,8 @@ import {
   purchaseListQuerySchema,
   type PurchasePostInput,
   purchasePostInputSchema,
+  type PurchaseReverseInput,
+  purchaseReverseInputSchema,
   type PurchaseUpdateInput,
   purchaseUpdateInputSchema,
 } from '@drinks/shared/schemas';
@@ -42,7 +44,7 @@ import type { z } from 'zod';
 
 import type { ServiceContext } from '../../core/context';
 import { storeDayAt, storeDayRange } from '../../core/dates';
-import { lockCashboxes, lockPurchase, lockWarehouses } from '../../core/locks';
+import { lockCashboxes, lockDebt, lockPurchase, lockWarehouses } from '../../core/locks';
 import { decimalToString, moneyToBigInt, moneyToNumber } from '../../core/money';
 import { nextDocNumber } from '../../core/numbering';
 import { assertCan } from '../../core/rbac';
@@ -662,4 +664,147 @@ async function post(ctx: ServiceContext, input: PurchasePostInput): Promise<Purc
   });
 }
 
-export const purchases = { list, get, create, update, remove, post };
+// ── Reversal (T-406, BR-3, business-logic §5.3) ──────────────────────────
+
+const REVERSE_SELECT = {
+  number: true,
+  docDate: true,
+  paidCash: true,
+  paidCard: true,
+  paidCredit: true,
+  debt: { select: { id: true } },
+  lines: {
+    orderBy: { lineNo: 'asc' },
+    select: {
+      id: true,
+      lineNo: true,
+      productId: true,
+      subWarehouseId: true,
+      qty: true,
+      lineTotal: true,
+      unitCost: true,
+      subWarehouse: { select: { warehouseId: true } },
+    },
+  },
+} as const satisfies Prisma.PurchaseSelect;
+
+/**
+ * Reverses a posted purchase (BR-3): its goods leave the sub-warehouses at
+ * their purchase cost and the average is recalculated with the 0 floor
+ * (OQ-09), the paid parts come back to their cashboxes (PURCHASE_REFUND) and
+ * the credit debt is cancelled — blocked while the debt has repayments
+ * (OQ-04) or the goods are no longer in stock (sold first: reverse that sale).
+ * OWNER only (OQ-03); one transaction, locks in business-logic §2 order,
+ * audit REVERSE with the reason. Entries carry the document date (OQ-26).
+ */
+async function reverse(ctx: ServiceContext, input: PurchaseReverseInput): Promise<PurchaseDetail> {
+  assertCan(ctx.user, 'document.reverse');
+  const { id, reason } = parse(purchaseReverseInputSchema, input);
+
+  return withTransaction(async (tx) => {
+    // 1. The document: only a posted one can be reversed.
+    const locked = await lockPurchase(tx, ctx.storeId, id);
+    if (locked.status !== DocStatus.POSTED) throw new DomainError(ErrorCode.DOCUMENT_NOT_POSTED);
+    const doc = await tx.purchase.findUniqueOrThrow({ where: { id }, select: REVERSE_SELECT });
+    const paidCash = moneyToNumber(doc.paidCash);
+    const paidCard = moneyToNumber(doc.paidCard);
+
+    // 2. Warehouses FOR SHARE and the stock-count block (BR-8, §3). Archived
+    //    sub-warehouses are not an error: one holding these goods cannot be
+    //    archived (FR-2.2), so step 6 reports it as short of stock.
+    const warehouseIds = [...new Set(doc.lines.map((line) => line.subWarehouse.warehouseId))];
+    await lockWarehouses(tx, ctx.storeId, warehouseIds);
+    await warehouses.assertNoOpenStockCount(tx, ctx, warehouseIds);
+
+    // 4. Cashboxes of the paid parts: money comes back IN, so no balance check.
+    const paid = [
+      { type: CashboxType.CASH, amount: paidCash },
+      { type: CashboxType.CARD, amount: paidCard },
+    ].filter((part) => part.amount > 0);
+    const cashboxes = new Map(
+      (
+        await lockCashboxes(
+          tx,
+          ctx.storeId,
+          paid.map((part) => part.type),
+        )
+      ).map((box) => [box.type, box]),
+    );
+
+    // 3/5. The credit debt (§2 step 5, after the cashboxes): cancelled here so
+    //      DEBT_HAS_REPAYMENTS (OQ-04) fails before any stock moves.
+    const debtId = doc.debt?.id ?? null;
+    if (debtId) await debts.cancel(tx, ctx, await lockDebt(tx, ctx.storeId, debtId));
+
+    // 5–7. Goods leave at their purchase cost; PURCHASE_REVERSAL_INSUFFICIENT_STOCK
+    //      (BR-3) if some were sold. Inventory takes locks 6–7 itself.
+    const movements = await inventory.issue(tx, ctx, {
+      type: MovementType.PURCHASE_REVERSAL,
+      docDate: doc.docDate,
+      lines: doc.lines.map((line) => ({
+        subWarehouseId: line.subWarehouseId,
+        productId: line.productId,
+        qty: line.qty,
+        unitCost: decimalToString(line.unitCost),
+        costAmount: moneyToNumber(line.lineTotal),
+        purchaseLineId: line.id,
+      })),
+    });
+
+    // 8. Cash IN for the parts paid at posting.
+    const cashTransactionIds: string[] = [];
+    for (const part of paid) {
+      const entry = await cash.record(tx, ctx, cashboxes.get(part.type)!, {
+        type: CashTxType.PURCHASE_REFUND,
+        amount: part.amount,
+        txDate: doc.docDate,
+        note: reason,
+        purchaseId: id,
+      });
+      cashTransactionIds.push(entry.id.toString());
+    }
+
+    // 9. Status, then audit REVERSE (costs are fine here: audit is OWNER-only).
+    const reversedAt = new Date();
+    await tx.purchase.update({
+      where: { id },
+      data: {
+        status: DocStatus.REVERSED,
+        reversedAt,
+        reversedById: ctx.user.id,
+        reverseReason: reason,
+        version: { increment: 1 },
+      },
+      select: { id: true },
+    });
+    await audit.log(tx, ctx, {
+      action: 'REVERSE',
+      entityType: 'purchase',
+      entityId: id,
+      before: { status: DocStatus.POSTED, version: locked.version },
+      after: {
+        status: DocStatus.REVERSED,
+        number: doc.number,
+        docDate: doc.docDate,
+        reversedAt,
+        reverseReason: reason,
+        movements: movements.map((movement, index) => ({
+          lineNo: doc.lines[index]!.lineNo,
+          productId: movement.productId,
+          subWarehouseId: movement.subWarehouseId,
+          qty: movement.qtyDelta,
+          unitCost: movement.unitCost,
+          avgCostBefore: movement.avgCostBefore,
+          avgCostAfter: movement.avgCostAfter,
+        })),
+        cashTransactionIds,
+        cancelledDebtId: debtId,
+      },
+      backdated: isBackdated(doc.docDate),
+      meta: { reason },
+    });
+    return toDetail(await loadDetail(tx, ctx, id));
+  });
+}
+
+export const purchases = { list, get, create, update, remove, post, reverse };

@@ -19,8 +19,12 @@ interface ConfirmDialogProps {
   trigger: ReactElement;
   title: ReactNode;
   description?: ReactNode;
+  /** Extra body between the description and the buttons (e.g. a reason field). */
+  children?: ReactNode;
   /** Defaults to `common.confirm`. */
   confirmLabel?: ReactNode;
+  /** Disables the confirm button (e.g. a required field is empty). */
+  confirmDisabled?: boolean;
   /** Red confirm button for irreversible actions (post, reverse, delete). */
   destructive?: boolean;
   /**
@@ -35,7 +39,9 @@ export function ConfirmDialog({
   trigger,
   title,
   description,
+  children,
   confirmLabel,
+  confirmDisabled = false,
   destructive = false,
   onConfirm,
 }: ConfirmDialogProps) {
@@ -59,11 +65,12 @@ export function ConfirmDialog({
           <AlertDialogTitle>{title}</AlertDialogTitle>
           {description && <AlertDialogDescription>{description}</AlertDialogDescription>}
         </AlertDialogHeader>
+        {children}
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isPending}>{t('cancel')}</AlertDialogCancel>
           <AlertDialogAction
             variant={destructive ? 'destructive' : 'default'}
-            disabled={isPending}
+            disabled={isPending || confirmDisabled}
             onClick={handleConfirm}
           >
             {confirmLabel ?? t('confirm')}
