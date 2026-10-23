@@ -8,6 +8,7 @@ import {
   type UserAccount,
   type UserRole,
   validationError,
+  parseInput,
 } from '@drinks/shared';
 import {
   localeSchema,
@@ -27,7 +28,6 @@ import {
   type UserUpdateInput,
   userUpdateInputSchema,
 } from '@drinks/shared/schemas';
-import type { z } from 'zod';
 
 import type { ServiceContext } from '../../core/context';
 import { assertCan } from '../../core/rbac';
@@ -180,12 +180,6 @@ function toAccount(row: UserAccount): UserAccount {
   };
 }
 
-function parse<TSchema extends z.ZodType>(schema: TSchema, input: unknown): z.output<TSchema> {
-  const parsed = schema.safeParse(input);
-  if (!parsed.success) throw validationError(parsed.error);
-  return parsed.data;
-}
-
 function duplicateUsername(): DomainError {
   return new DomainError(ErrorCode.DUPLICATE_VALUE, { entity: 'user', field: 'username' });
 }
@@ -267,7 +261,7 @@ export async function list(ctx: ServiceContext): Promise<UserAccount[]> {
 /** Creates a STAFF account (the role is never an input: one OWNER per organization). */
 export async function create(ctx: ServiceContext, input: UserCreateInput): Promise<UserAccount> {
   assertCan(ctx.user, 'user.manage');
-  const { fullName, username, password, locale } = parse(userCreateInputSchema, input);
+  const { fullName, username, password, locale } = parseInput(userCreateInputSchema, input);
   // argon2 is deliberately slow; hash before opening the transaction.
   const passwordHash = await hashPassword(password);
 
@@ -303,7 +297,7 @@ const EDITABLE_FIELDS = ['fullName', 'username', 'locale'] as const;
 /** Edits a STAFF account's full name, login and language; a new login signs them out. */
 export async function update(ctx: ServiceContext, input: UserUpdateInput): Promise<UserAccount> {
   assertCan(ctx.user, 'user.manage');
-  const { id, ...next } = parse(userUpdateInputSchema, input);
+  const { id, ...next } = parseInput(userUpdateInputSchema, input);
 
   return write(async (tx) => {
     const current = await findStaff(tx, ctx, id);
@@ -345,7 +339,7 @@ export async function setPassword(
   input: UserSetPasswordInput,
 ): Promise<UserAccount> {
   assertCan(ctx.user, 'user.manage');
-  const { id, password } = parse(userSetPasswordInputSchema, input);
+  const { id, password } = parseInput(userSetPasswordInputSchema, input);
   const passwordHash = await hashPassword(password);
 
   return withTransaction(async (tx) => {
@@ -382,7 +376,7 @@ async function setActive(
   isActive: boolean,
 ): Promise<UserAccount> {
   assertCan(ctx.user, 'user.manage');
-  const { id } = parse(userIdInputSchema, input);
+  const { id } = parseInput(userIdInputSchema, input);
 
   return withTransaction(async (tx) => {
     const current = await findStaff(tx, ctx, id);
@@ -434,7 +428,7 @@ export async function updateOwnProfile(
   input: OwnProfileInput,
 ): Promise<UserAccount> {
   assertCan(ctx.user, 'user.manage');
-  const { fullName } = parse(ownProfileInputSchema, input);
+  const { fullName } = parseInput(ownProfileInputSchema, input);
   const self = await findSelf(ctx);
   if (self.fullName === fullName) return toAccount(self);
 
@@ -467,7 +461,7 @@ export async function changeOwnUsername(
   currentSessionToken: string | null | undefined,
 ): Promise<UserAccount> {
   assertCan(ctx.user, 'user.manage');
-  const { currentPassword, username } = parse(ownUsernameInputSchema, input);
+  const { currentPassword, username } = parseInput(ownUsernameInputSchema, input);
   const self = await findSelf(ctx);
   await assertCurrentPassword(self.passwordHash, currentPassword);
   if (self.username === username) return toAccount(self);
@@ -508,7 +502,7 @@ export async function changeOwnPassword(
   currentSessionToken: string | null | undefined,
 ): Promise<UserAccount> {
   assertCan(ctx.user, 'user.manage');
-  const { currentPassword, newPassword } = parse(ownPasswordInputSchema, input);
+  const { currentPassword, newPassword } = parseInput(ownPasswordInputSchema, input);
   const self = await findSelf(ctx);
   await assertCurrentPassword(self.passwordHash, currentPassword);
   const passwordHash = await hashPassword(newPassword);

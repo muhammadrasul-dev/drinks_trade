@@ -12,3 +12,13 @@ export function validationError(error: z.ZodError): DomainError {
   }
   return new DomainError(ErrorCode.VALIDATION_FAILED, undefined, fieldErrors);
 }
+
+/** `schema.parse` that fails as VALIDATION_FAILED (services and Server Actions alike). */
+export function parseInput<TSchema extends z.ZodType>(
+  schema: TSchema,
+  input: unknown,
+): z.output<TSchema> {
+  const parsed = schema.safeParse(input);
+  if (!parsed.success) throw validationError(parsed.error);
+  return parsed.data;
+}

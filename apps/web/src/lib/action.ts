@@ -5,7 +5,7 @@ import {
   DomainError,
   ErrorCode,
   isDomainError,
-  validationError,
+  parseInput,
 } from '@drinks/shared';
 import type { z } from 'zod';
 
@@ -39,7 +39,7 @@ export function action<TSchema extends z.ZodType, TResult>(
     run(async () => {
       const session = await getCurrentSession();
       if (!session) throw new DomainError(ErrorCode.UNAUTHORIZED);
-      const data = parse(schema, input);
+      const data = parseInput(schema, input);
       const meta = await getRequestMeta();
       return handler(data, { session, ctx: auth.toServiceContext(session, meta.requestId), meta });
     });
@@ -52,7 +52,7 @@ export function publicAction<TSchema extends z.ZodType, TResult>(
 ): (input: unknown) => Promise<ActionResult<TResult>> {
   return async (input) =>
     run(async () => {
-      const data = parse(schema, input);
+      const data = parseInput(schema, input);
       return handler(data, await getRequestMeta());
     });
 }
@@ -65,12 +65,6 @@ export function toActionError(error: unknown): ActionError {
     ...(error.params && { params: error.params }),
     ...(error.fieldErrors && { fieldErrors: error.fieldErrors }),
   };
-}
-
-function parse<TSchema extends z.ZodType>(schema: TSchema, input: unknown): z.output<TSchema> {
-  const parsed = schema.safeParse(input);
-  if (!parsed.success) throw validationError(parsed.error);
-  return parsed.data;
 }
 
 async function run<T>(body: () => Promise<T>): Promise<ActionResult<T>> {

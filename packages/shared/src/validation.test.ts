@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
 import { ErrorCode } from './errors';
-import { validationError } from './validation';
+import { parseInput, validationError } from './validation';
 
 describe('validationError', () => {
   it('maps a zod failure to VALIDATION_FAILED with per-field messages', () => {
@@ -21,5 +21,22 @@ describe('validationError', () => {
     if (result.success) throw new Error('expected failure');
 
     expect(validationError(result.error).fieldErrors).toEqual({});
+  });
+});
+
+describe('parseInput', () => {
+  const schema = z.object({ name: z.string().trim().min(1) });
+
+  it('returns the parsed output', () => {
+    expect(parseInput(schema, { name: '  Cola ' })).toEqual({ name: 'Cola' });
+  });
+
+  it('throws VALIDATION_FAILED with field errors', () => {
+    expect(() => parseInput(schema, { name: ' ' })).toThrow(
+      expect.objectContaining({
+        code: ErrorCode.VALIDATION_FAILED,
+        fieldErrors: expect.objectContaining({ name: expect.any(Array) }),
+      }),
+    );
   });
 });

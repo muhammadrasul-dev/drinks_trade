@@ -19,9 +19,8 @@ import {
   MovementType,
   QtyUnit,
   storeDateOf,
-  storeToday,
   unitCostOf,
-  validationError,
+  parseInput,
 } from '@drinks/shared';
 import {
   PURCHASE_PAGE_SIZE,
@@ -43,7 +42,7 @@ import {
 import type { z } from 'zod';
 
 import type { ServiceContext } from '../../core/context';
-import { storeDayAt, storeDayRange } from '../../core/dates';
+import { resolveStoreDate, storeDayRange } from '../../core/dates';
 import { lockCashboxes, lockDebt, lockPurchase, lockWarehouses } from '../../core/locks';
 import { decimalToString, moneyToBigInt, moneyToNumber } from '../../core/money';
 import { nextDocNumber } from '../../core/numbering';
@@ -130,12 +129,6 @@ interface Snapshot {
   lines: Omit<ComputedLine, 'unitCost'>[];
 }
 
-function parse<TSchema extends z.ZodType>(schema: TSchema, input: unknown): z.output<TSchema> {
-  const parsed = schema.safeParse(input);
-  if (!parsed.success) throw validationError(parsed.error);
-  return parsed.data;
-}
-
 function toListItem(row: ListRow, lineCount: number): PurchaseListItem {
   return {
     id: row.id,
@@ -191,18 +184,6 @@ function toDetail(row: DetailRow): PurchaseDetail {
     reverseReason: row.reverseReason,
     lines: row.lines.map(toLine),
   };
-}
-
-/**
- * The form sends a store-zone day (OQ-07). Today → now; a past day → noon of
- * that day (Asia/Tashkent is UTC+5 all year), so the day survives any zone
- * conversion. `keep` is the stored timestamp: an unchanged day keeps it.
- */
-function resolveDocDate(day: string, keep?: Date): Date {
-  const today = storeToday();
-  if (day > today) throw new DomainError(ErrorCode.DOC_DATE_IN_FUTURE);
-  if (keep && storeDateOf(keep) === day) return keep;
-  return day === today ? new Date() : storeDayAt(day, '12:00:00');
 }
 
 /**
@@ -342,7 +323,7 @@ async function lockDraft(tx: Tx, ctx: ServiceContext, id: string, version: numbe
 /** Newest first; filters by status, store-zone date range and part of the number. */
 async function list(ctx: ServiceContext, query: PurchaseListQuery = {}): Promise<PurchaseListPage> {
   assertCan(ctx.user, 'purchase.write');
-  const { status, from, to, q, page = 1 } = parse(purchaseListQuerySchema, query);
+  const { status, from, to, q, page = 1 } = parseInput(purchaseListQuerySchema, query);
   const { prisma } = await import('@drinks/db');
   const docDate = storeDayRange(from, to);
   const where: Prisma.PurchaseWhereInput = {
@@ -372,7 +353,7 @@ async function list(ctx: ServiceContext, query: PurchaseListQuery = {}): Promise
 /** One purchase of the store with its lines; NOT_FOUND otherwise. */
 async function get(ctx: ServiceContext, input: PurchaseIdInput): Promise<PurchaseDetail> {
   assertCan(ctx.user, 'purchase.write');
-  const { id } = parse(purchaseIdInputSchema, input);
+  const { id } = parseInput(purchaseIdInputSchema, input);
   const { prisma } = await import('@drinks/db');
   return toDetail(await loadDetail(prisma, ctx, id));
 }
@@ -381,8 +362,8 @@ async function get(ctx: ServiceContext, input: PurchaseIdInput): Promise<Purchas
 async function create(ctx: ServiceContext, input: PurchaseDraftInput): Promise<PurchaseDetail> {
   assertCan(ctx.user, 'purchase.write');
   assertCan(ctx.user, 'document.paymentSplit.write');
-  const values = parse(purchaseDraftInputSchema, input);
-  const docDate = resolveDocDate(values.docDate);
+  const values = parseInput(purchaseDraftInputSchema, input);
+  const docDate = resolveStoreDate(values.docDate);
 
   return withTransaction(async (tx) => {
     const lines = await computeLines(tx, ctx, values.lines);
@@ -413,12 +394,12 @@ async function create(ctx: ServiceContext, input: PurchaseDraftInput): Promise<P
 async function update(ctx: ServiceContext, input: PurchaseUpdateInput): Promise<PurchaseDetail> {
   assertCan(ctx.user, 'purchase.write');
   assertCan(ctx.user, 'document.paymentSplit.write');
-  const { id, version, ...values } = parse(purchaseUpdateInputSchema, input);
+  const { id, version, ...values } = parseInput(purchaseUpdateInputSchema, input);
 
   return withTransaction(async (tx) => {
     await lockDraft(tx, ctx, id, version);
     const before = await loadDetail(tx, ctx, id);
-    const docDate = resolveDocDate(values.docDate, before.docDate);
+    const docDate = resolveStoreDate(values.docDate, before.docDate);
     const lines = await computeLines(tx, ctx, values.lines);
     const header = headerData(values, docDate, lines);
 
@@ -446,7 +427,7 @@ async function update(ctx: ServiceContext, input: PurchaseUpdateInput): Promise<
 /** Deletes a draft and its lines (database §6.3); its number stays unused. */
 async function remove(ctx: ServiceContext, input: PurchaseDeleteInput): Promise<void> {
   assertCan(ctx.user, 'purchase.write');
-  const { id, version } = parse(purchaseDeleteInputSchema, input);
+  const { id, version } = parseInput(purchaseDeleteInputSchema, input);
 
   await withTransaction(async (tx) => {
     await lockDraft(tx, ctx, id, version);
@@ -530,7 +511,7 @@ function assertProductsUnchanged(lines: PostRow['lines']): void {
  */
 async function post(ctx: ServiceContext, input: PurchasePostInput): Promise<PurchaseDetail> {
   assertCan(ctx.user, 'purchase.post');
-  const { id, version } = parse(purchasePostInputSchema, input);
+  const { id, version } = parseInput(purchasePostInputSchema, input);
 
   return withTransaction(async (tx) => {
     // 1. The document: still the draft the user saw.
@@ -699,7 +680,7 @@ const REVERSE_SELECT = {
  */
 async function reverse(ctx: ServiceContext, input: PurchaseReverseInput): Promise<PurchaseDetail> {
   assertCan(ctx.user, 'document.reverse');
-  const { id, reason } = parse(purchaseReverseInputSchema, input);
+  const { id, reason } = parseInput(purchaseReverseInputSchema, input);
 
   return withTransaction(async (tx) => {
     // 1. The document: only a posted one can be reversed.

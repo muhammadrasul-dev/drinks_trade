@@ -45,10 +45,10 @@ SRS'dagi biznes savollar yopilgan. Bu yerda — arxitektura va DB loyihalashda c
 | OQ-20 | Omborda qoldig'i bor mahsulotni arxivlash mumkinmi? | Ha — ruxsat, tasdiqlash oynasida qolgan miqdor va "sotib bo'lmaydi" ogohlantirishi; arxivdan istalgan payt chiqariladi | Yopilgan — A: ruxsat, ogohlantirish bilan |
 | OQ-24 | Kassa jurnali qaysi tartibda ko'rsatiladi: hisobot sanasi (`tx_date`) yoki kiritilgan vaqt bo'yicha? | `tx_date` bo'yicha, yangisi tepada (teng bo'lsa — keyin kiritilgani tepada); o'tgan sana bilan kiritilgan yozuvlarda `balance_after` ketma-ket bo'lmasligi mumkin | Yopilgan — A (2026-10-23) |
 | OQ-25 | Audit jurnalida do'konga bog'lanmagan (`store_id IS NULL`) yozuvlar — muvaffaqiyatsiz kirish (`LOGIN_FAILED`) — Egasiga ko'rinadimi? | Ha — o'z tashkilotidagi foydalanuvchi haqidagilari va noma'lum login bilan urinishlar | Yopilgan — B (foydalanuvchi, 2026-10-23) |
-| OQ-26 | Xarid storno'sida tovar harakati va kassa qaytimi (`PURCHASE_REFUND`) qaysi sana bilan yoziladi: asl hujjat sanasi yoki storno payti? | Asl `doc_date` (OQ-01 kabi: storno qilingan hujjat o'z davrida nolga tushadi; bajarishdagi `tx_date = doc_date` bilan simmetrik) | Ochiq — tavsiya bo'yicha qilingan (T-406) |
-| OQ-27 | Qarz qaytarish sanasi qarz sanasidan oldin bo'lishi mumkinmi? | Yo'q — qaytarish kuni ≥ qarz kuni (Toshkent), aks holda `VALIDATION_FAILED` (`date`) | Ochiq — tavsiya bo'yicha qilingan (T-704) |
-| OQ-28 | Qoldiq hisobotida qaysi mahsulotlar chiqadi va tannarx ustunlari qaysi ruxsat bilan? | Qoldig'i bor (`qty > 0`) mahsulotlar; "Kam qolganlar" filtrida (joylashuv filtrisiz) qoldig'i 0 bo'lganlari ham; tannarx/qiymat — `report.sales.cost` (faqat Egasi), yangi ruxsat yo'q | Ochiq — tavsiya bo'yicha qilingan (T-801) |
-| OQ-29 | Savdo qoralamasi saqlangandan keyin mahsulot narxi o'zgarsa, bajarish (T-502) qaysi narx bilan o'tadi? | Bajarish rad etiladi (`SALE_PRICE_CHANGED { lines }`), foydalanuvchi qoralamani qayta saqlaydi — yangi narx va jami ko'rinadi (OQ-06 kabi) | Ochiq — T-502 dan oldin javob kerak |
+| OQ-26 | Xarid storno'sida tovar harakati va kassa qaytimi (`PURCHASE_REFUND`) qaysi sana bilan yoziladi: asl hujjat sanasi yoki storno payti? | Asl `doc_date` (OQ-01 kabi: storno qilingan hujjat o'z davrida nolga tushadi; bajarishdagi `tx_date = doc_date` bilan simmetrik) | Yopilgan — A (tavsiya, 2026-10-23) |
+| OQ-27 | Qarz qaytarish sanasi qarz sanasidan oldin bo'lishi mumkinmi? | Yo'q — qaytarish kuni ≥ qarz kuni (Toshkent), aks holda `VALIDATION_FAILED` (`date`) | Yopilgan — A (tavsiya, 2026-10-23) |
+| OQ-28 | Qoldiq hisobotida qaysi mahsulotlar chiqadi va tannarx ustunlari qaysi ruxsat bilan? | Qoldig'i bor (`qty > 0`) mahsulotlar; "Kam qolganlar" filtrida (joylashuv filtrisiz) qoldig'i 0 bo'lganlari ham; tannarx/qiymat — `report.sales.cost` (faqat Egasi), yangi ruxsat yo'q | Yopilgan — 1-A, 2-A (tavsiya, 2026-10-23) |
+| OQ-29 | Savdo qoralamasi saqlangandan keyin mahsulot narxi o'zgarsa, bajarish (T-502) qaysi narx bilan o'tadi? | Bajarish rad etiladi (`SALE_PRICE_CHANGED { lines }`), foydalanuvchi qoralamani qayta saqlaydi — yangi narx va jami ko'rinadi (OQ-06 kabi) | Yopilgan — A (tavsiya, 2026-10-23) |
 
 ---
 
@@ -163,19 +163,19 @@ T-901. `audit_log.store_id` ixtiyoriy: `LOGIN_FAILED` (`auth.service`) sessiyasi
 A ga qaytish — `audit.queries.ts` dagi `where` ga `store_id IS NULL`, `entity_type = 'user'` (o'z tashkiloti foydalanuvchilari) shartini `OR` bilan qo'shish, `LOGIN_FAILED` ni `AUDIT_ACTIONS` va tarjimalarga qaytarish (+ test).
 
 ### OQ-26 — Xarid storno'sidagi yozuvlar sanasi
-T-406. §5.3 storno yozuvlarining (`stock_movement.doc_date`, `cash_transaction.tx_date`) sanasini aytmaydi. Bajarishda ikkalasi ham hujjat sanasi bilan yoziladi (§5.2, BR-13). Qo'lda kiritilgan qarzni bekor qilish (`MANUAL_REVERSAL`, OQ-08) esa joriy vaqt bilan yoziladi.
+**Javob (2026-10-23, Prompt 47): A — tavsiya bo'yicha.** T-406. §5.3 storno yozuvlarining (`stock_movement.doc_date`, `cash_transaction.tx_date`) sanasini aytmaydi. Bajarishda ikkalasi ham hujjat sanasi bilan yoziladi (§5.2, BR-13). Qo'lda kiritilgan qarzni bekor qilish (`MANUAL_REVERSAL`, OQ-08) esa joriy vaqt bilan yoziladi.
 - **A (tavsiya, T-406 da shunday):** asl `doc_date`. Storno qilingan xarid har qanday sana bo'yicha filtrlangan hisobot va kassa jurnalida o'z kunida nolga tushadi — OQ-01 ("hujjat go'yo bo'lmagan") bilan bir xil mantiq. Kamchilik: o'tgan kunning kassa jurnali storno qilingan paytda o'zgaradi (jurnal `tx_date` bo'yicha tartiblangani uchun qaytim o'sha kunda ko'rinadi, OQ-24), `balance_after` ketma-ketligi "sakraydi".
 - **B:** storno payti (`now()`). Pul haqiqatda bugun qaytadi — bugungi kassa sanog'i bilan mos; o'tgan kunlar jurnali o'zgarmaydi. Kamchilik: xarid kuni chiqim, storno kuni kirim bo'lib qoladi (sana bo'yicha hisobotlarda ikki kun bo'yicha "yoyiladi").
 B ga o'tish — `purchases.reverse` da `inventory.issue({ docDate })` va `cash.record({ txDate })` ga `new Date()` (+ testdagi sana tekshiruvlari). T-503 (savdo storno'si) ham shu javobga ergashadi.
 
 ### OQ-27 — Qarz qaytarish sanasi qarz sanasidan oldin
-T-704. Qaytarish ham, qarz ham o'tgan sana bilan kiritilishi mumkin (OQ-07: faqat kelajak taqiqlangan). Hujjatlar qaytarish sanasining qarz sanasiga nisbatini aytmaydi; o'tgan sana bilan kiritilgan qarzni undan ham oldingi sana bilan "qaytarish" mumkin bo'lib qoladi — kassa jurnali va P&L davrlarida mantiqsiz ketma-ketlik.
+**Javob (2026-10-23, Prompt 47): A — tavsiya bo'yicha.** T-704. Qaytarish ham, qarz ham o'tgan sana bilan kiritilishi mumkin (OQ-07: faqat kelajak taqiqlangan). Hujjatlar qaytarish sanasining qarz sanasiga nisbatini aytmaydi; o'tgan sana bilan kiritilgan qarzni undan ham oldingi sana bilan "qaytarish" mumkin bo'lib qoladi — kassa jurnali va P&L davrlarida mantiqsiz ketma-ketlik.
 - **A (tavsiya, T-704 da shunday):** qaytarish kuni ≥ qarz kuni (do'kon vaqti bo'yicha, bir kun ichida ruxsat). Aks holda `VALIDATION_FAILED` (`params.reason = BEFORE_DEBT_DATE`, `fieldErrors.date`); formada sana maydoni `min` = qarz kuni.
 - **B:** cheklov yo'q — faqat OQ-07 (kelajak emas).
 B ga o'tish — `debts.commands.ts` dagi `BEFORE_DEBT_DATE` tekshiruvini olib tashlash (+ test).
 
 ### OQ-28 — Qoldiq hisobotidagi mahsulotlar va tannarx ustunlari
-T-801. SRS §7.1 "har mahsulot dona va blokda; joylashuv bo'yicha" deydi; database §7.1 namunasi faqat `sb.qty > 0` qatorlarni oladi. Ikki narsa aniq emas:
+**Javob (2026-10-23, Prompt 47): 1-A, 2-A — tavsiya bo'yicha.** T-801. SRS §7.1 "har mahsulot dona va blokda; joylashuv bo'yicha" deydi; database §7.1 namunasi faqat `sb.qty > 0` qatorlarni oladi. Ikki narsa aniq emas:
 1. **Qoldig'i 0 mahsulot.** Hammasi sotilgan yoki hech qachon kirmagan mahsulot `stock_balance` da `qty > 0` qatoriga ega emas — oddiy ro'yxatda chiqmaydi. Lekin minimal qoldig'i bo'lsa, u eng "kam qolgan" mahsulot (FR-1.3).
    - **A (tavsiya, T-801 da shunday):** oddiy ko'rinishda faqat qoldig'i borlar (database §7.1). "Kam qolganlar" filtri yoqilsa va ombor/sub-ombor tanlanmagan bo'lsa — `minStock > 0` va do'kon bo'yicha jami `< minStock` bo'lgan **barcha** mahsulotlar, qoldig'i 0 bo'lganlari ham (joylashuv "—"). Ombor tanlangan bo'lsa — faqat o'sha joyda qoldig'i borlar, "kam" belgisi esa doim do'kon bo'yicha jamiga qarab (business-logic §9).
    - **B:** "Qoldig'i 0 larni ham ko'rsatish" alohida almashtirgichi — barcha faol mahsulotlar 0 bilan.
@@ -186,7 +186,7 @@ T-801. SRS §7.1 "har mahsulot dona va blokda; joylashuv bo'yicha" deydi; databa
 1-B ga o'tish — `stockReportQuerySchema` ga `withEmpty` va `stock-report.queries.ts` dagi `includeEmpty` shartini almashtirish (+ test). 2-B — `permissions.ts` + `getProductTotals` o'rniga alohida tekshiruv; 2-C — `reports.stock` dan `avgCost`/`value` ni olib tashlash.
 
 ### OQ-29 — Qoralamadan keyin narx o'zgarishi
-T-501. Savdo qatori narxni qoralama **saqlanganda** mahsulotdan nusxalaydi (business-logic §4.1 4-qadam, OQ-05, OQ-15). Qoralama ochiq turganida Egasi/xodim mahsulot narxini o'zgartirsa, saqlangan `unit_price` eskirib qoladi. §4.2 bu holatni aytmaydi. Forma har doim joriy narxni ko'rsatadi va qayta saqlashda uni yozadi — savol faqat qayta saqlanmagan qoralamani bajarish haqida.
+**Javob (2026-10-23, Prompt 47): A — tavsiya bo'yicha.** T-501. Savdo qatori narxni qoralama **saqlanganda** mahsulotdan nusxalaydi (business-logic §4.1 4-qadam, OQ-05, OQ-15). Qoralama ochiq turganida Egasi/xodim mahsulot narxini o'zgartirsa, saqlangan `unit_price` eskirib qoladi. §4.2 bu holatni aytmaydi. Forma har doim joriy narxni ko'rsatadi va qayta saqlashda uni yozadi — savol faqat qayta saqlanmagan qoralamani bajarish haqida.
 - **A (tavsiya):** bajarishda `line.unitPrice ≠ product.salePrice` bo'lsa → `SALE_PRICE_CHANGED { lines: [{ lineNo, product, unitPrice, salePrice }] }`; foydalanuvchi qoralamani qayta saqlaydi (yangi jami va to'lov qismlari ko'rinadi). BR-2 "bitta narx" saqlanadi, kassir pulni eski summada olmaydi. OQ-06 (`UNITS_PER_BLOCK_CHANGED`) bilan bir xil yo'l. Yangi xato kodi kerak.
 - **B:** saqlangan narx bilan bajariladi — mijozga aytilgan summa o'zgarmaydi, lekin narx o'zgargandan keyin eski narxda sotish mumkin bo'ladi.
 - **C:** bajarishda narx jimgina qayta hisoblanadi — jami o'zgaradi va to'lov qismlari mos kelmay `PAYMENT_SPLIT_MISMATCH` beradi (tushunarsiz xato), tavsiya etilmaydi.

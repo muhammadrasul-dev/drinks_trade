@@ -2,7 +2,7 @@
 // group products. Both tables have the same shape, so one implementation
 // serves both through a small per-kind table adapter. Nothing is deleted —
 // an item is archived (database.md §1 rule 5) and hidden from new choices.
-import { type CatalogItem, DomainError, ErrorCode, validationError } from '@drinks/shared';
+import { type CatalogItem, DomainError, ErrorCode, parseInput } from '@drinks/shared';
 import {
   type CatalogCreateInput,
   type CatalogIdInput,
@@ -12,7 +12,6 @@ import {
   type CatalogRenameInput,
   catalogRenameInputSchema,
 } from '@drinks/shared/schemas';
-import type { z } from 'zod';
 
 import type { ServiceContext } from '../../core/context';
 import { assertCan } from '../../core/rbac';
@@ -77,12 +76,6 @@ function toItem(row: Row): CatalogItem {
     archived: row.archivedAt !== null,
     productCount: row._count.products,
   };
-}
-
-function parse<TSchema extends z.ZodType>(schema: TSchema, input: unknown): z.output<TSchema> {
-  const parsed = schema.safeParse(input);
-  if (!parsed.success) throw validationError(parsed.error);
-  return parsed.data;
 }
 
 /** Unique-constraint violation (P2002) — a concurrent create/rename won the same name. */
@@ -159,7 +152,7 @@ function service(kind: CatalogKind) {
 
     async create(ctx: ServiceContext, input: CatalogCreateInput): Promise<CatalogItem> {
       assertCan(ctx.user, 'product.write');
-      const { name } = parse(catalogCreateInputSchema, input);
+      const { name } = parseInput(catalogCreateInputSchema, input);
       return write(kind, async (tx) => {
         await assertNameFree(tx, ctx, kind, name);
         const row = await table(tx, kind).create({
@@ -179,7 +172,7 @@ function service(kind: CatalogKind) {
     /** Archived items can be renamed too (e.g. before restoring). */
     async rename(ctx: ServiceContext, input: CatalogRenameInput): Promise<CatalogItem> {
       assertCan(ctx.user, 'product.write');
-      const { id, name } = parse(catalogRenameInputSchema, input);
+      const { id, name } = parseInput(catalogRenameInputSchema, input);
       return write(kind, async (tx) => {
         const current = await findOwn(tx, ctx, kind, id);
         if (current.name === name) return toItem(current);
@@ -220,7 +213,7 @@ function service(kind: CatalogKind) {
     archived: boolean,
   ): Promise<CatalogItem> {
     assertCan(ctx.user, 'product.write');
-    const { id } = parse(catalogIdInputSchema, input);
+    const { id } = parseInput(catalogIdInputSchema, input);
     return write(kind, async (tx) => {
       const current = await findOwn(tx, ctx, kind, id);
       if ((current.archivedAt !== null) === archived) return toItem(current);

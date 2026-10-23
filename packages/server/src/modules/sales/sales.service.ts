@@ -19,8 +19,7 @@ import {
   type StockAvailability,
   stockKeyOf,
   storeDateOf,
-  storeToday,
-  validationError,
+  parseInput,
 } from '@drinks/shared';
 import {
   SALE_PAGE_SIZE,
@@ -40,7 +39,7 @@ import {
 import type { z } from 'zod';
 
 import type { ServiceContext } from '../../core/context';
-import { storeDayAt, storeDayRange } from '../../core/dates';
+import { resolveStoreDate, storeDayRange } from '../../core/dates';
 import { lockSale } from '../../core/locks';
 import { moneyToBigInt, moneyToNumber } from '../../core/money';
 import { nextDocNumber } from '../../core/numbering';
@@ -122,12 +121,6 @@ interface Snapshot {
   paidCard: number;
   paidCredit: number;
   lines: ComputedLine[];
-}
-
-function parse<TSchema extends z.ZodType>(schema: TSchema, input: unknown): z.output<TSchema> {
-  const parsed = schema.safeParse(input);
-  if (!parsed.success) throw validationError(parsed.error);
-  return parsed.data;
 }
 
 /** A line or document sum past Number.MAX_SAFE_INTEGER is bad input, not a crash. */
@@ -214,18 +207,6 @@ async function stockOf(
   const rows = await inventory.getAvailable(db, ctx, needs);
   const qtyByKey = new Map(rows.map((row) => [stockKeyOf(row), row.qty]));
   return lineStock(needs, (key) => qtyByKey.get(stockKeyOf(key)) ?? 0);
-}
-
-/**
- * The form sends a store-zone day (OQ-07). Today → now; a past day → noon of
- * that day, so the day survives any zone conversion. `keep` is the stored
- * timestamp: an unchanged day keeps it. Same rule as purchases (§5.1).
- */
-function resolveDocDate(day: string, keep?: Date): Date {
-  const today = storeToday();
-  if (day > today) throw new DomainError(ErrorCode.DOC_DATE_IN_FUTURE);
-  if (keep && storeDateOf(keep) === day) return keep;
-  return day === today ? new Date() : storeDayAt(day, '12:00:00');
 }
 
 /**
@@ -366,7 +347,7 @@ async function lockDraft(tx: Tx, ctx: ServiceContext, id: string, version: numbe
 /** Newest first; filters by status, store-zone date range and part of the number. */
 async function list(ctx: ServiceContext, query: SaleListQuery = {}): Promise<SaleListPage> {
   assertCan(ctx.user, 'sale.write');
-  const { status, from, to, q, page = 1 } = parse(saleListQuerySchema, query);
+  const { status, from, to, q, page = 1 } = parseInput(saleListQuerySchema, query);
   const { prisma } = await import('@drinks/db');
   const docDate = storeDayRange(from, to);
   const where: Prisma.SaleWhereInput = {
@@ -396,7 +377,7 @@ async function list(ctx: ServiceContext, query: SaleListQuery = {}): Promise<Sal
 /** One sale of the store with its lines (a draft with the stock warning); NOT_FOUND otherwise. */
 async function get(ctx: ServiceContext, input: SaleIdInput): Promise<SaleDetail> {
   assertCan(ctx.user, 'sale.write');
-  const { id } = parse(saleIdInputSchema, input);
+  const { id } = parseInput(saleIdInputSchema, input);
   const { prisma } = await import('@drinks/db');
   return toDetail(prisma, ctx, await loadDetail(prisma, ctx, id));
 }
@@ -405,8 +386,8 @@ async function get(ctx: ServiceContext, input: SaleIdInput): Promise<SaleDetail>
 async function create(ctx: ServiceContext, input: SaleDraftInput): Promise<SaleDetail> {
   assertCan(ctx.user, 'sale.write');
   assertCan(ctx.user, 'document.paymentSplit.write');
-  const values = parse(saleDraftInputSchema, input);
-  const docDate = resolveDocDate(values.docDate);
+  const values = parseInput(saleDraftInputSchema, input);
+  const docDate = resolveStoreDate(values.docDate);
 
   return withTransaction(async (tx) => {
     const lines = await computeLines(tx, ctx, values.lines);
@@ -437,12 +418,12 @@ async function create(ctx: ServiceContext, input: SaleDraftInput): Promise<SaleD
 async function update(ctx: ServiceContext, input: SaleUpdateInput): Promise<SaleDetail> {
   assertCan(ctx.user, 'sale.write');
   assertCan(ctx.user, 'document.paymentSplit.write');
-  const { id, version, ...values } = parse(saleUpdateInputSchema, input);
+  const { id, version, ...values } = parseInput(saleUpdateInputSchema, input);
 
   return withTransaction(async (tx) => {
     await lockDraft(tx, ctx, id, version);
     const before = await loadDetail(tx, ctx, id);
-    const docDate = resolveDocDate(values.docDate, before.docDate);
+    const docDate = resolveStoreDate(values.docDate, before.docDate);
     const lines = await computeLines(tx, ctx, values.lines);
     const header = headerData(values, docDate, lines);
 
@@ -470,7 +451,7 @@ async function update(ctx: ServiceContext, input: SaleUpdateInput): Promise<Sale
 /** Deletes a draft and its lines (database §6.3); its number stays unused. */
 async function remove(ctx: ServiceContext, input: SaleDeleteInput): Promise<void> {
   assertCan(ctx.user, 'sale.write');
-  const { id, version } = parse(saleDeleteInputSchema, input);
+  const { id, version } = parseInput(saleDeleteInputSchema, input);
 
   await withTransaction(async (tx) => {
     await lockDraft(tx, ctx, id, version);
@@ -494,7 +475,7 @@ async function availability(
   input: SaleAvailabilityInput,
 ): Promise<StockAvailability[]> {
   assertCan(ctx.user, 'sale.write');
-  const { keys } = parse(saleAvailabilityInputSchema, input);
+  const { keys } = parseInput(saleAvailabilityInputSchema, input);
   const { prisma } = await import('@drinks/db');
   return inventory.getAvailable(prisma, ctx, keys);
 }

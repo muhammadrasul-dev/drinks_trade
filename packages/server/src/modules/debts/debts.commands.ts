@@ -3,14 +3,13 @@
 // STAFF gets FORBIDDEN (CLAUDE.md rule 6). Each is one transaction with the
 // locks of business-logic §2 (cashbox → debt); the writes themselves are
 // debts.open / debts.repay, cash moves only through cash.record.
-import { DebtSource, DomainError, ErrorCode, storeDateOf, validationError } from '@drinks/shared';
+import { DebtSource, DomainError, ErrorCode, storeDateOf, parseInput } from '@drinks/shared';
 import {
   type DebtOpenInput,
   debtOpenInputSchema,
   type DebtRepayInput,
   debtRepayInputSchema,
 } from '@drinks/shared/schemas';
-import type { z } from 'zod';
 
 import type { ServiceContext } from '../../core/context';
 import { resolveStoreDate } from '../../core/dates';
@@ -19,19 +18,13 @@ import { assertCan } from '../../core/rbac';
 import { withTransaction } from '../../core/tx';
 import * as debts from './debts.service';
 
-function parse<TSchema extends z.ZodType>(schema: TSchema, input: unknown): z.output<TSchema> {
-  const parsed = schema.safeParse(input);
-  if (!parsed.success) throw validationError(parsed.error);
-  return parsed.data;
-}
-
 /**
  * Debt given (RECEIVABLE: DEBT_GIVEN, cash OUT — the cashbox must cover it)
  * or taken (PAYABLE: DEBT_TAKEN, cash IN). Blank note → NOTE_REQUIRED.
  */
 async function open(ctx: ServiceContext, input: DebtOpenInput): Promise<{ id: string }> {
   assertCan(ctx.user, 'debt.write');
-  const values = parse(debtOpenInputSchema, input);
+  const values = parseInput(debtOpenInputSchema, input);
   const debtDate = resolveStoreDate(values.date);
 
   return withTransaction(async (tx) => {
@@ -57,7 +50,7 @@ async function repay(
   input: DebtRepayInput,
 ): Promise<Awaited<ReturnType<typeof debts.repay>>> {
   assertCan(ctx.user, 'debt.write');
-  const values = parse(debtRepayInputSchema, input);
+  const values = parseInput(debtRepayInputSchema, input);
   const repaidAt = resolveStoreDate(values.date);
 
   return withTransaction(async (tx) => {

@@ -14,7 +14,7 @@ import {
   type ProductOption,
   type ProductPage,
   type ProductRef,
-  validationError,
+  parseInput,
 } from '@drinks/shared';
 import {
   PRODUCT_PAGE_SIZE,
@@ -80,12 +80,6 @@ interface Snapshot {
   salePrice: number;
   minStock: number;
   expiryDate: string | null;
-}
-
-function parse<TSchema extends z.ZodType>(schema: TSchema, input: unknown): z.output<TSchema> {
-  const parsed = schema.safeParse(input);
-  if (!parsed.success) throw validationError(parsed.error);
-  return parsed.data;
 }
 
 /** `@db.Date` comes back as UTC midnight. */
@@ -284,7 +278,7 @@ async function deleteQuietly(key: string | null): Promise<void> {
  */
 async function list(ctx: ServiceContext, query: ProductListQuery = {}): Promise<ProductPage> {
   assertCan(ctx.user, 'product.read');
-  const { q, categoryId, brandId, archived, page = 1 } = parse(productListQuerySchema, query);
+  const { q, categoryId, brandId, archived, page = 1 } = parseInput(productListQuerySchema, query);
   const { prisma } = await import('@drinks/db');
   const where: Prisma.ProductWhereInput = {
     organizationId: ctx.organizationId,
@@ -315,7 +309,7 @@ async function list(ctx: ServiceContext, query: ProductListQuery = {}): Promise<
 /** One product of the organization (archived too); NOT_FOUND otherwise. */
 async function get(ctx: ServiceContext, input: ProductIdInput): Promise<Product> {
   assertCan(ctx.user, 'product.read');
-  const { id } = parse(productIdInputSchema, input);
+  const { id } = parseInput(productIdInputSchema, input);
   const { prisma } = await import('@drinks/db');
   const [product] = await withStock(prisma, ctx, [await findOwn(prisma, ctx, id)]);
   return product as Product;
@@ -323,7 +317,7 @@ async function get(ctx: ServiceContext, input: ProductIdInput): Promise<Product>
 
 async function create(ctx: ServiceContext, input: ProductCreateInput): Promise<Product> {
   assertCan(ctx.user, 'product.write');
-  const data = parse(productCreateInputSchema, input);
+  const data = parseInput(productCreateInputSchema, input);
   return write(async (tx) => {
     await assertCodesFree(tx, ctx, data);
     await assertRefSelectable(tx, ctx, 'category', data.categoryId);
@@ -350,7 +344,7 @@ async function create(ctx: ServiceContext, input: ProductCreateInput): Promise<P
  */
 async function update(ctx: ServiceContext, input: ProductUpdateInput): Promise<Product> {
   assertCan(ctx.user, 'product.write');
-  const { id, ...data } = parse(productUpdateInputSchema, input);
+  const { id, ...data } = parseInput(productUpdateInputSchema, input);
   return write(async (tx) => {
     const current = await findOwn(tx, ctx, id);
     const changes = diff(snapshot(current), { ...data });
@@ -393,7 +387,7 @@ async function setArchived(
   archived: boolean,
 ): Promise<Product> {
   assertCan(ctx.user, 'product.write');
-  const { id } = parse(productIdInputSchema, input);
+  const { id } = parseInput(productIdInputSchema, input);
   return write(async (tx) => {
     const current = await findOwn(tx, ctx, id);
     let row = current;
@@ -440,7 +434,7 @@ async function setImage(
   input: { id: string; data: Uint8Array },
 ): Promise<Product> {
   assertCan(ctx.user, 'product.write');
-  const { id } = parse(productIdInputSchema, { id: input.id });
+  const { id } = parseInput(productIdInputSchema, { id: input.id });
   const image = await processProductImage(input.data);
   const key = `products/${id}/${randomUUID()}.${PRODUCT_IMAGE_EXTENSION}`;
   const storage = getStorage();
@@ -477,7 +471,7 @@ async function setImage(
 /** Removes the image; no-op when there is none. */
 async function removeImage(ctx: ServiceContext, input: ProductIdInput): Promise<Product> {
   assertCan(ctx.user, 'product.write');
-  const { id } = parse(productIdInputSchema, input);
+  const { id } = parseInput(productIdInputSchema, input);
   let previous: string | null = null;
   const product = await write(async (tx) => {
     const current = await findOwn(tx, ctx, id);
@@ -514,7 +508,7 @@ export interface ProductImage {
 /** The stored image bytes; NOT_FOUND when the product or its image is missing. */
 async function readImage(ctx: ServiceContext, input: ProductIdInput): Promise<ProductImage> {
   assertCan(ctx.user, 'product.read');
-  const { id } = parse(productIdInputSchema, input);
+  const { id } = parseInput(productIdInputSchema, input);
   const { prisma } = await import('@drinks/db');
   const row = await prisma.product.findFirst({
     where: { id, organizationId: ctx.organizationId },

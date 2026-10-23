@@ -13,9 +13,9 @@ import {
   DomainError,
   ErrorCode,
   type SubWarehouseItem,
-  validationError,
   type WarehouseItem,
   type WarehouseOption,
+  parseInput,
 } from '@drinks/shared';
 import {
   type SubWarehouseCreateInput,
@@ -27,7 +27,6 @@ import {
   type WarehouseRenameInput,
   warehouseRenameInputSchema,
 } from '@drinks/shared/schemas';
-import type { z } from 'zod';
 
 import type { ServiceContext } from '../../core/context';
 import { lockWarehouses } from '../../core/locks';
@@ -67,12 +66,6 @@ interface WarehouseRow {
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────
-
-function parse<TSchema extends z.ZodType>(schema: TSchema, input: unknown): z.output<TSchema> {
-  const parsed = schema.safeParse(input);
-  if (!parsed.success) throw validationError(parsed.error);
-  return parsed.data;
-}
 
 function toSubItem(row: SubRow, stocked: ReadonlySet<string>): SubWarehouseItem {
   return {
@@ -230,7 +223,7 @@ async function setWarehouseArchived(
   archived: boolean,
 ): Promise<WarehouseItem> {
   assertCan(ctx.user, 'warehouse.write');
-  const { id } = parse(warehouseIdInputSchema, input);
+  const { id } = parseInput(warehouseIdInputSchema, input);
   return withTransaction(async (tx) => {
     await lockWarehouses(tx, ctx.storeId, [id], { exclusive: true });
     const current = await findWarehouse(tx, ctx, id);
@@ -357,7 +350,7 @@ export const warehouses = {
 
   async create(ctx: ServiceContext, input: WarehouseCreateInput): Promise<WarehouseItem> {
     assertCan(ctx.user, 'warehouse.write');
-    const { name } = parse(warehouseCreateInputSchema, input);
+    const { name } = parseInput(warehouseCreateInputSchema, input);
     return write('warehouse', async (tx) => {
       await assertWarehouseNameFree(tx, ctx, name);
       const row = await tx.warehouse.create({
@@ -377,7 +370,7 @@ export const warehouses = {
   /** Archived warehouses can be renamed too (e.g. before restoring). */
   async rename(ctx: ServiceContext, input: WarehouseRenameInput): Promise<WarehouseItem> {
     assertCan(ctx.user, 'warehouse.write');
-    const { id, name } = parse(warehouseRenameInputSchema, input);
+    const { id, name } = parseInput(warehouseRenameInputSchema, input);
     return write('warehouse', async (tx) => {
       const current = await findWarehouse(tx, ctx, id);
       if (current.name !== name) {
@@ -419,7 +412,7 @@ async function setSubArchived(
   archived: boolean,
 ): Promise<SubWarehouseItem> {
   assertCan(ctx.user, 'warehouse.write');
-  const { id } = parse(warehouseIdInputSchema, input);
+  const { id } = parseInput(warehouseIdInputSchema, input);
   return withTransaction(async (tx) => {
     // warehouse_id never changes, so it is safe to read before the lock.
     const { warehouseId } = await findSub(tx, ctx, id);
@@ -460,7 +453,7 @@ export const subWarehouses = {
    */
   async create(ctx: ServiceContext, input: SubWarehouseCreateInput): Promise<SubWarehouseItem> {
     assertCan(ctx.user, 'warehouse.write');
-    const { warehouseId, name } = parse(subWarehouseCreateInputSchema, input);
+    const { warehouseId, name } = parseInput(subWarehouseCreateInputSchema, input);
     return write('sub_warehouse', async (tx) => {
       // FOR SHARE: a concurrent archive of the parent waits, and vice versa.
       const [warehouse] = await lockWarehouses(tx, ctx.storeId, [warehouseId]);
@@ -488,7 +481,7 @@ export const subWarehouses = {
 
   async rename(ctx: ServiceContext, input: WarehouseRenameInput): Promise<SubWarehouseItem> {
     assertCan(ctx.user, 'warehouse.write');
-    const { id, name } = parse(warehouseRenameInputSchema, input);
+    const { id, name } = parseInput(warehouseRenameInputSchema, input);
     return write('sub_warehouse', async (tx) => {
       const current = await findSub(tx, ctx, id);
       if (current.name !== name) {
