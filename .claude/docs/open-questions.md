@@ -20,6 +20,8 @@ SRS'dagi biznes savollar yopilgan. Bu yerda — arxitektura va DB loyihalashda c
 
 **2026-10-23 (T-801):** OQ-28 ochildi — qoldiq hisobotidagi mahsulotlar va tannarx ustunlari; tavsiya bo'yicha qilingan, javob kutilmoqda.
 
+**2026-10-23 (T-603):** OQ-34 ochildi — inventarizatsiya banneri boshqa qurilmadagi o'zgarishni qachon ko'rsatadi; tavsiya bo'yicha qilingan, javob kutilmoqda.
+
 | # | Savol | Tavsiya | Holat |
 |---|---|---|---|
 | OQ-01 | Storno qilingan savdo P&L'da qaysi sanada aks etadi? | Asl hujjat sanasida (hujjat davr hisobidan butunlay chiqadi) | Yopilgan — asl sanada (A) |
@@ -54,6 +56,7 @@ SRS'dagi biznes savollar yopilgan. Bu yerda — arxitektura va DB loyihalashda c
 | OQ-30 | Qo'lda kiritilgan kassa yozuvi storno'si (T-703) qaysi sana bilan yoziladi: asl yozuv sanasi yoki storno payti? | Asl yozuvning `tx_date` si (OQ-01/OQ-26 kabi: xato yozuv o'z kunida nolga tushadi, jurnalda asl yozuv yonida turadi) | Ochiq — tavsiya bo'yicha qilingan (T-703) |
 | OQ-31 | Savdo storno qilinayotganda tovar qaytadigan sub-ombor (yoki uning ombori) arxivlangan bo'lsa? | Storno bloklanadi (`ENTITY_ARCHIVED`) — avval sub-omborni tiklash kerak | Ochiq — tavsiya bo'yicha qilingan (T-503), javob kutilmoqda |
 | OQ-32 | Inventarizatsiyada arxivlangan mahsulotni sanash mumkinmi? | Faqat shu sub-omborda qoldig'i bor bo'lsa (hisobdan chiqarish uchun); qoldig'i yo'q joyga arxivdagi mahsulotni qo'shish → `ENTITY_ARCHIVED` | Ochiq — tavsiya bo'yicha qilingan (T-601) |
+| OQ-34 | Inventarizatsiya banneri boshqa qurilmada (boshqa xodim) ochilgan yoki yopilgan sanoqni qachon ko'rsatadi? | Keyingi bosishda: banner har sahifa o'tishida va tab qayta ochilganda serverdan qayta o'qiladi (bitta yengil so'rov), taymer bilan so'rov yo'q | Ochiq — tavsiya bo'yicha qilingan (T-603) |
 
 ---
 
@@ -214,3 +217,10 @@ T-601. OQ-20 (A) qoldig'i bor mahsulotni arxivlashga ruxsat beradi — bunday ma
 - **A (tavsiya, T-601 da shunday):** arxivdagi mahsulot sanoq formasida qoldig'i bor sub-omborlarda chiqadi (belgi bilan) va sanaladi — masalan, singan/yaroqsiz tovarni 0 qilib hisobdan chiqarish shu yo'l bilan. Qoldig'i yo'q sub-omborga arxivdagi mahsulotni qo'shish → `ENTITY_ARCHIVED { entity: 'product', name }` (arxivdagi tovar yangi joyga "kirmaydi"). "Qo'shish" ro'yxatida faqat faol mahsulotlar.
 - **B:** arxivdagi mahsulot umuman sanalmaydi — qoldig'i hisobotda abadiy qoladi, uni tushirish uchun avval arxivdan chiqarish kerak.
 B ga o'tish — `stock-counts.service.ts` `computeLines` da arxivdagi mahsulotni har doim rad etish (+ test).
+
+### OQ-34 — Inventarizatsiya banneri qachon yangilanadi
+T-603. Banner ochiq sanoqlarni server'da, `(app)` layout bilan o'qiydi. Lekin Next.js layout'ni sahifadan sahifaga (client navigatsiya) o'tganda qayta render qilmaydi: faqat shunga tayansak, bir xodim sanoqni ochsa yoki yopsa, boshqa qurilmadagi xodim buni sahifani qayta yuklaguncha (F5) yoki o'zi biror inventarizatsiya amalini bajarguncha ko'rmaydi (brauzerda tasdiqlandi). BR-8 bannerdan "unutilib savdoni to'xtatib qo'ymaslik"ni kutadi; qanchalik tez yangilanishi aytilmagan.
+- **A (tavsiya, T-603 da shunday):** birinchi ro'yxat layout bilan keladi, keyin banner har sahifa o'tishida va brauzer tabi qayta ko'ringanda `GET /api/stock-counts/open` ni o'qiydi (bitta kichik so'rov, taymer yo'q). Boshqa qurilmadagi o'zgarish keyingi bosishda ko'rinadi; bitta sahifada qimirlamay turgan xodim uni ko'rmaydi (savdoni bajarishda baribir `WAREHOUSE_IN_STOCK_COUNT` xabari chiqadi).
+- **B:** faqat server render — qo'shimcha so'rov yo'q, lekin boshqa qurilmada banner F5 gacha eskirgan bo'lib qoladi.
+- **C:** davriy so'rov (masalan, 30 soniyada) — ochiq sahifada ham deyarli darhol, lekin har ochiq tab doimiy yuklama beradi.
+B ga o'tish — `open-stock-count-banner.tsx` dagi `useEffect` ni va `app/api/stock-counts/open/route.ts` ni olib tashlash; C ga — o'sha effektga `setInterval` qo'shish.
