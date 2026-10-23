@@ -7,24 +7,24 @@ import path from 'node:path';
 
 import { expect, type Page, test } from '@playwright/test';
 
-import { OWNER, REPO_ROOT, STAFF } from '../env';
+import { DOCS_VIEWPORT, OWNER, REPO_ROOT, STAFF } from '../env';
 import {
   choose,
   createPostedPurchase,
   createProduct,
   createSaleDraft,
+  createStaffUser,
   createWarehouse,
   docTitle,
   login,
   type NewProduct,
+  openStockCount,
+  pickProduct,
   postDocument,
 } from '../support/app';
 import { msg } from '../support/i18n';
 
 const OUT_DIR = path.join(REPO_ROOT, '.claude/docs/images/user-guide');
-
-/** Same as playwright.docs.config.ts. */
-const DESKTOP = { width: 1440, height: 900 };
 
 /**
  * Writes `<name>.png` once the page has settled (no toasts, fonts loaded).
@@ -165,10 +165,7 @@ test('user guide screenshots', async ({ browser, page }) => {
     qty: 1,
   });
   await page.goto('/uz/sales/new');
-  const picker = page.getByRole('combobox', { name: msg('sales.form.product'), exact: true });
-  await picker.click();
-  await picker.fill(TEA.name);
-  await page.getByRole('option', { name: TEA.name }).click();
+  await pickProduct(page, msg('sales.form.product'), TEA.name);
   await choose(page, msg('sales.form.subWarehouse'), 'Peshtaxta');
   await page.getByLabel(msg('sales.form.qty'), { exact: true }).fill('6');
   await page.getByRole('button', { name: msg('sales.form.restToCash'), exact: true }).click();
@@ -177,12 +174,8 @@ test('user guide screenshots', async ({ browser, page }) => {
   await expect(docTitle(page)).toContainText(msg('enums.DocStatus.DRAFT'));
 
   // §8 — a stock count on the shop floor: two pieces of tea are missing.
-  await page.goto('/uz/stock-counts');
-  await page.getByRole('button', { name: msg('stockCounts.open.button'), exact: true }).click();
-  const dialog = page.getByRole('dialog');
-  await choose(dialog, msg('stockCounts.open.warehouse'), "Do'kon zali");
-  await dialog.getByRole('button', { name: msg('stockCounts.open.submit'), exact: true }).click();
-  await expect(dialog).toBeHidden();
+  await openStockCount(page, "Do'kon zali");
+  const countUrl = page.url();
   const countLabel = { product: TEA.name, sub: 'Peshtaxta' };
   await page.getByLabel(msg('stockCounts.form.blocksOf', countLabel), { exact: true }).fill('3');
   await page.getByLabel(msg('stockCounts.form.piecesOf', countLabel), { exact: true }).fill('10');
@@ -193,8 +186,7 @@ test('user guide screenshots', async ({ browser, page }) => {
   await page.goto('/uz');
   await shot(page, '02-dashboard', true);
 
-  await page.goto('/uz/stock-counts');
-  await page.getByRole('link', { name: /I-\d+/ }).first().click();
+  await page.goto(countUrl);
   await postDocument(page, msg('stockCounts.post.button'));
   await expect(docTitle(page)).toContainText(msg('enums.StockCountStatus.POSTED'));
 
@@ -222,21 +214,13 @@ test('user guide screenshots', async ({ browser, page }) => {
   await shot(page, '14-pnl', true);
 
   // §12–13 — users and the audit log.
-  await page.goto('/uz/users');
-  await page.getByRole('button', { name: msg('users.add'), exact: true }).click();
-  const userDialog = page.getByRole('dialog');
-  await userDialog.getByLabel(msg('users.fullName'), { exact: true }).fill('Aliyev Vali');
-  await userDialog.getByLabel(msg('users.username'), { exact: true }).fill(STAFF.username);
-  await userDialog.getByLabel(msg('users.password'), { exact: true }).fill(STAFF.password);
-  await userDialog.getByLabel(msg('users.confirmPassword'), { exact: true }).fill(STAFF.password);
-  await userDialog.getByRole('button', { name: msg('common.save'), exact: true }).click();
-  await expect(userDialog).toBeHidden();
+  await createStaffUser(page, { ...STAFF, fullName: 'Aliyev Vali' });
   await shot(page, '15-users');
   await page.goto('/uz/audit');
   await shot(page, '16-audit');
 
   // §3 — what a STAFF member sees (own browser): a shorter menu, no cost or profit.
-  const staff = await browser.newPage({ viewport: DESKTOP });
+  const staff = await browser.newPage({ viewport: DOCS_VIEWPORT });
   await login(staff, STAFF);
   await staff.goto('/uz/reports/sales');
   await shot(staff, '17-staff-sales-report', true);

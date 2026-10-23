@@ -34,7 +34,7 @@ export async function choose(scope: Page | Locator, label: string, option: strin
 }
 
 /** Searches the document-line product picker and picks the product. */
-async function pickProduct(page: Page, label: string, product: string): Promise<void> {
+export async function pickProduct(page: Page, label: string, product: string): Promise<void> {
   const picker = page.getByRole('combobox', { name: label, exact: true });
   await picker.click();
   await picker.fill(product);
@@ -65,6 +65,24 @@ async function fillNameDialog(page: Page, name: string): Promise<void> {
   await dialog.getByLabel(msg('warehouses.name'), { exact: true }).fill(name);
   await dialog.getByRole('button', { name: msg('common.save'), exact: true }).click();
   await expect(dialog).toBeHidden();
+}
+
+export interface NewUser extends Credentials {
+  fullName: string;
+}
+
+/** STAFF account through the Users page (the OWNER is signed in). */
+export async function createStaffUser(page: Page, user: NewUser): Promise<void> {
+  await page.goto('/uz/users');
+  await page.getByRole('button', { name: msg('users.add'), exact: true }).click();
+  const dialog = page.getByRole('dialog');
+  await dialog.getByLabel(msg('users.fullName'), { exact: true }).fill(user.fullName);
+  await dialog.getByLabel(msg('users.username'), { exact: true }).fill(user.username);
+  await dialog.getByLabel(msg('users.password'), { exact: true }).fill(user.password);
+  await dialog.getByLabel(msg('users.confirmPassword'), { exact: true }).fill(user.password);
+  await dialog.getByRole('button', { name: msg('common.save'), exact: true }).click();
+  await expect(dialog).toBeHidden();
+  await expect(page.getByRole('row').filter({ hasText: user.username })).toBeVisible();
 }
 
 export interface NewProduct {
@@ -159,6 +177,20 @@ export async function createSaleDraft(page: Page, sale: NewSale): Promise<string
   await expect(page).toHaveURL(new RegExp(`/uz/sales/${UUID}$`));
   await expect(docTitle(page)).toContainText(msg('enums.DocStatus.DRAFT'));
   return page.url();
+}
+
+/** Opens a stock count on `warehouse`; lands on its page and returns its number (I-…). */
+export async function openStockCount(page: Page, warehouse: string): Promise<string> {
+  await page.goto('/uz/stock-counts');
+  await page.getByRole('button', { name: msg('stockCounts.open.button'), exact: true }).click();
+  const dialog = page.getByRole('dialog');
+  await choose(dialog, msg('stockCounts.open.warehouse'), warehouse);
+  await dialog.getByRole('button', { name: msg('stockCounts.open.submit'), exact: true }).click();
+  await expect(dialog).toBeHidden();
+  await expect(page).toHaveURL(new RegExp(`/uz/stock-counts/${UUID}$`));
+  const number = (await docTitle(page).textContent())?.match(/I-\d+/)?.[0];
+  if (!number) throw new Error('No stock count number in the page title');
+  return number;
 }
 
 /** "Bajarish" on a saved draft and the confirmation dialog's own "Bajarish". */

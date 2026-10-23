@@ -9,6 +9,9 @@ export const E2E_DIR = import.meta.dirname;
 export const PORT = Number(process.env.E2E_PORT ?? 3911);
 export const BASE_URL = `http://localhost:${PORT}`;
 
+/** Viewport of the user-guide screenshots (playwright.docs.config.ts). */
+export const DOCS_VIEWPORT = { width: 1440, height: 900 };
+
 export const DATABASE_URL =
   process.env.E2E_DATABASE_URL ?? 'postgresql://drinks:drinks@localhost:5433/drinks_trade_e2e';
 

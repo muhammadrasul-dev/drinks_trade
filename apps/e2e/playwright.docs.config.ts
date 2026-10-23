@@ -4,6 +4,7 @@
 // through the UI and writes the PNGs to .claude/docs/images/user-guide/.
 import { defineConfig, devices } from '@playwright/test';
 
+import { DOCS_VIEWPORT } from './env';
 import e2e from './playwright.config';
 
 export default defineConfig({
@@ -17,7 +18,7 @@ export default defineConfig({
   projects: [
     {
       name: 'docs',
-      use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } },
+      use: { ...devices['Desktop Chrome'], viewport: DOCS_VIEWPORT },
     },
   ],
 });

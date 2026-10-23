@@ -6,12 +6,12 @@ import { expect, type Page, test } from '@playwright/test';
 
 import { STORAGE_STATE } from '../env';
 import {
-  choose,
   createPostedPurchase,
   createProduct,
   createSaleDraft,
   createWarehouse,
   docTitle,
+  openStockCount,
   postDocument,
 } from '../support/app';
 import { msg } from '../support/i18n';
@@ -45,32 +45,23 @@ test('stock count: posting a sale in the counted warehouse waits for the count',
     qty: 3,
   });
 
-  // Open a count on the warehouse.
-  await page.goto('/uz/stock-counts');
-  await page.getByRole('button', { name: msg('stockCounts.open.button'), exact: true }).click();
-  const dialog = page.getByRole('dialog');
-  await choose(dialog, msg('stockCounts.open.warehouse'), WAREHOUSE);
-  await dialog.getByRole('button', { name: msg('stockCounts.open.submit'), exact: true }).click();
-  await expect(dialog).toBeHidden();
-  await expect(page).toHaveURL(/\/uz\/stock-counts\/[0-9a-f-]{36}$/);
-  const countNumber = (await docTitle(page).textContent())?.match(/I-\d+/)?.[0];
-  expect(countNumber).toBeTruthy();
+  const countNumber = await openStockCount(page, WAREHOUSE);
 
   // Back on the sale draft: the banner names the warehouse and the count.
   await page.goto(saleUrl);
   await expect(banner(page)).toContainText(
-    msg('stockCounts.banner.single', { warehouse: WAREHOUSE, number: countNumber! }),
+    msg('stockCounts.banner.single', { warehouse: WAREHOUSE, number: countNumber }),
   );
 
   await postDocument(page, msg('sales.post.button'));
   await expect(page.getByRole('main').getByRole('alert')).toContainText(
-    msg('sales.post.stockCount', { warehouse: WAREHOUSE, number: countNumber! }),
+    msg('sales.post.stockCount', { warehouse: WAREHOUSE, number: countNumber }),
   );
   await page.reload();
   await expect(docTitle(page)).toContainText(msg('enums.DocStatus.DRAFT'));
 
   // Cancel the count (from the banner link): the block is lifted at once.
-  await banner(page).getByRole('link', { name: countNumber! }).click();
+  await banner(page).getByRole('link', { name: countNumber }).click();
   await expect(page).toHaveURL(/\/uz\/stock-counts\/[0-9a-f-]{36}$/);
   await postDocument(page, msg('stockCounts.cancel.button'));
   await expect(docTitle(page)).toContainText(msg('enums.StockCountStatus.CANCELLED'));
