@@ -43,6 +43,7 @@ SRS'dagi biznes savollar yopilgan. Bu yerda — arxitektura va DB loyihalashda c
 | OQ-20 | Omborda qoldig'i bor mahsulotni arxivlash mumkinmi? | Ha — ruxsat, tasdiqlash oynasida qolgan miqdor va "sotib bo'lmaydi" ogohlantirishi; arxivdan istalgan payt chiqariladi | Yopilgan — A: ruxsat, ogohlantirish bilan |
 | OQ-24 | Kassa jurnali qaysi tartibda ko'rsatiladi: hisobot sanasi (`tx_date`) yoki kiritilgan vaqt bo'yicha? | `tx_date` bo'yicha, yangisi tepada (teng bo'lsa — keyin kiritilgani tepada); o'tgan sana bilan kiritilgan yozuvlarda `balance_after` ketma-ket bo'lmasligi mumkin | Yopilgan — A (2026-10-23) |
 | OQ-25 | Audit jurnalida do'konga bog'lanmagan (`store_id IS NULL`) yozuvlar — muvaffaqiyatsiz kirish (`LOGIN_FAILED`) — Egasiga ko'rinadimi? | Ha — o'z tashkilotidagi foydalanuvchi haqidagilari va noma'lum login bilan urinishlar | Yopilgan — B (foydalanuvchi, 2026-10-23) |
+| OQ-26 | Savdo qoralamasi saqlangandan keyin mahsulot narxi o'zgarsa, bajarish (T-502) qaysi narx bilan o'tadi? | Bajarish rad etiladi (`SALE_PRICE_CHANGED { lines }`), foydalanuvchi qoralamani qayta saqlaydi — yangi narx va jami ko'rinadi (OQ-06 kabi) | Ochiq — T-502 dan oldin javob kerak |
 
 ---
 
@@ -155,3 +156,9 @@ T-901. `audit_log.store_id` ixtiyoriy: `LOGIN_FAILED` (`auth.service`) sessiyasi
 - **A (tavsiya):** Egasi o'z do'koni yozuvlarini **va** `store_id IS NULL`, `entity_type = 'user'` bo'lgan yozuvlarni ko'radi — boshqa tashkilot foydalanuvchisi haqidagilari bundan mustasno. Noma'lum login bilan urinishlar ham ko'rinadi (v1 da bitta tashkilot, ular kimga tegishli ekanini aniqlab bo'lmaydi). Egasi parolni taxmin qilish urinishlarini ko'ra oladi.
 - **B (tanlandi, T-901 da shunday):** faqat `store_id = joriy do'kon` — muvaffaqiyatsiz kirishlar jurnalda ko'rinmaydi (faqat `login_attempt` blokida ishlaydi).
 A ga qaytish — `audit.queries.ts` dagi `where` ga `store_id IS NULL`, `entity_type = 'user'` (o'z tashkiloti foydalanuvchilari) shartini `OR` bilan qo'shish, `LOGIN_FAILED` ni `AUDIT_ACTIONS` va tarjimalarga qaytarish (+ test).
+
+### OQ-26 — Qoralamadan keyin narx o'zgarishi
+T-501. Savdo qatori narxni qoralama **saqlanganda** mahsulotdan nusxalaydi (business-logic §4.1 4-qadam, OQ-05, OQ-15). Qoralama ochiq turganida Egasi/xodim mahsulot narxini o'zgartirsa, saqlangan `unit_price` eskirib qoladi. §4.2 bu holatni aytmaydi. Forma har doim joriy narxni ko'rsatadi va qayta saqlashda uni yozadi — savol faqat qayta saqlanmagan qoralamani bajarish haqida.
+- **A (tavsiya):** bajarishda `line.unitPrice ≠ product.salePrice` bo'lsa → `SALE_PRICE_CHANGED { lines: [{ lineNo, product, unitPrice, salePrice }] }`; foydalanuvchi qoralamani qayta saqlaydi (yangi jami va to'lov qismlari ko'rinadi). BR-2 "bitta narx" saqlanadi, kassir pulni eski summada olmaydi. OQ-06 (`UNITS_PER_BLOCK_CHANGED`) bilan bir xil yo'l. Yangi xato kodi kerak.
+- **B:** saqlangan narx bilan bajariladi — mijozga aytilgan summa o'zgarmaydi, lekin narx o'zgargandan keyin eski narxda sotish mumkin bo'ladi.
+- **C:** bajarishda narx jimgina qayta hisoblanadi — jami o'zgaradi va to'lov qismlari mos kelmay `PAYMENT_SPLIT_MISMATCH` beradi (tushunarsiz xato), tavsiya etilmaydi.

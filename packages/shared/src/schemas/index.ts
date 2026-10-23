@@ -5,5 +5,6 @@ export * from './warehouses';
 export * from './users';
 export * from './product';
 export * from './purchase';
+export * from './sale';
 export * from './cash';
 export * from './audit';

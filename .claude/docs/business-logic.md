@@ -101,6 +101,14 @@ Qoralama yaratish/tahrirlash bloklanmaydi (BR-8).
 8. Istalgan foydalanuvchi istalgan qoralamani tahrirlay oladi (OQ-14); audit kim tahrirlaganini yozadi.
 9. Audit `CREATE`/`UPDATE` (+ `backdated` agar `docDate < bugun`).
 
+**Amalda (T-501)** — `packages/server/src/modules/sales/sales.service.ts` (`sales.list/get/create/update/remove/availability/productOptions`, ruxsat `sale.write`; `create`/`update` — `document.paymentSplit.write` ham; ikkala rol):
+- Kiritma — `@drinks/shared/schemas` `saleDraftInputSchema` (forma ham shu): 1–200 qator, `inputQty` 1…1 000 000, qatorda narx **yo'q**; to'lov qismlari ≥ 0, izoh ≤ 500 (bo'sh → `null`). Qator yoki hujjat jami xavfsiz butun sondan oshsa → `VALIDATION_FAILED`.
+- Sana, faol/begona mahsulot va sub-ombor (`NOT_FOUND` / `ENTITY_ARCHIVED`), `BLOCK` → joriy `unitsPerBlock`, raqamlash, `lockSale` + `version`, to'liq almashtirish, o'chirish va audit — xarid qoralamasi (§5.1 "Amalda") bilan bir xil.
+- 4-qadam: `unitPrice` — saqlash paytidagi `product.salePrice`; har saqlashda qayta nusxalanadi (forma ham joriy narxni ko'rsatadi). Saqlangandan keyin narx o'zgarsa bajarishda nima bo'lishi — OQ-26 (T-502).
+- 6-qadam (FR-3.3): qoralama DTO'sida har qatorga `available` (shu (sub-ombor, mahsulot) juftining joriy qoldig'i, `inventory.getAvailable`) va `stockShort` — juftning **barcha qatorlari yig'indisi** qoldiqdan oshsa, shu juftning har qatori belgilanadi (bajarishdagi 7-qadam bilan bir xil hisob; `@drinks/shared` `lineStock`). Hujjatda `stockShort` — birorta qator belgilangan. Saqlash bloklanmaydi. Bajarilgan/storno hujjatda `available = null`, `stockShort = false`. Tannarx maydonlari DTO'da yo'q.
+- Forma: jonli tekshiruv — `sales.availability(keys)` (yangi juftlar bir marta so'raladi), saqlangan qoralama DTO qiymatlari bilan boshlanadi. "Bajarish" T-502 gacha doim o'chiq; keyin ham saqlanmagan o'zgarish yoki `stockShort` bo'lsa o'chiq qoladi.
+- Ro'yxat: holat, sana oralig'i (Toshkent kunlari), raqam qismi (`45` → `S-000045`); yangilari birinchi, 50 tadan. Mahsulot tanlovi — `sales.productOptions(ctx)` (faol, `salePrice` bilan).
+
 ### 4.2 Bajarish (BR-5, BR-7, BR-9)
 ```
 BEGIN

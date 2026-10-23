@@ -72,7 +72,7 @@ Kassada pul yetmasa bajarilmaydi ("Kassada mablag' yetarli emas").
 ## 7. Savdo
 1. **Savdolar** → "Yangi savdo".
 2. Qator: mahsulot (nom yoki shtrix-kod) → **qaysi sub-ombordan** → soni (dona/blok). Narx mahsulot kartochkasidan avtomatik olinadi va savdoda o'zgartirilmaydi (narxni o'zgartirish — **Mahsulotlar** bo'limida).
-3. Qatorda qoldiq ko'rinadi. Yetmasa qator **qizil** bo'ladi va **Bajarish** tugmasi o'chadi.
+3. Qatorda shu sub-ombordagi qoldiq ko'rinadi. Yetmasa qator **qizil** bo'ladi va **Bajarish** tugmasi o'chadi (bir mahsulot bir sub-ombordan bir necha qatorda bo'lsa, qatorlar qo'shib hisoblanadi). Bunday qoralamani **saqlash mumkin** — keyin qoldiq kelganda yoki miqdorni kamaytirib bajarasiz.
 4. To'lov: Naqd + Karta + Nasiya = jami.
 5. **Bajarish** — tovar chiqadi, pul kassaga tushadi, nasiya "Menga qarz"ga tushadi.
 

@@ -526,6 +526,91 @@
       "archivedItem": "«{name}» arxivlangan — qatorni oʻzgartiring."
     }
   },
+  "sales": {
+    "title": "Savdo",
+    "add": "Yangi savdo",
+    "newTitle": "Yangi savdo",
+    "docTitle": "Savdo {number}",
+    "docDescription": "{date} · {author}",
+    "empty": "Savdo topilmadi.",
+    "filters": {
+      "label": "Filtrlar",
+      "number": "Raqam",
+      "status": "Holati",
+      "allStatuses": "Barcha holatlar",
+      "from": "dan",
+      "to": "gacha"
+    },
+    "columns": {
+      "number": "Raqam",
+      "date": "Sana",
+      "status": "Holati",
+      "total": "Summa",
+      "payment": "Toʻlov",
+      "lines": "Qatorlar",
+      "author": "Kiritgan"
+    },
+    "payment": {
+      "cash": "Naqd",
+      "card": "Karta",
+      "credit": "Nasiya"
+    },
+    "pagination": {
+      "label": "Sahifalar",
+      "range": "{from}–{to} / {total}",
+      "prev": "Oldingi",
+      "next": "Keyingi"
+    },
+    "view": {
+      "postedAt": "Bajarilgan",
+      "reversedAt": "Storno qilingan"
+    },
+    "post": {
+      "button": "Bajarish",
+      "saveFirst": "Oʻzgarishlar saqlanmagan — bajarishdan oldin saqlang.",
+      "short": "Qoldiq yetmaydigan qatorlar bor — qoralamani saqlash mumkin, lekin bajarib boʻlmaydi."
+    },
+    "form": {
+      "date": "Sana",
+      "note": "Izoh",
+      "notePlaceholder": "Masalan, mijoz ismi",
+      "lines": "Qatorlar",
+      "product": "Mahsulot",
+      "subWarehouse": "Sub-ombordan",
+      "unit": "Birlik",
+      "qty": "Soni",
+      "price": "Narxi (1 dona)",
+      "available": "Qoldiq",
+      "lineTotal": "Summa",
+      "productSearch": "Nom, SKU yoki shtrix-kod",
+      "noProducts": "Mahsulot topilmadi",
+      "pickSubWarehouse": "Tanlang",
+      "pieces": "= {count} dona",
+      "short": "Qoldiq yetmaydi: bu sub-omborda {available} dona bor, shu mahsulotga jami {required} dona kerak.",
+      "removeLine": "{n}-qatorni oʻchirish",
+      "addLine": "Qator qoʻshish",
+      "noLines": "Kamida bitta qator kiriting.",
+      "payment": "Toʻlov",
+      "total": "Jami",
+      "paidCash": "Naqd",
+      "paidCard": "Karta",
+      "paidCredit": "Nasiya",
+      "splitOk": "Toʻlov qismlari jami summaga teng.",
+      "splitUnder": "Toʻlov yetishmayapti:",
+      "splitOver": "Toʻlov ortiqcha:",
+      "restToCash": "Qolganini naqdga",
+      "creditNote": "Nasiya bor — bajarishdan oldin izohga kimga berilganini yozing.",
+      "reload": "Sahifani yangilash",
+      "back": "Roʻyxatga qaytish",
+      "delete": "Oʻchirish",
+      "deleteTitle": "{number} qoralamasini oʻchirasizmi?",
+      "deleteDescription": "Qoralama butunlay oʻchiriladi, raqami qayta ishlatilmaydi.",
+      "created": "{number} qoralamasi saqlandi",
+      "deleted": "{number} oʻchirildi",
+      "archivedOption": "{name} (arxiv)",
+      "archivedItem": "«{name}» arxivlangan — qatorni oʻzgartiring."
+    }
+  },
   "audit": {
     "title": "Audit jurnali",
     "description": "Kim, qachon va nimani oʻzgartirgani. Yozuvlar oʻzgartirilmaydi va oʻchirilmaydi.",
