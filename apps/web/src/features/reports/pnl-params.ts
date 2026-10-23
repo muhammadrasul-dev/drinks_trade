@@ -1,4 +1,4 @@
-import { storeToday } from '@drinks/shared';
+import { addMonths, addStoreDays, lastDayOfMonth, storeToday } from '@drinks/shared';
 import type { PnlReportQuery } from '@drinks/shared/schemas';
 
 import { dateParam, firstParam, hrefWith, type SearchParams } from '@/lib/search-params';
@@ -29,13 +29,6 @@ const YEAR = /^[1-9]\d{3}$/;
 const monthOf = (day: string) => day.slice(0, 7);
 const yearOf = (day: string) => day.slice(0, 4);
 
-/** The last day of a `YYYY-MM` month. */
-function lastDayOf(month: string): string {
-  const [year, m] = month.split('-').map(Number);
-  const last = new Date(Date.UTC(year!, m!, 0)).getUTCDate();
-  return `${month}-${String(last).padStart(2, '0')}`;
-}
-
 /** The current month: the page's default period (OQ-36). */
 export function currentMonthPeriod(today: string = storeToday()): PnlPeriod {
   return { kind: 'month', month: monthOf(today) };
@@ -65,7 +58,7 @@ export function pnlPeriodRange(period: PnlPeriod): PnlReportQuery {
     case 'day':
       return { from: period.day, to: period.day };
     case 'month':
-      return { from: `${period.month}-01`, to: lastDayOf(period.month) };
+      return { from: `${period.month}-01`, to: lastDayOfMonth(period.month) };
     case 'year':
       return { from: `${period.year}-01-01`, to: `${period.year}-12-31` };
     case 'range':
@@ -89,16 +82,6 @@ export function pnlReportHref(period: PnlPeriod, today: string = storeToday()): 
   }
 }
 
-function addDays(day: string, days: number): string {
-  const [y, m, d] = day.split('-').map(Number);
-  return new Date(Date.UTC(y!, m! - 1, d! + days)).toISOString().slice(0, 10);
-}
-
-function addMonths(month: string, months: number): string {
-  const [y, m] = month.split('-').map(Number);
-  return new Date(Date.UTC(y!, m! - 1 + months, 1)).toISOString().slice(0, 7);
-}
-
 /**
  * The previous (`-1`) or next (`1`) day / month / year; a range has no step
  * (undefined). Steps never go past the current one: a future period is empty.
@@ -111,7 +94,7 @@ export function shiftPnlPeriod(
   let next: PnlPeriod;
   switch (period.kind) {
     case 'day':
-      next = { kind: 'day', day: addDays(period.day, step) };
+      next = { kind: 'day', day: addStoreDays(period.day, step) };
       break;
     case 'month':
       next = { kind: 'month', month: addMonths(period.month, step) };
