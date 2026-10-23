@@ -295,6 +295,7 @@ COMMIT
 - **Maxfiylik (6-qoida):** `stockCount.amount.read` (faqat OWNER) bo'lmasa DTO'da `avgCost`, `diffAmount`, `estimate`, `shortageAmount`, `surplusAmount` kalitlari **yo'q**. OWNER uchun `estimate` — joriy qatorlar bo'yicha §6.2 5–6-qadam (mahsulot bo'yicha ombor jami farqi × avg, sub-omborlar orasidagi farq 0).
 - **Ro'yxat:** ochiq (DRAFT) sanoqlar birinchi (BR-8: yaqqol ko'rinadi), keyin sana/raqam kamayishi; filtr — holat, ombor, raqam qismi; 50 tadan.
 - UI: `/stock-counts` (ro'yxat + "Yangi inventarizatsiya" oynasi — ochiq sanoqli ombor tanlanmaydi), `/stock-counts/[id]` (DRAFT — sanoq formasi: sariq blok ogohlantirishi, sub-ombor bo'yicha guruhlar, qidiruv, blok + dona, jonli farq, "N ta qator sanalmagan", topilgan tovarni qo'shish, OWNER — farq summasi va taxminiy kamomad/ortiqcha; boshqa holat — faqat o'qish). "Bajarish" — §6.3b (T-602).
+- **Banner (T-603):** barcha `(app)` sahifalarida, ikkala rol — ochiq (DRAFT) sanoqlar `openCounts` dan (summasiz): "«X» ombori inventarizatsiyada (I-000007)" + sanoqqa havola; sanoqning o'z formasida o'sha sanoq takrorlanmaydi. Boshqa qurilmada ochilgan/yopilgan sanoq keyingi navigatsiyada ko'rinadi (architecture §6, OQ-34).
 
 ### 6.3b Amalda: bajarish (T-602)
 `stockCounts.post(ctx, { id, version })` — ruxsat `stockCount.post` (ikkala rol); kiritma `stockCountPostInputSchema`.

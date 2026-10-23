@@ -8,7 +8,7 @@ import { useMemo } from 'react';
 import { MoneyText } from '@/components/money-text';
 import { Link } from '@/i18n/navigation';
 
-import { STOCK_COUNTS_HREF } from '../list-params';
+import { stockCountHref } from '../list-params';
 import { StockCountStatusBadge } from './stock-count-status-badge';
 
 const col = dataTableColumnHelper<StockCountListItem>();
@@ -40,7 +40,7 @@ export function StockCountTable({
           header: t('columns.number'),
           cell: (info) => (
             <Link
-              href={`${STOCK_COUNTS_HREF}/${info.row.original.id}`}
+              href={stockCountHref(info.row.original.id)}
               className="font-medium tabular-nums underline-offset-4 hover:underline"
             >
               {info.getValue()}

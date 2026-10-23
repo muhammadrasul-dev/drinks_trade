@@ -29,7 +29,7 @@ import { type FormEvent, useId, useState, useTransition } from 'react';
 import { useRouter } from '@/i18n/navigation';
 
 import { openStockCount } from '../actions';
-import { STOCK_COUNTS_HREF } from '../list-params';
+import { stockCountHref } from '../list-params';
 
 interface StockCountOpenDialogProps {
   /** Active warehouses; one with an open count is shown but disabled. */
@@ -93,7 +93,7 @@ export function StockCountOpenDialog({
       }
       toast.success(t('done', { number: result.data.number }));
       setOpen(false);
-      router.push(`${STOCK_COUNTS_HREF}/${result.data.id}`);
+      router.push(stockCountHref(result.data.id));
     });
   }
 

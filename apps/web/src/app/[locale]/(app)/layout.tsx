@@ -11,12 +11,13 @@ import { navForRole } from '@/lib/nav';
 import { requireSession } from '@/lib/session';
 
 // Protected shell (architecture §6): role-based sidebar, header with language
-// switcher and user menu, the open stock-count banner slot. Every page below
+// switcher and user menu, the open stock-count banner (T-603). Every page below
 // still checks its own permission (requireSection / requirePermission).
 export default async function AppLayout({ children, params }: LayoutProps<'/[locale]'>) {
   const { locale } = await params;
   setRequestLocale(locale as Locale);
-  const { user } = await requireSession(locale as Locale);
+  const session = await requireSession(locale as Locale);
+  const { user } = session;
   const groups = navForRole(user.role);
   const t = await getTranslations('meta');
 
@@ -36,7 +37,7 @@ export default async function AppLayout({ children, params }: LayoutProps<'/[loc
             <UserMenu fullName={user.fullName} username={user.username} role={user.role} />
           </div>
         </header>
-        <StockCountBanner />
+        <StockCountBanner session={session} />
         <main className="flex flex-1 flex-col gap-6 p-4 md:p-6">{children}</main>
       </div>
     </div>

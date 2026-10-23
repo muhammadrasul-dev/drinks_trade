@@ -6,6 +6,11 @@ import { z } from 'zod';
 
 export const STOCK_COUNTS_HREF = '/stock-counts';
 
+/** One count's page: the counting form while DRAFT, read-only otherwise. */
+export function stockCountHref(id: string): string {
+  return `${STOCK_COUNTS_HREF}/${id}`;
+}
+
 export interface StockCountListFilters {
   status?: StockCountStatus;
   warehouseId?: string;

@@ -1052,6 +1052,11 @@
       "cancelledAt": "Bekor qilingan",
       "lines": "Sanalgan qatorlar ({count})",
       "noLines": "Sanalgan qator yoʻq."
+    },
+    "banner": {
+      "single": "«{warehouse}» ombori inventarizatsiyada (<link>{number}</link>) — bu omborda savdo, xarid va storno bajarilmaydi.",
+      "multiple": "Omborlar inventarizatsiyada — ularda savdo, xarid va storno bajarilmaydi:",
+      "item": "«{warehouse}» (<link>{number}</link>)"
     }
   }
 }
