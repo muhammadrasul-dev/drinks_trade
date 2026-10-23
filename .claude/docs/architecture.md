@@ -294,6 +294,7 @@ Har bir so'rov `storeId` bilan filtrlanadi — filiallar qo'shilganda kod o'zgar
 - `audit_log` jadvalida `UPDATE`/`DELETE` DB trigger bilan taqiqlangan.
 - O'tgan sana bilan kiritilgan hujjatlar `meta.backdated = true` bilan belgilanadi (BR-13).
 - Amalda (T-104): `modules/audit` — `audit.log(tx, actor, { action, entityType, entityId, before?, after?, backdated?, meta? })`; `meta.requestId` har doim yoziladi; `before`/`after` dagi `bigint` → string. `isBackdated(docDate)` — `docDate` kuni Toshkent vaqti bo'yicha bugundan oldin.
+- O'qish (T-901): `auditLog.list(ctx, { user?, entityType?, action?, entityId?, from?, to?, page? })` va `auditLog.userOptions(ctx)` (`modules/audit/audit.queries.ts`, faqat `audit.read` — STAFF `FORBIDDEN`). 50 tadan, eng yangisi birinchi; `user: 'system'` — foydalanuvchisiz yozuvlar; sana oralig'i Toshkent kuni bo'yicha. Ko'rinish doirasi — joriy do'kon + tashkilotga tegishli do'konsiz `LOGIN_FAILED` (OQ-26). Javobda `before`/`after`/`meta` dan maxfiy kalitlar (`pass…`, `hash`, `token`, `secret`) yana olib tashlanadi (`redactAuditValue`), `meta.backdated` alohida `backdated` maydoniga chiqadi, `refs` — sahifadagi id'lar (`entityId`, `productId`, `subWarehouseId` …) → nomlar (faqat o'z tashkiloti/do'koni). Diff (`auditChanges`, `auditListChanges` — qatorlar `lineNo` bo'yicha) — `@drinks/shared/audit.ts`. UI: `/audit` — filtrlar URL'da, qator ochilganda eski → yangi qiymatlar, hujjat qatorlari jadvali, "o'tgan sana" belgisi.
 
 ### 5.5 RBAC
 Ruxsatlar `shared/permissions.ts` da yagona joyda:

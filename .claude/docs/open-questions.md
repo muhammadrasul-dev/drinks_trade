@@ -39,6 +39,7 @@ SRS'dagi biznes savollar yopilgan. Bu yerda — arxitektura va DB loyihalashda c
 | OQ-22 | Egasi o'z login/parolini o'zgartirsa, shu o'zgarishni qilgan (joriy) sessiya ham o'chadimi? | Yo'q — joriy sessiya qoladi, boshqa barcha sessiyalari o'chiriladi | Yopilgan — A: joriy sessiya qoladi |
 | OQ-23 | Xarid qatorida narx 0 bo'lishi mumkinmi (bonus/aksiya tovari)? | Ha — `inputPrice ≥ 0`; tannarx 0 bilan kiradi va o'rtacha tannarxni pasaytiradi | Yopilgan — A: 0 narx ruxsat |
 | OQ-20 | Omborda qoldig'i bor mahsulotni arxivlash mumkinmi? | Ha — ruxsat, tasdiqlash oynasida qolgan miqdor va "sotib bo'lmaydi" ogohlantirishi; arxivdan istalgan payt chiqariladi | Yopilgan — A: ruxsat, ogohlantirish bilan |
+| OQ-26 | Audit jurnalida do'konga bog'lanmagan (`store_id IS NULL`) yozuvlar — muvaffaqiyatsiz kirish (`LOGIN_FAILED`) — Egasiga ko'rinadimi? | Ha — o'z tashkilotidagi foydalanuvchi haqidagilari va noma'lum login bilan urinishlar; boshqa tashkilot foydalanuvchilari haqidagilari ko'rinmaydi | Ochiq — tavsiya bo'yicha qilingan (T-901) |
 
 ---
 
@@ -139,3 +140,9 @@ FR-4.1 xarid narxini so'raydi, lekin 0 ga ruxsat bor-yo'qligini aytmaydi. Ichiml
 - **A (tavsiya, T-404 da shunday):** `inputPrice ≥ 0`. Bonus tovar alohida qatorda 0 narx bilan kiritiladi: qoldiq oshadi, `unitCost = 0`, bajarishda (T-405) o'rtacha tannarx pasayadi — bu iqtisodiy jihatdan to'g'ri (tovar tekin kelgan).
 - **B:** `inputPrice > 0` majburiy; bonus tovar narxi foydalanuvchi tomonidan boshqa qatorlarga taqsimlanadi (qo'lda, xatoga moyil).
 B ga o'tish — `packages/shared/src/schemas/purchase.ts` da `.min(0)` → `.min(1)` (+ test).
+
+### OQ-26 — Audit jurnalida do'konsiz yozuvlar
+T-901. `audit_log.store_id` ixtiyoriy: `LOGIN_FAILED` (`auth.service`) sessiyasiz yoziladi va `store_id = NULL`, `entity_id` — topilgan foydalanuvchi id'si yoki noma'lum bo'lsa terilgan login. Jurnal "do'kon darajasida" (database §2), lekin bu yozuvlar hech bir do'konga tegishli emas. BR-12 "har o'zgarish… faqat Egasi ko'radi" deydi, kirish urinishlari haqida aniq aytmaydi.
+- **A (tavsiya, T-901 da shunday):** Egasi o'z do'koni yozuvlarini **va** `store_id IS NULL`, `entity_type = 'user'` bo'lgan yozuvlarni ko'radi — boshqa tashkilot foydalanuvchisi haqidagilari bundan mustasno. Noma'lum login bilan urinishlar ham ko'rinadi (v1 da bitta tashkilot, ular kimga tegishli ekanini aniqlab bo'lmaydi). Egasi parolni taxmin qilish urinishlarini ko'ra oladi.
+- **B:** faqat `store_id = joriy do'kon` — muvaffaqiyatsiz kirishlar jurnalda ko'rinmaydi (faqat `login_attempt` blokida ishlaydi).
+B ga o'tish — `packages/server/src/modules/audit/audit.queries.ts` dagi `scopeOf` ni `{ storeId: ctx.storeId }` ga almashtirish (+ `audit.int.test.ts` dagi tegishli test).

@@ -51,6 +51,8 @@ interface DataTableProps<TData extends RowData> {
   emptyMessage: React.ReactNode;
   /** Stable row key, e.g. `(row) => row.id`; defaults to the row index. */
   getRowId?: (row: TData, index: number) => string;
+  /** Optional full-width row under a row (e.g. expanded details); null/undefined for none. */
+  renderSubRow?: (row: TData) => React.ReactNode;
   className?: string;
 }
 
@@ -59,6 +61,7 @@ function DataTable<TData extends RowData>({
   data,
   emptyMessage,
   getRowId,
+  renderSubRow,
   className,
 }: DataTableProps<TData>) {
   const table = useTable({
@@ -68,6 +71,7 @@ function DataTable<TData extends RowData>({
     ...(getRowId && { getRowId }),
   });
   const rows = table.getRowModel().rows;
+  const columnCount = table.getAllLeafColumns().length;
 
   return (
     <div data-slot="data-table" className={cn('rounded-md border', className)}>
@@ -85,21 +89,30 @@ function DataTable<TData extends RowData>({
         </TableHeader>
         <TableBody>
           {rows.length > 0 ? (
-            rows.map((row) => (
-              <TableRow key={row.id}>
-                {row.getAllCells().map((cell) => (
-                  <TableCell key={cell.id}>
-                    <table.FlexRender cell={cell} />
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))
+            rows.map((row) => {
+              const subRow = renderSubRow?.(row.original);
+              return (
+                <React.Fragment key={row.id}>
+                  <TableRow>
+                    {row.getAllCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        <table.FlexRender cell={cell} />
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                  {subRow != null && (
+                    <TableRow className="bg-muted/30 hover:bg-muted/30">
+                      <TableCell colSpan={columnCount} className="whitespace-normal">
+                        {subRow}
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </React.Fragment>
+              );
+            })
           ) : (
             <TableRow>
-              <TableCell
-                colSpan={table.getAllLeafColumns().length}
-                className="h-24 text-center text-muted-foreground"
-              >
+              <TableCell colSpan={columnCount} className="h-24 text-center text-muted-foreground">
                 {emptyMessage}
               </TableCell>
             </TableRow>
