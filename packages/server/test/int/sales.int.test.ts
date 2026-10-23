@@ -9,11 +9,12 @@ import {
   makeSubWarehouse,
   type StoreFixture,
 } from '@drinks/db/test-utils';
-import { ErrorCode, storeToday } from '@drinks/shared';
+import { ErrorCode } from '@drinks/shared';
 import type { SaleDraftInput } from '@drinks/shared/schemas';
 import { afterAll, afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { inventory, sales, type ServiceContext, withTransaction } from '../../src/index';
+import { day } from './helpers';
 
 let f: StoreFixture;
 let owner: ServiceContext;
@@ -41,12 +42,6 @@ afterEach(async () => {
 afterAll(async () => {
   await prisma.$disconnect();
 });
-
-/** `YYYY-MM-DD` `days` days from today in the store zone. */
-function day(days: number): string {
-  const [y, m, d] = storeToday().split('-').map(Number);
-  return new Date(Date.UTC(y!, m! - 1, d! + days)).toISOString().slice(0, 10);
-}
 
 function receive(qty: number, subWarehouseId = f.subWarehouse.id, id = productId) {
   return withTransaction((tx) =>
