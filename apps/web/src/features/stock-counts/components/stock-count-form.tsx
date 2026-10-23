@@ -57,7 +57,7 @@ const keyOf = (row: { subWarehouse: { id: string }; product: { id: string } }) =
   `${row.subWarehouse.id}:${row.product.id}`;
 
 const ROW_GRID =
-  'md:grid md:grid-cols-[minmax(10rem,2fr)_8rem_5.5rem_5.5rem_8rem_8rem] md:items-center md:gap-3';
+  'lg:grid lg:grid-cols-[minmax(10rem,2fr)_7rem_5rem_5rem_7rem_7rem] lg:items-center lg:gap-3';
 
 function entryOf(row: StockCountRow): Entry {
   if (row.countedQty === null) return { blocks: '', pieces: '' };
@@ -330,7 +330,7 @@ export function StockCountForm({ count, products, subWarehouses, today }: StockC
                 key={key}
                 className={cn(
                   ROW_GRID,
-                  'flex flex-col gap-2 rounded-md border p-3 md:rounded-none md:border-0 md:border-b md:p-1 md:pb-2',
+                  'flex flex-col gap-2 rounded-md border p-3 lg:rounded-none lg:border-0 lg:border-b lg:p-1 lg:pb-2',
                 )}
               >
                 <div className="min-w-0">
@@ -345,15 +345,15 @@ export function StockCountForm({ count, products, subWarehouses, today }: StockC
                       .join(' · ')}
                   </div>
                 </div>
-                <div className="flex justify-between gap-2 text-sm md:block md:text-right">
-                  <span className="text-muted-foreground md:sr-only">{t('form.system')}</span>
+                <div className="flex justify-between gap-2 text-sm lg:block lg:text-right">
+                  <span className="text-muted-foreground lg:sr-only">{t('form.system')}</span>
                   {row.systemQty === null ? (
                     <span className="text-muted-foreground">{t('form.afterSave')}</span>
                   ) : (
                     <QtyText qty={row.systemQty} unitsPerBlock={row.product.unitsPerBlock} />
                   )}
                 </div>
-                <div className="grid grid-cols-2 gap-2 md:contents">
+                <div className="grid grid-cols-2 gap-2 lg:contents">
                   <Input
                     inputMode="numeric"
                     autoComplete="off"
@@ -373,8 +373,8 @@ export function StockCountForm({ count, products, subWarehouses, today }: StockC
                     className="tabular-nums"
                   />
                 </div>
-                <div className="flex justify-between gap-2 text-sm md:block md:text-right">
-                  <span className="text-muted-foreground md:sr-only">{t('form.diff')}</span>
+                <div className="flex justify-between gap-2 text-sm lg:block lg:text-right">
+                  <span className="text-muted-foreground lg:sr-only">{t('form.diff')}</span>
                   {diff === null ? (
                     <span className="text-muted-foreground">
                       {isCounted(entry) ? '…' : t('form.notCounted')}
@@ -390,10 +390,10 @@ export function StockCountForm({ count, products, subWarehouses, today }: StockC
                     />
                   )}
                 </div>
-                <div className="flex justify-between gap-2 text-sm md:block md:text-right">
+                <div className="flex justify-between gap-2 text-sm lg:block lg:text-right">
                   {showAmounts && (
                     <>
-                      <span className="text-muted-foreground md:sr-only">
+                      <span className="text-muted-foreground lg:sr-only">
                         {t('form.diffAmount')}
                       </span>
                       {amount === null ? (

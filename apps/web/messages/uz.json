@@ -1010,7 +1010,7 @@
       "archivedItem": "«{name}» arxivda — uni bu yerda sanab boʻlmaydi."
     },
     "cancel": {
-      "button": "Bekor qilish",
+      "button": "Inventarizatsiyani bekor qilish",
       "title": "{number} inventarizatsiyasini bekor qilasizmi?",
       "description": "Kiritilgan sanoq saqlanadi, lekin qoldiq oʻzgarmaydi. «{warehouse}» omboridagi blok darhol olib tashlanadi.",
       "done": "{number} bekor qilindi"
