@@ -375,6 +375,10 @@ Savdo hisoboti (T-802, SRS §7.2, database §7.2) tushum va tannarxni shu qoida 
 `Σ stock_balance.qty (do'kon bo'yicha) < product.minStock` (va `minStock > 0`) → mahsulotlar ro'yxatida belgi + dashboard'da "Kam qolgan mahsulotlar" bloki. Push/SMS yo'q.
 Qoldiq hisobotida (T-801) ham shu qoida: `lowStock` ombor filtridan qat'i nazar do'kon bo'yicha jamiga qarab; "Kam qolganlar" filtri qoldig'i 0 mahsulotlarni ham ko'rsatadi (OQ-28).
 Amalda (T-303): `isLowStock(stockQty, minStock)` (`@drinks/shared`); `stockQty` = `product_cost.total_qty` (invariant bo'yicha `Σ stock_balance.qty` ga teng) — `inventory.getProductTotals` orqali; DTO'da `stockQty`, `lowStock`.
+Bosh sahifa (T-902): `packages/server/src/modules/dashboard/dashboard.queries.ts` — `dashboard.summary(ctx)`, faqat o'qish, qulfsiz; faqat miqdor va sonlar — hech bir rolga pul/tannarx yo'q (DTO `DashboardSummary`, `@drinks/shared`). Bosh sahifaning o'z ruxsati yo'q (`nav.ts`: `permission: null`), shuning uchun har blok rol u havola qiladigan sahifani ocha olsagina qaytadi (aks holda kalit umuman yo'q):
+- `lowStock` (`report.stock`) — **faol** (arxivlanmagan, OQ-39) mahsulotlardan `minStock > 0` va `isLowStock(getProductTotals().totalQty, minStock)` bo'lganlari: `total` va eng ko'p kamaygan `DASHBOARD_LOW_STOCK_LIMIT` (10) tasi — `stockQty / minStock` o'sish tartibida, teng bo'lsa nom bo'yicha (`compareStockShortage`, OQ-40). `total` = `/reports/stock?low=1&archived=0` dagi mahsulotlar soni (integratsiya testi tekshiradi).
+- `openStockCounts` (`warehouse.read`) — `stockCounts.openCounts` (T-603 banneri bilan bir xil).
+- `draftSales` (`sale.write`), `draftPurchases` (`purchase.write`) — do'kondagi `DRAFT` hujjatlar soni (kim yaratganidan qat'i nazar, OQ-14).
 
 ## 9a. Toifa va brend (T-302, FR-1.1)
 `packages/server/src/modules/products/catalog.service.ts` — `categories` va `brands` (bir xil API, jadval adapteri orqali):

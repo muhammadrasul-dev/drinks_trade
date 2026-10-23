@@ -159,6 +159,7 @@ drinks_trade/
 │   │       │   ├── cash/
 │   │       │   ├── debts/          # open/cancel/repay (ichki) + qarzlar sahifasi (T-704)
 │   │       │   ├── reports/        # stock, sales, pnl + eksport
+│       │   ├── dashboard/      # bosh sahifa xulosasi (T-902), faqat o'qish
 │   │       │   └── audit/
 │   │       ├── core/
 │   │       │   ├── context.ts      # ServiceContext { user, storeId, tx }
