@@ -141,7 +141,9 @@ Xato kiritilgan yozuv (masalan, yo'l kira summasi noto'g'ri) o'chirilmaydi: jurn
 ![Qarzlar: nasiya xaridlardan tushgan «Bizning qarzimiz»](images/user-guide/11-debts.png)
 
 ## 11. Hisobotlar
-Hammasi **PDF** va **Excel**ga yuklab olinadi.
+Hammasi **PDF** va **Excel**ga yuklab olinadi: hisobot sahifasining yuqori o'ng burchagidagi **PDF** / **Excel** tugmalari ekrandagi filtrlar va davr bilan, sahifa tilida (o'zbekcha yoki ruscha) fayl beradi. Fayl nomida hisobot va davr bo'ladi (masalan, `savdo_2026-10-01_2026-10-23.xlsx`, `qoldiq_2026-10-23.pdf`). Faylda ham ekrandagidek: Xodimga tannarx va foyda ustunlari umuman chiqmaydi, P&L faylini faqat Egasi oladi.
+- **PDF** — chop etish uchun: ekrandagi ustunlar, sarlavha ostida davr/filtrlar va tuzilgan vaqti, jami qatori, sahifa raqamlari.
+- **Excel** — hisob-kitob uchun: summa va miqdorlar haqiqiy son (so'm formati bilan, saralash va qo'shish mumkin), toifa, brend, SKU alohida ustunlarda, miqdor donada ham; jami qatori — formulalar. P&L'da chiqimlar manfiy son bilan.
 1. **Mahsulotlar qoldig'i** — har mahsulot blok/donada, ombor → sub-ombor bo'yicha. Filtrlar: ombor va uning sub-ombori, toifa, brend, mahsulot holati (faol va arxiv / faqat faol / faqat arxiv), **"Kam qolganlar"** — do'kon bo'yicha jami minimal qoldiqdan kam bo'lganlar, umuman qolmaganlari ham. Ombor tanlansa, "Qoldiq" ustuni shu ombordagini, ostida do'kondagi jamini ko'rsatadi. Egasi qo'shimcha ravishda o'rtacha tannarx (1 dona) va qoldiq qiymatini (jami bilan) ko'radi; Xodimga bu ustunlar yuborilmaydi.
 
 ![Qoldiq hisoboti (Egasi)](images/user-guide/12-stock-report.png)

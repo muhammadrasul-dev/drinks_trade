@@ -12,7 +12,7 @@ import {
 
 export default [
   ...base,
-  ...nodeFiles(['*.{js,mjs,cjs}', 'packages/{config,server,db}/**/*.{js,mjs,cjs,ts,mts,cts}']),
+  ...nodeFiles(['*.{js,mjs,cjs}', 'packages/{config,server,db}/**/*.{js,mjs,cjs,ts,tsx,mts,cts}']),
   ...webBoundaries(),
   ...sharedBoundaries(),
   ...uiBoundaries(),

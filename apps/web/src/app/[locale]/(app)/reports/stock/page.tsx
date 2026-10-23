@@ -4,9 +4,10 @@ import { PageHeader } from '@drinks/ui/components/page-header';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
 import { MoneyText } from '@/components/money-text';
+import { ReportExportButtons } from '@/features/reports/components/report-export-buttons';
 import { StockReportFiltersBar } from '@/features/reports/components/stock-report-filters';
 import { StockReportTable } from '@/features/reports/components/stock-report-table';
-import { parseStockReportParams } from '@/features/reports/stock-params';
+import { parseStockReportParams, stockReportSearch } from '@/features/reports/stock-params';
 import { getServiceContext, requireSection } from '@/lib/session';
 
 /** Active and archived items, by name: filters may point at an archived category / brand. */
@@ -46,7 +47,10 @@ export default async function ReportsStockPage({
 
   return (
     <>
-      <PageHeader title={t('title')} />
+      <PageHeader
+        title={t('title')}
+        actions={<ReportExportButtons report="stock" search={stockReportSearch(filters)} />}
+      />
       <StockReportFiltersBar
         filters={filters}
         warehouses={warehouseOptions}

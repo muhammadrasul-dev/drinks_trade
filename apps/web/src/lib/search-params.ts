@@ -7,6 +7,16 @@ import { z } from 'zod';
 
 export type SearchParams = Record<string, string | string[] | undefined>;
 
+/** A Route Handler's `URLSearchParams` in the shape pages get (a repeated key → array). */
+export function searchParamsOf(params: URLSearchParams): SearchParams {
+  const result: SearchParams = {};
+  for (const key of new Set(params.keys())) {
+    const values = params.getAll(key);
+    result[key] = values.length === 1 ? values[0] : values;
+  }
+  return result;
+}
+
 /** The first value of a search param. */
 export function firstParam(value: string | string[] | undefined): string | undefined {
   return Array.isArray(value) ? value[0] : value;

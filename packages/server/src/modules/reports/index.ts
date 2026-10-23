@@ -7,3 +7,7 @@ import { stockReport } from './stock-report.queries';
  * `report.sales.cost`, the P&L only for `report.pnl`.
  */
 export const reports = { stock: stockReport, sales: salesReport, pnl: pnlReport };
+
+// PDF / Excel of a report (T-804): render a translated ReportDocument built
+// from one of the DTOs above.
+export * from './export';

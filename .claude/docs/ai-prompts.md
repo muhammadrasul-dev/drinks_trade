@@ -580,3 +580,19 @@ yes merge to main, and then begin you sayed tasks in seperate sessions, after th
 ```
 check @.claude/docs/tasks.md and start one task which not started. And then simply refactor that finished your task
 ```
+
+---
+
+## Prompt 58 — Boshqa sessiya tugagach T-804 integratsiyasini main'ga merge qilish (2026-10-23)
+
+```
+yes merge to main when done
+```
+
+---
+
+## Prompt 59 — T-804 ni boshlash, keyin bajarilgan ishni oddiy refactor qilish (2026-10-23)
+
+```
+start T-804 task in this session, then begin siply refactoring proccess for checking done works.
+```

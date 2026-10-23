@@ -160,26 +160,24 @@ async function toDetail(db: Tx, ctx: ServiceContext, row: DetailRow): Promise<St
   }
 
   const productIds = [...new Set(keys.map((key) => key.productId))];
-  const [products, subs, totals] = await Promise.all([
-    db.product.findMany({
-      where: { id: { in: productIds } },
-      select: {
-        id: true,
-        name: true,
-        sku: true,
-        barcode: true,
-        unitsPerBlock: true,
-        archivedAt: true,
-      },
-    }),
-    db.subWarehouse.findMany({
-      where: { warehouseId: row.warehouse.id },
-      select: { id: true, name: true, archivedAt: true },
-    }),
-    showAmounts(ctx) && !posted
-      ? inventory.getProductTotals(db, ctx, productIds)
-      : Promise.resolve([]),
-  ]);
+  // One after the other: `db` may be a transaction, which runs one query at a time.
+  const products = await db.product.findMany({
+    where: { id: { in: productIds } },
+    select: {
+      id: true,
+      name: true,
+      sku: true,
+      barcode: true,
+      unitsPerBlock: true,
+      archivedAt: true,
+    },
+  });
+  const subs = await db.subWarehouse.findMany({
+    where: { warehouseId: row.warehouse.id },
+    select: { id: true, name: true, archivedAt: true },
+  });
+  const totals =
+    showAmounts(ctx) && !posted ? await inventory.getProductTotals(db, ctx, productIds) : [];
   const productById = new Map(products.map((p) => [p.id, p]));
   const subById = new Map(subs.map((s) => [s.id, s]));
   // A posted count shows the average it was adjusted at; otherwise the current one.

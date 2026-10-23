@@ -6,6 +6,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import type { ReactNode } from 'react';
 
 import { MoneyText } from '@/components/money-text';
+import { ReportExportButtons } from '@/features/reports/components/report-export-buttons';
 import { SalesReportFiltersBar } from '@/features/reports/components/sales-report-filters';
 import { SalesReportTable } from '@/features/reports/components/sales-report-table';
 import { parseSalesReportParams } from '@/features/reports/sales-params';
@@ -30,7 +31,12 @@ export default async function ReportsSalesPage({
 
   return (
     <>
-      <PageHeader title={t('title')} />
+      <PageHeader
+        title={t('title')}
+        actions={
+          <ReportExportButtons report="sales" search={{ from: filters.from, to: filters.to }} />
+        }
+      />
       <SalesReportFiltersBar filters={filters} />
       <dl
         aria-label={t('totals.label')}
