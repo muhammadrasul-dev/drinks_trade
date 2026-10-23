@@ -7,8 +7,8 @@ import { useMemo } from 'react';
 
 import { MoneyText } from '@/components/money-text';
 import { QtyText } from '@/components/qty-text';
-import { Link } from '@/i18n/navigation';
-import { PRODUCTS_HREF } from '@/features/products/list-params';
+
+import { ReportProductCell } from './report-product-cell';
 
 const col = dataTableColumnHelper<StockReportRow>();
 
@@ -32,7 +32,7 @@ export function StockReportTable({ items, showCost }: StockReportTableProps) {
         col.accessor('product', {
           id: 'product',
           header: t('columns.product'),
-          cell: (info) => <ProductCell row={info.row.original} />,
+          cell: (info) => <ReportProductCell product={info.getValue()} />,
         }),
         col.display({
           id: 'locations',
@@ -78,27 +78,6 @@ export function StockReportTable({ items, showCost }: StockReportTableProps) {
       getRowId={(row) => row.product.id}
       emptyMessage={t('empty')}
     />
-  );
-}
-
-function ProductCell({ row }: { row: StockReportRow }) {
-  const t = useTranslations('stockReport');
-  const { product } = row;
-  const refs = [product.category?.name, product.brand?.name, product.sku].filter(Boolean);
-  return (
-    <div className="flex min-w-40 flex-col">
-      <span className="flex flex-wrap items-center gap-1.5">
-        <Link href={`${PRODUCTS_HREF}/${product.id}`} className="font-medium hover:underline">
-          {product.name}
-        </Link>
-        {product.archived && (
-          <span className="rounded-sm bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
-            {t('archivedTag')}
-          </span>
-        )}
-      </span>
-      {refs.length > 0 && <span className="text-xs text-muted-foreground">{refs.join(' · ')}</span>}
-    </div>
   );
 }
 
