@@ -37,7 +37,7 @@ import { toast } from '@drinks/ui/components/sonner';
 import { cn } from '@drinks/ui/lib/utils';
 import { CheckCircle2Icon, PlusIcon, Trash2Icon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useEffect, useMemo, useState, useTransition } from 'react';
+import { useMemo, useState, useTransition } from 'react';
 import { useFieldArray, useForm, useWatch } from 'react-hook-form';
 
 import { ConfirmDialog } from '@/components/confirm-dialog';
@@ -47,8 +47,9 @@ import { ProductPicker } from '@/features/purchases/components/product-picker';
 import { Link, useRouter } from '@/i18n/navigation';
 import { toNumber, toAmount } from '@/lib/number-input';
 
-import { createSale, deleteSale, getSaleAvailability, postSale, updateSale } from '../actions';
+import { createSale, deleteSale, postSale, updateSale } from '../actions';
 import { SALES_HREF } from '../list-params';
+import { useAvailability } from '../use-availability';
 
 type LineValues = SaleDraftInput['lines'][number];
 
@@ -125,53 +126,6 @@ function piecesOf(line: Partial<LineValues> | undefined, product?: SaleProductOp
   if (!line?.inputQty || !product) return 0;
   const qty = unitPieces(line.inputUnit ?? QtyUnit.PIECE, line.inputQty, product.unitsPerBlock);
   return Number.isSafeInteger(qty) ? qty : 0;
-}
-
-/**
- * Current stock of the form's (sub-warehouse, product) pairs (FR-3.3). Seeded
- * from the saved draft; pairs the user adds are fetched once. Saving reloads
- * the page with fresh numbers; posting re-checks under the locks anyway.
- */
-function useAvailability(sale: SaleDetail | undefined, keys: readonly string[]) {
-  const [known, setKnown] = useState<ReadonlyMap<string, number>>(
-    () =>
-      new Map(
-        (sale?.lines ?? []).flatMap((line) =>
-          line.available === null
-            ? []
-            : [
-                [
-                  stockKeyOf({ subWarehouseId: line.subWarehouse.id, productId: line.product.id }),
-                  line.available,
-                ] as const,
-              ],
-        ),
-      ),
-  );
-  const missing = keys.filter((key) => !known.has(key));
-  const missingKey = missing.join(',');
-
-  useEffect(() => {
-    if (missingKey === '') return;
-    let cancelled = false;
-    const pairs = missingKey.split(',').map((key) => {
-      const [subWarehouseId = '', productId = ''] = key.split(':');
-      return { subWarehouseId, productId };
-    });
-    void getSaleAvailability({ keys: pairs }).then((result) => {
-      if (cancelled || !result.ok) return;
-      setKnown((prev) => {
-        const next = new Map(prev);
-        for (const row of result.data) next.set(stockKeyOf(row), row.qty);
-        return next;
-      });
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [missingKey]);
-
-  return known;
 }
 
 /**
