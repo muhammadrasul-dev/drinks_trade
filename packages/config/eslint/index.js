@@ -20,6 +20,10 @@ export const IGNORES = [
   '**/out/**',
   '**/coverage/**',
   '**/storage/**',
+  // Playwright output (apps/e2e): HTML report, traces, signed-in states.
+  '**/playwright-report/**',
+  '**/test-results/**',
+  '**/.auth/**',
   '**/next-env.d.ts',
   '**/src/generated/**',
   // Agent worktrees are full repo copies on other branches.
