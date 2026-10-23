@@ -19,6 +19,11 @@ Kim uchun: do'kon **Egasi** va **Xodim**.
 
 Parolni unutsangiz — Egasiga murojaat qiling, u yangi parol o'rnatadi.
 
+**Bosh sahifa** (kirgandan keyin ochiladi, Egasi ham, Xodim ham) — uchta blok, faqat miqdor va sonlar (pul yo'q):
+- **Kam qolgan mahsulotlar** — do'kondagi jami qoldig'i minimal qoldiqdan kam faol mahsulotlar soni va eng kam qolgan 10 tasi (umuman qolmaganlari birinchi): qoldiq / minimal, blok va donada. Nom bosilsa — mahsulot kartochkasi; "Qoldiq hisobotida ko'rish" — to'liq ro'yxat (qoldiq hisoboti, "Kam qolganlar", faqat faol). Minimal qoldig'i 0 bo'lgan va arxivlangan mahsulotlar bu yerda chiqmaydi.
+- **Ochiq inventarizatsiyalar** — qaysi omborda sanoq ochiq (raqami bosilsa — sanoq sahifasi).
+- **Bajarilmagan qoralamalar** — savdo va xarid qoralamalari soni; bosilsa — o'sha ro'yxat, "Qoralama" holati bo'yicha.
+
 ## 3. Rollar — kim nimani ko'radi
 
 | Bo'lim | Egasi | Xodim |

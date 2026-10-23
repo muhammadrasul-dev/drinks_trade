@@ -9,7 +9,27 @@
     "ru": "Русский"
   },
   "home": {
-    "greeting": "Xush kelibsiz, {name} ({role})."
+    "greeting": "Xush kelibsiz, {name} ({role}).",
+    "lowStock": {
+      "title": "Kam qolgan mahsulotlar",
+      "description": "Doʻkondagi jami qoldigʻi minimaldan past (arxivdagilarsiz).",
+      "empty": "Hamma mahsulot yetarli — qoldigʻi minimaldan past mahsulot yoʻq.",
+      "min": "min.",
+      "more": "Yana {count} ta mahsulot — qoldiq hisobotida.",
+      "all": "Qoldiq hisobotida koʻrish ({count})"
+    },
+    "stockCounts": {
+      "title": "Ochiq inventarizatsiyalar",
+      "empty": "Ochiq inventarizatsiya yoʻq.",
+      "warehouse": "«{warehouse}» ombori",
+      "all": "Inventarizatsiyalar roʻyxati"
+    },
+    "drafts": {
+      "title": "Bajarilmagan qoralamalar",
+      "sales": "Savdo",
+      "purchases": "Xarid",
+      "empty": "Bajarilmagan qoralama yoʻq."
+    }
   },
   "common": {
     "cancel": "Bekor qilish",

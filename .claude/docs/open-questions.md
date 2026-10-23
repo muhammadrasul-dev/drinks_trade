@@ -28,6 +28,8 @@ SRS'dagi biznes savollar yopilgan. Bu yerda — arxitektura va DB loyihalashda c
 
 **2026-10-23 (T-803):** OQ-36 ochildi — P&L davri: tanlanmagan bo'lsa qaysi davr, "oy"/"yil" to'liqmi yoki bugungacha; tavsiya bo'yicha qilingan, javob kutilmoqda.
 
+**2026-10-23 (T-902):** OQ-39 va OQ-40 ochildi — bosh sahifadagi "Kam qolgan mahsulotlar" blokida arxivlangan mahsulotlar, ro'yxat hajmi va tartibi; tavsiya bo'yicha qilingan, javob kutilmoqda.
+
 | # | Savol | Tavsiya | Holat |
 |---|---|---|---|
 | OQ-01 | Storno qilingan savdo P&L'da qaysi sanada aks etadi? | Asl hujjat sanasida (hujjat davr hisobidan butunlay chiqadi) | Yopilgan — asl sanada (A) |
@@ -66,6 +68,8 @@ SRS'dagi biznes savollar yopilgan. Bu yerda — arxitektura va DB loyihalashda c
 | OQ-34 | Inventarizatsiya banneri boshqa qurilmada (boshqa xodim) ochilgan yoki yopilgan sanoqni qachon ko'rsatadi? | Keyingi bosishda: banner har sahifa o'tishida va tab qayta ochilganda serverdan qayta o'qiladi (bitta yengil so'rov), taymer bilan so'rov yo'q | Ochiq — tavsiya bo'yicha qilingan (T-603) |
 | OQ-35 | Savdo hisoboti davr tanlanmasdan ochilsa qaysi davrni ko'rsatadi va mahsulot qatorlari qaysi tartibda? | 1) Joriy oy (1-sanadan bugungacha, Toshkent); 2) mahsulot nomi bo'yicha (qoldiq hisoboti kabi) | Ochiq — tavsiya bo'yicha qilingan (T-802) |
 | OQ-36 | P&L davri tanlanmasdan ochilsa qaysi davr? "Oy" va "Yil" — to'liq kalendar oy/yilmi yoki bugungacha? | 1) Joriy oy; 2) to'liq kalendar oy/yil (kelajakdagi kunlar bo'sh — summa bugungacha bilan bir xil), ‹ › bilan qo'shni davrga, kelajakka emas | Ochiq — tavsiya bo'yicha qilingan (T-803) |
+| OQ-39 | Bosh sahifadagi "Kam qolgan mahsulotlar" blokida arxivlangan mahsulotlar ko'rinadimi? | Yo'q — faqat faol mahsulotlar; "Qoldiq hisobotida ko'rish" havolasi ham faqat faollarni ochadi (`?low=1&archived=0`), son bir xil | Ochiq — tavsiya bo'yicha qilingan (T-902) |
+| OQ-40 | Blokda nechta mahsulot va qaysi tartibda ko'rsatiladi? | Jami soni + eng ko'p kamaygan 10 tasi (`qoldiq / minimal` o'sish tartibida — qoldig'i 0 lar birinchi; teng bo'lsa nom bo'yicha); qolganlari — "Yana N ta" va hisobotga havola | Ochiq — tavsiya bo'yicha qilingan (T-902) |
 
 ---
 
@@ -262,3 +266,16 @@ T-803. BR-11 / business-logic §8 filtrni "kun / oy / yil / ixtiyoriy oraliq (To
    - **B:** joriy oy/yil bugungacha (savdo hisobotidagi "Shu oy" kabi) — summa bir xil, faqat sarlavhadagi sana farq qiladi.
 URL: `?day=YYYY-MM-DD` · `?month=YYYY-MM` · `?year=YYYY` · `?from=&to=` (birinchi to'g'ri tur ustun; oraliqning bir cheti bo'sh bo'lsa — o'sha tomoni ochiq, teskari oraliq almashtiriladi). Server faqat `from`/`to` (Toshkent kunlari) qabul qiladi — tur sahifada kunlarga aylantiriladi.
 1-B/1-C ga o'tish — `apps/web/src/features/reports/pnl-params.ts` dagi `currentMonthPeriod` sukutini almashtirish (+ `pnl-params.test.ts`). 2-B — `pnlPeriodRange` da `to` ni bugun bilan cheklash.
+
+### OQ-39 — Bosh sahifada arxivlangan kam qolgan mahsulotlar
+T-902. business-logic §9 "dashboard'da «Kam qolgan mahsulotlar» bloki" deydi, arxivni aytmaydi. Mahsulotlar ro'yxati sukut bo'yicha faqat faollarni, qoldiq hisoboti esa (OQ-20, T-801) faol va arxivni birga ko'rsatadi. Arxivlangan mahsulot sotilmaydi va qayta xarid qilinmaydi — uning minimal qoldig'i amalda eskirgan.
+- **A (tavsiya, T-902 da shunday):** faqat faol mahsulotlar. "Qoldiq hisobotida ko'rish" havolasi `/reports/stock?low=1&archived=0` — hisobotdagi son blokdagi jami bilan bir xil.
+- **B:** arxivlanganlari ham (qoldiq hisobotining sukuti kabi), belgi bilan. Kamchilik: chiqarib tashlangan mahsulotlar har kuni ogohlantirish beradi, uni yo'qotish uchun minimal qoldiqni 0 ga tushirish kerak.
+B ga o'tish — `dashboard.queries.ts` dagi `archivedAt: null` shartini olib tashlash, DTO'ga `archived` qo'shish, `features/dashboard/links.ts` dagi `archived: false` ni olib tashlash (+ `dashboard.int.test.ts` dagi OQ-39 testi, `links.test.ts`).
+
+### OQ-40 — "Kam qolgan mahsulotlar" blokining hajmi va tartibi
+T-902. Necha mahsulot ko'rsatilishi va tartibi aytilmagan; mahsulotlar soni o'sishi bilan to'liq ro'yxat bosh sahifani cho'zib yuboradi (to'liq ro'yxat — qoldiq hisobotida).
+- **A (tavsiya, T-902 da shunday):** jami soni va eng ko'p kamaygan 10 tasi (`DASHBOARD_LOW_STOCK_LIMIT`): `qoldiq / minimal` o'sish tartibida — umuman qolmaganlari birinchi, teng bo'lsa nom bo'yicha (`compareStockShortage`, `@drinks/shared`); qolganlari uchun "Yana N ta" va hisobotga havola.
+- **B:** nom bo'yicha (qoldiq hisoboti kabi), shu 10 ta.
+- **C:** hammasi, cheklovsiz.
+B ga o'tish — `dashboard.queries.ts` dagi `low.sort(compareStockShortage)` ni olib tashlash; C — `slice` ni olib tashlash (+ `dashboard.int.test.ts` dagi OQ-40 testi).
