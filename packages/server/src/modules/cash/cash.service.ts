@@ -122,3 +122,32 @@ export async function record(
 
   return { id: created.id, direction, balanceAfter: moneyToNumber(updated.balance) };
 }
+
+/** The entry being reversed, as read from cash_transaction. */
+export interface ReversedCashEntry {
+  id: bigint;
+  direction: CashDirection;
+  amount: bigint;
+}
+
+/**
+ * Books the MANUAL_REVERSAL of `original` (OQ-08) on its cashbox, locked by the
+ * caller: same amount, opposite direction, reversal_of_id → original. Reversing
+ * an IN is a cash OUT and can throw CASHBOX_INSUFFICIENT. reversal_of_id is
+ * unique, so a second reversal of the same entry cannot commit.
+ */
+export function reverse(
+  tx: Tx,
+  ctx: ServiceContext,
+  cashbox: Pick<LockedCashbox, 'id' | 'type'>,
+  original: ReversedCashEntry,
+  options: Omit<CashRecordBase, 'amount'> = {},
+): Promise<CashRecordResult> {
+  return record(tx, ctx, cashbox, {
+    ...options,
+    type: CashTxType.MANUAL_REVERSAL,
+    direction: original.direction === CashDirection.IN ? CashDirection.OUT : CashDirection.IN,
+    amount: moneyToNumber(original.amount),
+    reversalOfId: original.id,
+  });
+}

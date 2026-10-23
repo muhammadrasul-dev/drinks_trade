@@ -4,7 +4,6 @@
 // dates (OQ-07) and take the locks of business-logic §2 themselves. Repayments
 // (debt_repayment, CLOSED) were added with the debts screen (T-704).
 import {
-  CashDirection,
   CashTxType,
   DebtDirection,
   DebtSource,
@@ -185,13 +184,7 @@ export async function cancel(
     if (options.cashbox?.id !== original.cashboxId) {
       throw new Error(`Debt ${debt.id}: pass its locked cashbox ${original.cashboxId} to cancel`);
     }
-    const reversal = await cash.record(tx, ctx, options.cashbox, {
-      type: CashTxType.MANUAL_REVERSAL,
-      direction: original.direction === CashDirection.IN ? CashDirection.OUT : CashDirection.IN,
-      amount: debt.amount,
-      reversalOfId: original.id,
-      debtId: debt.id,
-    });
+    const reversal = await cash.reverse(tx, ctx, options.cashbox, original, { debtId: debt.id });
     cashTransactionId = reversal.id;
   } else if (options.cashbox) {
     throw new Error(`Debt ${debt.id} (${debt.source}) moves no cash on cancel`);
