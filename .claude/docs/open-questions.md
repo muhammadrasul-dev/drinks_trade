@@ -39,7 +39,7 @@ SRS'dagi biznes savollar yopilgan. Bu yerda — arxitektura va DB loyihalashda c
 | OQ-22 | Egasi o'z login/parolini o'zgartirsa, shu o'zgarishni qilgan (joriy) sessiya ham o'chadimi? | Yo'q — joriy sessiya qoladi, boshqa barcha sessiyalari o'chiriladi | Yopilgan — A: joriy sessiya qoladi |
 | OQ-23 | Xarid qatorida narx 0 bo'lishi mumkinmi (bonus/aksiya tovari)? | Ha — `inputPrice ≥ 0`; tannarx 0 bilan kiradi va o'rtacha tannarxni pasaytiradi | Yopilgan — A: 0 narx ruxsat |
 | OQ-20 | Omborda qoldig'i bor mahsulotni arxivlash mumkinmi? | Ha — ruxsat, tasdiqlash oynasida qolgan miqdor va "sotib bo'lmaydi" ogohlantirishi; arxivdan istalgan payt chiqariladi | Yopilgan — A: ruxsat, ogohlantirish bilan |
-| OQ-24 | Kassa jurnali qaysi tartibda ko'rsatiladi: hisobot sanasi (`tx_date`) yoki kiritilgan vaqt bo'yicha? | `tx_date` bo'yicha, yangisi tepada (teng bo'lsa — keyin kiritilgani tepada); o'tgan sana bilan kiritilgan yozuvlarda `balance_after` ketma-ket bo'lmasligi mumkin | Ochiq — tavsiya bo'yicha qilingan (T-701) |
+| OQ-24 | Kassa jurnali qaysi tartibda ko'rsatiladi: hisobot sanasi (`tx_date`) yoki kiritilgan vaqt bo'yicha? | `tx_date` bo'yicha, yangisi tepada (teng bo'lsa — keyin kiritilgani tepada); o'tgan sana bilan kiritilgan yozuvlarda `balance_after` ketma-ket bo'lmasligi mumkin | Yopilgan — A (2026-10-23) |
 
 ---
 
@@ -142,7 +142,7 @@ FR-4.1 xarid narxini so'raydi, lekin 0 ga ruxsat bor-yo'qligini aytmaydi. Ichiml
 B ga o'tish — `packages/shared/src/schemas/purchase.ts` da `.min(0)` → `.min(1)` (+ test).
 
 ### OQ-24 — Kassa jurnalining tartibi
-FR-6.1 kassa jurnalini talab qiladi, lekin tartibini aytmaydi. Kassa yozuvida ikki vaqt bor: `tx_date` (hisobot sanasi — filtrlar va P&L shu bo'yicha, o'tgan sana bilan kiritilishi mumkin, BR-13) va `created_at` (kiritilgan payt). `balance_after` esa kiritilish tartibida hisoblanadi.
+**Javob (2026-10-23, Prompt 44): A.** FR-6.1 kassa jurnalini talab qiladi, lekin tartibini aytmaydi. Kassa yozuvida ikki vaqt bor: `tx_date` (hisobot sanasi — filtrlar va P&L shu bo'yicha, o'tgan sana bilan kiritilishi mumkin, BR-13) va `created_at` (kiritilgan payt). `balance_after` esa kiritilish tartibida hisoblanadi.
 - **A (tavsiya, T-701 da shunday):** `tx_date` kamayish bo'yicha, teng bo'lsa `id` kamayish bo'yicha. Sana filtri bilan bir xil mantiq; lekin kecha sanasi bilan bugun kiritilgan yozuv kechagi yozuvlar orasida turadi va uning `balance_after` qo'shni qatorlardan "sakraydi" (jadvalda kiritilgan vaqt ham ko'rsatiladi).
 - **B:** kiritilish tartibi (`id` kamayish) — `balance_after` doim ketma-ket, lekin sana ustuni tartibsiz ko'rinishi mumkin.
 B ga o'tish — `cash.queries.ts` da `orderBy: [{ id: 'desc' }]` (+ test).

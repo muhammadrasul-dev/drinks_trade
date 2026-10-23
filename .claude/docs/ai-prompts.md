@@ -461,3 +461,12 @@ i have some unfinished tasks in other claude and other claude accaunt, can you c
 ```
 Try again
 ```
+
+---
+
+## Prompt 44 — OQ-24 (A), OQ-26 (B) javoblari (2026-10-23)
+
+```
+oq-24 (A) option is suitable for this section
+oq-26 no, it is not needly function at this time
+```
