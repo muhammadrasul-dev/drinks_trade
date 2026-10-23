@@ -1,5 +1,6 @@
 import type { StockReportQuery } from '@drinks/shared/schemas';
-import { z } from 'zod';
+
+import { firstParam, type SearchParams, uuidParam } from '@/lib/search-params';
 
 // /reports/stock filters live in the URL
 // (?warehouse=&sub=&category=&brand=&low=1&archived=0|1), like /products.
@@ -16,30 +17,17 @@ export interface StockReportFilters {
   archived?: boolean;
 }
 
-type SearchParams = Record<string, string | string[] | undefined>;
-
-function first(value: string | string[] | undefined): string | undefined {
-  return Array.isArray(value) ? value[0] : value;
-}
-
-const uuid = z.uuid();
-
-function id(value: string | string[] | undefined): string | undefined {
-  const raw = first(value);
-  return raw && uuid.safeParse(raw).success ? raw : undefined;
-}
-
 /** URL search params → service query; invalid values are dropped, never an error page. */
 export function parseStockReportParams(
   params: SearchParams,
 ): StockReportFilters & StockReportQuery {
-  const archived = first(params.archived);
+  const archived = firstParam(params.archived);
   const values: StockReportFilters = {
-    warehouseId: id(params.warehouse),
-    subWarehouseId: id(params.sub),
-    categoryId: id(params.category),
-    brandId: id(params.brand),
-    ...(first(params.low) === '1' && { lowStock: true }),
+    warehouseId: uuidParam(params.warehouse),
+    subWarehouseId: uuidParam(params.sub),
+    categoryId: uuidParam(params.category),
+    brandId: uuidParam(params.brand),
+    ...(firstParam(params.low) === '1' && { lowStock: true }),
     ...(archived === '0' && { archived: false }),
     ...(archived === '1' && { archived: true }),
   };
