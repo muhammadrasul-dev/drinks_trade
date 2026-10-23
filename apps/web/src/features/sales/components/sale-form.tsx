@@ -3,6 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   type ActionError,
+  formatSom,
   lineStock,
   QtyUnit,
   type SaleDetail,
@@ -44,13 +45,29 @@ import { QtyText } from '@/components/qty-text';
 import { ProductPicker } from '@/features/purchases/components/product-picker';
 import { Link, useRouter } from '@/i18n/navigation';
 
-import { createSale, deleteSale, getSaleAvailability, updateSale } from '../actions';
+import { createSale, deleteSale, getSaleAvailability, postSale, updateSale } from '../actions';
 import { SALES_HREF } from '../list-params';
 
 type LineValues = SaleDraftInput['lines'][number];
 
-/** Posting arrives with T-502; until then "Bajarish" is shown but never enabled. */
-const POSTING_AVAILABLE = false;
+/** A line of INSUFFICIENT_STOCK / UNITS_PER_BLOCK_CHANGED / SALE_PRICE_CHANGED params. */
+interface ErrorLine {
+  lineNo?: number;
+  subWarehouseId?: string;
+  available?: number;
+  required?: number;
+  unitsPerBlock?: number;
+  unitPrice?: number;
+  salePrice?: number;
+}
+
+function errorLines(params: ActionError['params']): ErrorLine[] {
+  const lines = params?.lines;
+  return Array.isArray(lines) ? (lines as ErrorLine[]) : [];
+}
+
+/** Posting errors that point at lines → messages keyed by lineNo (1-based). */
+type LineErrors = ReadonlyMap<number, string>;
 
 interface SaleFormProps {
   /** Edit this draft; omitted → a new one. */
@@ -173,7 +190,8 @@ function useAvailability(sale: SaleDetail | undefined, keys: readonly string[]) 
  * quantity; the per-piece price comes from the product (read-only, OQ-05,
  * OQ-15). Each line shows the pair's current stock and turns red when the
  * draft needs more than that — the draft can still be saved, "Bajarish"
- * stays disabled (FR-3.3). Payment split and note as on purchases.
+ * stays disabled (FR-3.3). Payment split and note as on purchases. "Bajarish"
+ * (T-502) posts the saved draft; errors that name lines show under them.
  */
 export function SaleForm({ sale, products, warehouses, today }: SaleFormProps) {
   const t = useTranslations('sales');
@@ -184,6 +202,7 @@ export function SaleForm({ sale, products, warehouses, today }: SaleFormProps) {
   const [isPending, startTransition] = useTransition();
   const [version, setVersion] = useState(sale?.version ?? 0);
   const [stale, setStale] = useState(false);
+  const [lineErrors, setLineErrors] = useState<LineErrors>(new Map());
 
   const firstSub = warehouses[0]?.subWarehouses[0]?.id ?? '';
   const form = useForm<SaleDraftInput>({
@@ -278,9 +297,61 @@ export function SaleForm({ sale, products, warehouses, today }: SaleFormProps) {
   const difference = total - paid;
 
   function errorMessage(error: ActionError): string {
-    const name = typeof error.params?.name === 'string' ? error.params.name : null;
-    if (error.code === 'ENTITY_ARCHIVED' && name) return t('form.archivedItem', { name });
-    return tErrors(error.code);
+    const params = error.params ?? {};
+    const name = typeof params.name === 'string' ? params.name : null;
+    switch (error.code) {
+      case 'ENTITY_ARCHIVED':
+        return name ? t('form.archivedItem', { name }) : tErrors(error.code);
+      case 'WAREHOUSE_IN_STOCK_COUNT':
+        return t('post.stockCount', {
+          warehouse: String(params.warehouseName ?? ''),
+          number: String(params.stockCountNumber ?? ''),
+        });
+      case 'NOTE_REQUIRED':
+        return t('post.noteRequired');
+      case 'PAYMENT_SPLIT_MISMATCH':
+        return t('post.splitMismatch');
+      default:
+        return tErrors(error.code);
+    }
+  }
+
+  /** INSUFFICIENT_STOCK, UNITS_PER_BLOCK_CHANGED and SALE_PRICE_CHANGED name their lines. */
+  function lineErrorsOf(error: ActionError): LineErrors {
+    const subName = (id: string | undefined) =>
+      sale?.lines.find((line) => line.subWarehouse.id === id)?.subWarehouse.name ?? '';
+    const messages = new Map<number, string>();
+    for (const line of errorLines(error.params)) {
+      if (line.lineNo === undefined) continue;
+      switch (error.code) {
+        case 'INSUFFICIENT_STOCK':
+          messages.set(
+            line.lineNo,
+            t('post.lineShort', {
+              subWarehouse: subName(line.subWarehouseId),
+              available: line.available ?? 0,
+              required: line.required ?? 0,
+            }),
+          );
+          break;
+        case 'UNITS_PER_BLOCK_CHANGED':
+          messages.set(
+            line.lineNo,
+            t('post.lineUnitsChanged', { unitsPerBlock: line.unitsPerBlock ?? 0 }),
+          );
+          break;
+        case 'SALE_PRICE_CHANGED':
+          messages.set(
+            line.lineNo,
+            t('post.linePriceChanged', {
+              unitPrice: formatSom(line.unitPrice ?? 0, tCommon('som')),
+              salePrice: formatSom(line.salePrice ?? 0, tCommon('som')),
+            }),
+          );
+          break;
+      }
+    }
+    return messages;
   }
 
   function onSubmit(values: SaleDraftInput) {
@@ -303,10 +374,31 @@ export function SaleForm({ sale, products, warehouses, today }: SaleFormProps) {
         return;
       }
       setVersion(result.data.version);
+      setLineErrors(new Map());
       form.reset(values);
       toast.success(tCommon('saved'));
       router.refresh();
     });
+  }
+
+  async function onPost(): Promise<boolean> {
+    if (!sale) return true;
+    form.clearErrors('root');
+    setLineErrors(new Map());
+    const result = await postSale({ id: sale.id, version });
+    if (!result.ok) {
+      const code = result.error.code;
+      if (code === 'DOCUMENT_CHANGED' || code === 'DOCUMENT_NOT_DRAFT') setStale(true);
+      const byLine = lineErrorsOf(result.error);
+      setLineErrors(byLine);
+      form.setError('root', {
+        message: byLine.size > 0 ? t('post.failed') : errorMessage(result.error),
+      });
+      return true;
+    }
+    toast.success(t('post.done', { number: sale.number }));
+    router.refresh();
+    return true;
   }
 
   async function onDelete(): Promise<boolean> {
@@ -384,13 +476,15 @@ export function SaleForm({ sale, products, warehouses, today }: SaleFormProps) {
             const product = c?.product;
             const stock = c ? stockByLine.get(c) : undefined;
             const available = c?.ready ? known.get(c.key) : undefined;
+            // Posting errors refer to the saved lines; once the form changes they are stale.
+            const postError = isDirty ? undefined : lineErrors.get(index + 1);
             return (
               <div
                 key={field.id}
                 className={cn(
                   LINE_GRID,
                   'flex flex-col gap-2 rounded-md border p-3 md:rounded-none md:border-0 md:border-b md:p-1 md:pb-2',
-                  stock?.short && 'border-destructive/60 bg-destructive/5',
+                  (stock?.short || postError) && 'border-destructive/60 bg-destructive/5',
                 )}
               >
                 <span className="pt-2 text-sm text-muted-foreground tabular-nums">{index + 1}</span>
@@ -537,7 +631,12 @@ export function SaleForm({ sale, products, warehouses, today }: SaleFormProps) {
                 >
                   <Trash2Icon />
                 </Button>
-                {stock?.short && product && (
+                {postError && (
+                  <p role="alert" className="text-sm text-destructive md:col-span-8 md:col-start-2">
+                    {postError}
+                  </p>
+                )}
+                {!postError && stock?.short && product && (
                   <p role="alert" className="text-sm text-destructive md:col-span-8 md:col-start-2">
                     {t('form.short', {
                       available: stock.available,
@@ -654,13 +753,18 @@ export function SaleForm({ sale, products, warehouses, today }: SaleFormProps) {
             {tCommon('save')}
           </Button>
           {sale && (
-            <Button
-              type="button"
-              disabled={!POSTING_AVAILABLE || isPending || isDirty || stockShort}
-            >
-              <CheckCircle2Icon />
-              {t('post.button')}
-            </Button>
+            <ConfirmDialog
+              trigger={
+                <Button type="button" disabled={isPending || isDirty || stockShort}>
+                  <CheckCircle2Icon />
+                  {t('post.button')}
+                </Button>
+              }
+              title={t('post.title', { number: sale.number })}
+              description={t('post.description')}
+              confirmLabel={t('post.button')}
+              onConfirm={onPost}
+            />
           )}
           <Button asChild variant="outline">
             <Link href={SALES_HREF}>{t('form.back')}</Link>
