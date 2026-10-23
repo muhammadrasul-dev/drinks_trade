@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { formatQty, splitPieces, toPieces } from './units';
+import { QtyUnit } from './enums';
+import { formatQty, splitPieces, toPieces, unitPieces } from './units';
 
 const NBSP = '\u00a0';
 
@@ -22,6 +23,16 @@ describe('toPieces (BR-1)', () => {
     expect(() => toPieces(1.5, 0, 6)).toThrow(RangeError);
     expect(() => toPieces(1, 0, 0)).toThrow(RangeError);
     expect(() => toPieces(Number.MAX_SAFE_INTEGER, 0, 2)).toThrow(RangeError);
+  });
+});
+
+describe('unitPieces (BR-1)', () => {
+  it('multiplies a BLOCK line by the units per block', () => {
+    expect(unitPieces(QtyUnit.BLOCK, 3, 12)).toBe(36);
+  });
+
+  it('keeps a PIECE line as entered', () => {
+    expect(unitPieces(QtyUnit.PIECE, 7, 12)).toBe(7);
   });
 });
 
