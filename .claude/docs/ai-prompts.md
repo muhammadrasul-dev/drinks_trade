@@ -519,3 +519,16 @@ I hit my usage limit while you were working, but it has reset now. Please contin
 ```
 bro i cannot bajarish this sale. Maybe it is not working well, check this in sales sections.
 ```
+
+---
+
+## Prompt 51 — T-503, T-601, T-703 ni alohida sessiyalarda, refactor va test bilan (2026-10-23)
+
+```
+T-503 (savdo storno’si)
+T-601 (inventarizatsiya)
+T-703 (kassa yozuvi storno’si)
+
+
+do theese tasks in seperate sessions, in additions refactor during doing tasks and test proccess
+```
