@@ -766,5 +766,41 @@
       "attemptsCleared": "Сброшено попыток",
       "value": "Значение"
     }
+  },
+  "stockReport": {
+    "title": "Остатки товаров",
+    "empty": "Остатков не найдено.",
+    "archivedTag": "архив",
+    "lowStock": "Мало",
+    "lowStockTitle": "Минимальный остаток: {min}",
+    "pieces": "= {qty} шт.",
+    "storeQty": "Всего в магазине: {qty}",
+    "filters": {
+      "label": "Фильтры",
+      "warehouse": "Склад",
+      "allWarehouses": "Все склады",
+      "subWarehouse": "Подсклад",
+      "allSubWarehouses": "Все подсклады",
+      "category": "Категория",
+      "brand": "Бренд",
+      "archived": "Статус товара",
+      "archivedAll": "Активные и архив",
+      "archivedActive": "Только активные",
+      "archivedOnly": "Только архив",
+      "lowStock": "Заканчиваются",
+      "reset": "Сбросить"
+    },
+    "totals": {
+      "label": "Итого по отчёту",
+      "products": "Товаров:",
+      "value": "Стоимость остатка (по себестоимости):"
+    },
+    "columns": {
+      "product": "Товар",
+      "locations": "Размещение (склад → подсклад)",
+      "qty": "Остаток",
+      "avgCost": "Средняя себестоимость (1 шт.)",
+      "value": "Стоимость"
+    }
   }
 }
