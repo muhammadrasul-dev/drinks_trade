@@ -10,15 +10,11 @@ import {
 } from '@drinks/ui/components/select';
 import { Input } from '@drinks/ui/components/input';
 import { useTranslations } from 'next-intl';
-import type { ChangeEvent, ComponentProps } from 'react';
+import type { ComponentProps } from 'react';
+
+import { toNumber } from '@/lib/number-input';
 
 // Amount and cashbox inputs of the debt (T-704) and cash (T-702) dialogs.
-
-/** Digits only → number; empty → undefined (the schema then says "required"). */
-export function toNumber(event: ChangeEvent<HTMLInputElement>): number | undefined {
-  const digits = event.target.value.replace(/\D/g, '');
-  return digits === '' ? undefined : Number(digits);
-}
 
 type AmountInputProps = Omit<ComponentProps<typeof Input>, 'value' | 'onChange'> & {
   value: number | undefined;

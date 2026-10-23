@@ -31,7 +31,7 @@ import {
 
 import type { ServiceContext } from '../../core/context';
 import { assertCan } from '../../core/rbac';
-import { type Tx, withTransaction } from '../../core/tx';
+import { isUniqueViolation, type Tx, withTransaction } from '../../core/tx';
 import { audit } from '../audit';
 import { hashPassword, verifyPassword } from '../auth/password';
 import { hashSessionToken } from '../auth/token';
@@ -182,11 +182,6 @@ function toAccount(row: UserAccount): UserAccount {
 
 function duplicateUsername(): DomainError {
   return new DomainError(ErrorCode.DUPLICATE_VALUE, { entity: 'user', field: 'username' });
-}
-
-/** Unique-constraint violation (P2002) — a concurrent request took the same login. */
-function isUniqueViolation(error: unknown): boolean {
-  return typeof error === 'object' && error !== null && 'code' in error && error.code === 'P2002';
 }
 
 /** Runs a write; a concurrent duplicate login (P2002) → DUPLICATE_VALUE. */

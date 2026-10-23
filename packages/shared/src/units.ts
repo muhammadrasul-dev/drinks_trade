@@ -1,6 +1,7 @@
 // Units (BR-1): quantities are always whole pieces; a block is only a way to
 // enter and display them. Source of truth: .claude/docs/business-logic.md §1.1.
 import { assertInt, groupDigits } from './decimal';
+import { QtyUnit } from './enums';
 
 /** Blocks + loose pieces → pieces (input, stock count). `toPieces(3, 2, 6)` → 20. */
 export function toPieces(blocks: number, pieces: number, unitsPerBlock: number): number {
@@ -10,6 +11,15 @@ export function toPieces(blocks: number, pieces: number, unitsPerBlock: number):
   const result = blocks * unitsPerBlock + pieces;
   assertInt(result, 'quantity');
   return result;
+}
+
+/**
+ * Pieces of a document line entered as `qty` in `unit` (sale / purchase lines):
+ * a BLOCK line is `qty × unitsPerBlock`. Not range-checked - callers reject
+ * unsafe results themselves.
+ */
+export function unitPieces(unit: QtyUnit, qty: number, unitsPerBlock: number): number {
+  return unit === QtyUnit.BLOCK ? qty * unitsPerBlock : qty;
 }
 
 export interface BlocksAndPieces {

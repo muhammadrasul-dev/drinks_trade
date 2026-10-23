@@ -15,7 +15,7 @@ import {
 
 import type { ServiceContext } from '../../core/context';
 import { assertCan } from '../../core/rbac';
-import { type Tx, withTransaction } from '../../core/tx';
+import { isUniqueViolation, type Tx, withTransaction } from '../../core/tx';
 import { audit } from '../audit';
 
 export interface CatalogListOptions {
@@ -76,11 +76,6 @@ function toItem(row: Row): CatalogItem {
     archived: row.archivedAt !== null,
     productCount: row._count.products,
   };
-}
-
-/** Unique-constraint violation (P2002) — a concurrent create/rename won the same name. */
-function isUniqueViolation(error: unknown): boolean {
-  return typeof error === 'object' && error !== null && 'code' in error && error.code === 'P2002';
 }
 
 /**

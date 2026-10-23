@@ -55,6 +55,7 @@ import type { z } from 'zod';
 
 import { MoneyText } from '@/components/money-text';
 import { Link, useRouter } from '@/i18n/navigation';
+import { toNumber } from '@/lib/number-input';
 
 import { createProduct, removeProductImage, setProductImage, updateProduct } from '../actions';
 import { PRODUCTS_HREF, productImageUrl } from '../list-params';
@@ -95,12 +96,6 @@ function defaults(product?: Product): ProductCreateInput {
     minStock: product?.minStock ?? 0,
     expiryDate: product?.expiryDate ?? '',
   };
-}
-
-/** Digits only → number; empty → undefined (the schema then says "required"). */
-function toNumber(event: ChangeEvent<HTMLInputElement>): number | undefined {
-  const digits = event.target.value.replace(/\D/g, '');
-  return digits === '' ? undefined : Number(digits);
 }
 
 /**

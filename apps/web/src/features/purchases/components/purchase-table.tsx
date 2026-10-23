@@ -9,7 +9,7 @@ import { MoneyText } from '@/components/money-text';
 import { Link } from '@/i18n/navigation';
 
 import { PURCHASES_HREF } from '../list-params';
-import { DocStatusBadge } from './doc-status-badge';
+import { DocStatusBadge } from '@/components/doc-status-badge';
 
 const col = dataTableColumnHelper<PurchaseListItem>();
 

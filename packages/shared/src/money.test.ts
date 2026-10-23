@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { formatSom, roundHalfUp } from './money';
+import { formatSom, paymentSum, roundHalfUp } from './money';
 
 const NBSP = '\u00a0';
 
@@ -58,5 +58,16 @@ describe('roundHalfUp', () => {
     expect(() => roundHalfUp('1,5')).toThrow(RangeError);
     expect(() => roundHalfUp('.5')).toThrow(RangeError);
     expect(() => roundHalfUp('9007199254740992')).toThrow(RangeError);
+  });
+});
+
+describe('paymentSum', () => {
+  it('adds cash, card and credit', () => {
+    expect(paymentSum({ paidCash: 100, paidCard: 50, paidCredit: 25 })).toBe(175);
+  });
+
+  it('counts a part not entered yet as 0', () => {
+    expect(paymentSum({ paidCash: 100, paidCard: undefined })).toBe(100);
+    expect(paymentSum({})).toBe(0);
   });
 });

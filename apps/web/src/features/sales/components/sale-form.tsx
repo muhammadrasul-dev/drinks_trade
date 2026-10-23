@@ -5,10 +5,12 @@ import {
   type ActionError,
   formatSom,
   lineStock,
+  paymentSum,
   QtyUnit,
   type SaleDetail,
   type SaleProductOption,
   stockKeyOf,
+  unitPieces,
   type WarehouseOption,
 } from '@drinks/shared';
 import { SALE_NOTE_MAX, type SaleDraftInput, saleDraftInputSchema } from '@drinks/shared/schemas';
@@ -36,17 +38,19 @@ import { toast } from '@drinks/ui/components/sonner';
 import { cn } from '@drinks/ui/lib/utils';
 import { CheckCircle2Icon, PlusIcon, Trash2Icon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { type ChangeEvent, useEffect, useMemo, useState, useTransition } from 'react';
+import { useMemo, useState, useTransition } from 'react';
 import { useFieldArray, useForm, useWatch } from 'react-hook-form';
 
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import { MoneyText } from '@/components/money-text';
 import { QtyText } from '@/components/qty-text';
-import { ProductPicker } from '@/features/purchases/components/product-picker';
+import { ProductPicker } from '@/components/product-picker';
 import { Link, useRouter } from '@/i18n/navigation';
+import { toNumber, toAmount } from '@/lib/number-input';
 
-import { createSale, deleteSale, getSaleAvailability, postSale, updateSale } from '../actions';
+import { createSale, deleteSale, postSale, updateSale } from '../actions';
 import { SALES_HREF } from '../list-params';
+import { useAvailability } from '../use-availability';
 
 type LineValues = SaleDraftInput['lines'][number];
 
@@ -81,7 +85,7 @@ interface SaleFormProps {
 }
 
 const LINE_GRID =
-  'md:grid md:grid-cols-[1.5rem_minmax(12rem,2fr)_minmax(10rem,1.4fr)_6.5rem_6rem_7rem_8rem_8rem_2.25rem] md:items-start md:gap-2';
+  'xl:grid xl:grid-cols-[1.5rem_minmax(7rem,2fr)_minmax(6rem,1.4fr)_6rem_5.5rem_6rem_7rem_7rem_2.25rem] xl:items-start xl:gap-2';
 
 function emptyLine(subWarehouseId = ''): LineValues {
   return {
@@ -118,70 +122,11 @@ function defaults(sale: SaleDetail | undefined, today: string, firstSub: string)
   } satisfies SaleDraftInput;
 }
 
-/** Digits only → number; empty → undefined (the schema then says "required"). */
-function toNumber(event: ChangeEvent<HTMLInputElement>): number | undefined {
-  const digits = event.target.value.replace(/\D/g, '');
-  return digits === '' ? undefined : Number(digits);
-}
-
-/** Same as toNumber, but an empty payment field means 0. */
-function toAmount(event: ChangeEvent<HTMLInputElement>): number {
-  return toNumber(event) ?? 0;
-}
-
 /** Pieces of a line (BR-1), 0 while it is incomplete. */
 function piecesOf(line: Partial<LineValues> | undefined, product?: SaleProductOption): number {
   if (!line?.inputQty || !product) return 0;
-  const qty =
-    line.inputUnit === QtyUnit.BLOCK ? line.inputQty * product.unitsPerBlock : line.inputQty;
+  const qty = unitPieces(line.inputUnit ?? QtyUnit.PIECE, line.inputQty, product.unitsPerBlock);
   return Number.isSafeInteger(qty) ? qty : 0;
-}
-
-/**
- * Current stock of the form's (sub-warehouse, product) pairs (FR-3.3). Seeded
- * from the saved draft; pairs the user adds are fetched once. Saving reloads
- * the page with fresh numbers; posting re-checks under the locks anyway.
- */
-function useAvailability(sale: SaleDetail | undefined, keys: readonly string[]) {
-  const [known, setKnown] = useState<ReadonlyMap<string, number>>(
-    () =>
-      new Map(
-        (sale?.lines ?? []).flatMap((line) =>
-          line.available === null
-            ? []
-            : [
-                [
-                  stockKeyOf({ subWarehouseId: line.subWarehouse.id, productId: line.product.id }),
-                  line.available,
-                ] as const,
-              ],
-        ),
-      ),
-  );
-  const missing = keys.filter((key) => !known.has(key));
-  const missingKey = missing.join(',');
-
-  useEffect(() => {
-    if (missingKey === '') return;
-    let cancelled = false;
-    const pairs = missingKey.split(',').map((key) => {
-      const [subWarehouseId = '', productId = ''] = key.split(':');
-      return { subWarehouseId, productId };
-    });
-    void getSaleAvailability({ keys: pairs }).then((result) => {
-      if (cancelled || !result.ok) return;
-      setKnown((prev) => {
-        const next = new Map(prev);
-        for (const row of result.data) next.set(stockKeyOf(row), row.qty);
-        return next;
-      });
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [missingKey]);
-
-  return known;
 }
 
 /**
@@ -293,7 +238,7 @@ export function SaleForm({ sale, products, warehouses, today }: SaleFormProps) {
 
   const { isDirty } = form.formState;
   const total = computed.reduce((sum, c) => sum + c.lineTotal, 0);
-  const paid = (paidCash ?? 0) + (paidCard ?? 0) + (paidCredit ?? 0);
+  const paid = paymentSum({ paidCash, paidCard, paidCredit });
   const difference = total - paid;
 
   function errorMessage(error: ActionError): string {
@@ -483,7 +428,7 @@ export function SaleForm({ sale, products, warehouses, today }: SaleFormProps) {
                 key={field.id}
                 className={cn(
                   LINE_GRID,
-                  'flex flex-col gap-2 rounded-md border p-3 md:rounded-none md:border-0 md:border-b md:p-1 md:pb-2',
+                  'flex flex-col gap-2 rounded-md border p-3 xl:rounded-none xl:border-0 xl:border-b xl:p-1 xl:pb-2',
                   (stock?.short || postError) && 'border-destructive/60 bg-destructive/5',
                 )}
               >
@@ -493,7 +438,7 @@ export function SaleForm({ sale, products, warehouses, today }: SaleFormProps) {
                   name={`lines.${index}.productId`}
                   render={({ field: f, fieldState }) => (
                     <FormItem>
-                      <FormLabel className="md:sr-only">{t('form.product')}</FormLabel>
+                      <FormLabel className="xl:sr-only">{t('form.product')}</FormLabel>
                       <ProductPicker
                         options={productOptions}
                         value={f.value}
@@ -515,7 +460,7 @@ export function SaleForm({ sale, products, warehouses, today }: SaleFormProps) {
                   name={`lines.${index}.subWarehouseId`}
                   render={({ field: f }) => (
                     <FormItem>
-                      <FormLabel className="md:sr-only">{t('form.subWarehouse')}</FormLabel>
+                      <FormLabel className="xl:sr-only">{t('form.subWarehouse')}</FormLabel>
                       <Select value={f.value || undefined} onValueChange={f.onChange}>
                         <FormControl>
                           <SelectTrigger className="w-full">
@@ -549,7 +494,7 @@ export function SaleForm({ sale, products, warehouses, today }: SaleFormProps) {
                   name={`lines.${index}.inputUnit`}
                   render={({ field: f }) => (
                     <FormItem>
-                      <FormLabel className="md:sr-only">{t('form.unit')}</FormLabel>
+                      <FormLabel className="xl:sr-only">{t('form.unit')}</FormLabel>
                       <Select value={f.value} onValueChange={f.onChange}>
                         <FormControl>
                           <SelectTrigger className="w-full">
@@ -572,7 +517,7 @@ export function SaleForm({ sale, products, warehouses, today }: SaleFormProps) {
                   name={`lines.${index}.inputQty`}
                   render={({ field: f }) => (
                     <FormItem>
-                      <FormLabel className="md:sr-only">{t('form.qty')}</FormLabel>
+                      <FormLabel className="xl:sr-only">{t('form.qty')}</FormLabel>
                       <FormControl>
                         <Input
                           inputMode="numeric"
@@ -595,16 +540,16 @@ export function SaleForm({ sale, products, warehouses, today }: SaleFormProps) {
                     </FormItem>
                   )}
                 />
-                <div className="flex items-center justify-between gap-2 text-sm md:block md:pt-2">
-                  <span className="text-muted-foreground md:sr-only">{t('form.price')}</span>
+                <div className="flex items-center justify-between gap-2 text-sm xl:block xl:pt-2">
+                  <span className="text-muted-foreground xl:sr-only">{t('form.price')}</span>
                   {product ? (
                     <MoneyText amount={product.salePrice} />
                   ) : (
                     <span className="text-muted-foreground">—</span>
                   )}
                 </div>
-                <div className="flex items-center justify-between gap-2 text-sm md:block md:pt-2">
-                  <span className="text-muted-foreground md:sr-only">{t('form.available')}</span>
+                <div className="flex items-center justify-between gap-2 text-sm xl:block xl:pt-2">
+                  <span className="text-muted-foreground xl:sr-only">{t('form.available')}</span>
                   {product && available !== undefined ? (
                     <span className={cn(stock?.short && 'font-medium text-destructive')}>
                       <QtyText qty={available} unitsPerBlock={product.unitsPerBlock} />
@@ -613,8 +558,8 @@ export function SaleForm({ sale, products, warehouses, today }: SaleFormProps) {
                     <span className="text-muted-foreground">—</span>
                   )}
                 </div>
-                <div className="flex items-center justify-between gap-2 md:block md:pt-2 md:text-right">
-                  <span className="text-sm text-muted-foreground md:sr-only">
+                <div className="flex items-center justify-between gap-2 xl:block xl:pt-2 xl:text-right">
+                  <span className="text-sm text-muted-foreground xl:sr-only">
                     {t('form.lineTotal')}
                   </span>
                   <MoneyText amount={c?.lineTotal ?? 0} className="text-sm font-medium" />
@@ -623,7 +568,7 @@ export function SaleForm({ sale, products, warehouses, today }: SaleFormProps) {
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="self-end md:self-start"
+                  className="self-end xl:self-start"
                   aria-label={t('form.removeLine', { n: index + 1 })}
                   title={t('form.removeLine', { n: index + 1 })}
                   disabled={fields.length === 1}
@@ -632,12 +577,12 @@ export function SaleForm({ sale, products, warehouses, today }: SaleFormProps) {
                   <Trash2Icon />
                 </Button>
                 {postError && (
-                  <p role="alert" className="text-sm text-destructive md:col-span-8 md:col-start-2">
+                  <p role="alert" className="text-sm text-destructive xl:col-span-8 xl:col-start-2">
                     {postError}
                   </p>
                 )}
                 {!postError && stock?.short && product && (
-                  <p role="alert" className="text-sm text-destructive md:col-span-8 md:col-start-2">
+                  <p role="alert" className="text-sm text-destructive xl:col-span-8 xl:col-start-2">
                     {t('form.short', {
                       available: stock.available,
                       required: stock.required,

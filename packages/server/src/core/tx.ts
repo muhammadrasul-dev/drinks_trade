@@ -30,3 +30,8 @@ export async function withTransaction<T>(
     isolationLevel: 'ReadCommitted',
   });
 }
+
+/** Unique-constraint violation (P2002) - a concurrent write took the same unique value. */
+export function isUniqueViolation(error: unknown): boolean {
+  return typeof error === 'object' && error !== null && 'code' in error && error.code === 'P2002';
+}

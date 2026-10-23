@@ -3,6 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   type ActionError,
+  paymentSum,
   type ProductOption,
   type PurchaseDetail,
   QtyUnit,
@@ -37,16 +38,17 @@ import { toast } from '@drinks/ui/components/sonner';
 import { cn } from '@drinks/ui/lib/utils';
 import { CheckCircle2Icon, PlusIcon, Trash2Icon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { type ChangeEvent, useMemo, useState, useTransition } from 'react';
+import { useMemo, useState, useTransition } from 'react';
 import { useFieldArray, useForm, useWatch } from 'react-hook-form';
 
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import { MoneyText } from '@/components/money-text';
 import { Link, useRouter } from '@/i18n/navigation';
+import { toNumber, toAmount } from '@/lib/number-input';
 
 import { createPurchase, deletePurchase, postPurchase, updatePurchase } from '../actions';
 import { PURCHASES_HREF } from '../list-params';
-import { ProductPicker } from './product-picker';
+import { ProductPicker } from '@/components/product-picker';
 
 type LineValues = PurchaseDraftInput['lines'][number];
 
@@ -62,7 +64,7 @@ interface PurchaseFormProps {
 }
 
 const LINE_GRID =
-  'md:grid md:grid-cols-[1.5rem_minmax(12rem,2fr)_minmax(10rem,1.4fr)_6.5rem_6rem_8rem_8rem_2.25rem] md:items-start md:gap-2';
+  'lg:grid lg:grid-cols-[1.5rem_minmax(7rem,2fr)_minmax(6rem,1.4fr)_6rem_5.5rem_7rem_7rem_2.25rem] lg:items-start lg:gap-2';
 
 function emptyLine(subWarehouseId = ''): LineValues {
   return {
@@ -99,17 +101,6 @@ function defaults(purchase: PurchaseDetail | undefined, today: string, firstSub:
     paidCard: purchase.paidCard,
     paidCredit: purchase.paidCredit,
   } satisfies PurchaseDraftInput;
-}
-
-/** Digits only → number; empty → undefined (the schema then says "required"). */
-function toNumber(event: ChangeEvent<HTMLInputElement>): number | undefined {
-  const digits = event.target.value.replace(/\D/g, '');
-  return digits === '' ? undefined : Number(digits);
-}
-
-/** Same as toNumber, but an empty payment field means 0. */
-function toAmount(event: ChangeEvent<HTMLInputElement>): number {
-  return toNumber(event) ?? 0;
 }
 
 function lineTotal(line: Partial<LineValues> | undefined): number {
@@ -196,7 +187,7 @@ export function PurchaseForm({ purchase, products, warehouses, today }: Purchase
 
   const { isDirty } = form.formState;
   const total = (lines ?? []).reduce((sum, line) => sum + lineTotal(line), 0);
-  const paid = (paidCash ?? 0) + (paidCard ?? 0) + (paidCredit ?? 0);
+  const paid = paymentSum({ paidCash, paidCard, paidCredit });
   const difference = total - paid;
 
   function errorMessage(error: ActionError): string {
@@ -346,7 +337,7 @@ export function PurchaseForm({ purchase, products, warehouses, today }: Purchase
                 key={field.id}
                 className={cn(
                   LINE_GRID,
-                  'flex flex-col gap-2 rounded-md border p-3 md:rounded-none md:border-0 md:border-b md:p-1 md:pb-2',
+                  'flex flex-col gap-2 rounded-md border p-3 lg:rounded-none lg:border-0 lg:border-b lg:p-1 lg:pb-2',
                 )}
               >
                 <span className="pt-2 text-sm text-muted-foreground tabular-nums">{index + 1}</span>
@@ -355,7 +346,7 @@ export function PurchaseForm({ purchase, products, warehouses, today }: Purchase
                   name={`lines.${index}.productId`}
                   render={({ field: f, fieldState }) => (
                     <FormItem>
-                      <FormLabel className="md:sr-only">{t('form.product')}</FormLabel>
+                      <FormLabel className="lg:sr-only">{t('form.product')}</FormLabel>
                       <ProductPicker
                         options={productOptions}
                         value={f.value}
@@ -377,7 +368,7 @@ export function PurchaseForm({ purchase, products, warehouses, today }: Purchase
                   name={`lines.${index}.subWarehouseId`}
                   render={({ field: f }) => (
                     <FormItem>
-                      <FormLabel className="md:sr-only">{t('form.subWarehouse')}</FormLabel>
+                      <FormLabel className="lg:sr-only">{t('form.subWarehouse')}</FormLabel>
                       <Select value={f.value || undefined} onValueChange={f.onChange}>
                         <FormControl>
                           <SelectTrigger className="w-full">
@@ -411,7 +402,7 @@ export function PurchaseForm({ purchase, products, warehouses, today }: Purchase
                   name={`lines.${index}.inputUnit`}
                   render={({ field: f }) => (
                     <FormItem>
-                      <FormLabel className="md:sr-only">{t('form.unit')}</FormLabel>
+                      <FormLabel className="lg:sr-only">{t('form.unit')}</FormLabel>
                       <Select value={f.value} onValueChange={f.onChange}>
                         <FormControl>
                           <SelectTrigger className="w-full">
@@ -434,7 +425,7 @@ export function PurchaseForm({ purchase, products, warehouses, today }: Purchase
                   name={`lines.${index}.inputQty`}
                   render={({ field: f }) => (
                     <FormItem>
-                      <FormLabel className="md:sr-only">{t('form.qty')}</FormLabel>
+                      <FormLabel className="lg:sr-only">{t('form.qty')}</FormLabel>
                       <FormControl>
                         <Input
                           inputMode="numeric"
@@ -461,7 +452,7 @@ export function PurchaseForm({ purchase, products, warehouses, today }: Purchase
                   name={`lines.${index}.inputPrice`}
                   render={({ field: f }) => (
                     <FormItem>
-                      <FormLabel className="md:sr-only">{t('form.price')}</FormLabel>
+                      <FormLabel className="lg:sr-only">{t('form.price')}</FormLabel>
                       <FormControl>
                         <Input
                           inputMode="numeric"
@@ -478,8 +469,8 @@ export function PurchaseForm({ purchase, products, warehouses, today }: Purchase
                     </FormItem>
                   )}
                 />
-                <div className="flex items-center justify-between gap-2 md:block md:pt-2 md:text-right">
-                  <span className="text-sm text-muted-foreground md:sr-only">
+                <div className="flex items-center justify-between gap-2 lg:block lg:pt-2 lg:text-right">
+                  <span className="text-sm text-muted-foreground lg:sr-only">
                     {t('form.lineTotal')}
                   </span>
                   <MoneyText amount={lineTotal(line)} className="text-sm font-medium" />
@@ -488,7 +479,7 @@ export function PurchaseForm({ purchase, products, warehouses, today }: Purchase
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="self-end md:self-start"
+                  className="self-end lg:self-start"
                   aria-label={t('form.removeLine', { n: index + 1 })}
                   title={t('form.removeLine', { n: index + 1 })}
                   disabled={fields.length === 1}

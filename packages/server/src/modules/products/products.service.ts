@@ -33,7 +33,7 @@ import type { ServiceContext } from '../../core/context';
 import { moneyToBigInt, moneyToNumber } from '../../core/money';
 import { assertCan } from '../../core/rbac';
 import { getStorage } from '../../core/storage';
-import { type Tx, withTransaction } from '../../core/tx';
+import { isUniqueViolation, type Tx, withTransaction } from '../../core/tx';
 import { audit } from '../audit';
 import { getProductTotals } from '../inventory/inventory.service';
 import {
@@ -214,8 +214,7 @@ async function assertRefSelectable(
 
 /** P2002 from a concurrent write → DUPLICATE_VALUE on the field the index names. */
 function uniqueViolationField(error: unknown): CodeField | null {
-  if (typeof error !== 'object' || error === null || !('code' in error)) return null;
-  if (error.code !== 'P2002') return null;
+  if (!isUniqueViolation(error)) return null;
   const text = JSON.stringify((error as { meta?: unknown }).meta ?? {});
   return text.includes('barcode') ? 'barcode' : 'sku';
 }

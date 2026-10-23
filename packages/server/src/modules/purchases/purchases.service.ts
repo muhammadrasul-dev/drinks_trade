@@ -4,6 +4,7 @@
 // credit debt (debts) in one transaction, and reversal undoes all three. Any user may edit any draft (OQ-14); concurrent edits are
 // caught by the `version` column.
 import type { Prisma } from '@drinks/db';
+import type { QtyUnit } from '@drinks/shared';
 import {
   CashDirection,
   CashTxType,
@@ -17,10 +18,11 @@ import {
   type PurchaseListItem,
   type PurchaseListPage,
   MovementType,
-  QtyUnit,
   storeDateOf,
   unitCostOf,
   parseInput,
+  paymentSum,
+  unitPieces,
 } from '@drinks/shared';
 import {
   PURCHASE_PAGE_SIZE,
@@ -43,7 +45,7 @@ import type { z } from 'zod';
 
 import type { ServiceContext } from '../../core/context';
 import { resolveStoreDate, storeDayRange } from '../../core/dates';
-import { assertLineProductsUnchanged } from '../../core/doc-lines';
+import { assertLineProductsUnchanged, loadActiveProducts } from '../../core/doc-lines';
 import { lockDebt, lockPurchase } from '../../core/locks';
 import { decimalToString, moneyToBigInt, moneyToNumber } from '../../core/money';
 import { nextDocNumber } from '../../core/numbering';
@@ -198,19 +200,11 @@ async function computeLines(
   ctx: ServiceContext,
   lines: DraftValues['lines'],
 ): Promise<ComputedLine[]> {
-  const productIds = [...new Set(lines.map((line) => line.productId))];
-  const rows = await tx.product.findMany({
-    where: { id: { in: productIds }, organizationId: ctx.organizationId },
-    select: { id: true, name: true, unitsPerBlock: true, archivedAt: true },
-  });
-  const byId = new Map(rows.map((row) => [row.id, row]));
-  for (const id of productIds) {
-    const product = byId.get(id);
-    if (!product) throw new DomainError(ErrorCode.NOT_FOUND, { entity: 'product' });
-    if (product.archivedAt) {
-      throw new DomainError(ErrorCode.ENTITY_ARCHIVED, { entity: 'product', name: product.name });
-    }
-  }
+  const byId = await loadActiveProducts(
+    tx,
+    ctx,
+    lines.map((line) => line.productId),
+  );
   await warehouses.resolveActive(
     tx,
     ctx,
@@ -219,7 +213,7 @@ async function computeLines(
 
   return lines.map((line, index) => {
     const { unitsPerBlock } = byId.get(line.productId)!;
-    const qty = line.inputUnit === QtyUnit.BLOCK ? line.inputQty * unitsPerBlock : line.inputQty;
+    const qty = unitPieces(line.inputUnit, line.inputQty, unitsPerBlock);
     const lineTotal = line.inputQty * line.inputPrice;
     if (!Number.isSafeInteger(qty)) throw new RangeError(`Line qty overflow: ${qty}`);
     return {
@@ -496,7 +490,7 @@ async function post(ctx: ServiceContext, input: PurchasePostInput): Promise<Purc
     const paidCredit = moneyToNumber(doc.paidCredit);
 
     // 3. Header rules need no further lock, so they fail first (OQ-19: before other work).
-    if (paidCash + paidCard + paidCredit !== totalAmount) {
+    if (paymentSum({ paidCash, paidCard, paidCredit }) !== totalAmount) {
       throw new DomainError(ErrorCode.PAYMENT_SPLIT_MISMATCH);
     }
     if (paidCredit > 0 && !doc.note?.trim()) throw new DomainError(ErrorCode.NOTE_REQUIRED);

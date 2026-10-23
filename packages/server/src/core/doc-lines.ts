@@ -5,6 +5,9 @@
 // sends the user back to re-save the draft, which recomputes the lines.
 import { DomainError, ErrorCode, QtyUnit } from '@drinks/shared';
 
+import type { ServiceContext } from './context';
+import type { Tx } from './tx';
+
 export interface PostedLineProduct {
   lineNo: number;
   productId: string;
@@ -38,4 +41,30 @@ export function assertLineProductsUnchanged(lines: readonly PostedLineProduct[])
       })),
     });
   }
+}
+
+/**
+ * The distinct products of a draft's lines by id (what computeLines needs to
+ * turn input quantities into pieces). A missing product is NOT_FOUND, an
+ * archived one ENTITY_ARCHIVED.
+ */
+export async function loadActiveProducts(
+  tx: Tx,
+  ctx: ServiceContext,
+  productIds: readonly string[],
+) {
+  const ids = [...new Set(productIds)];
+  const rows = await tx.product.findMany({
+    where: { id: { in: ids }, organizationId: ctx.organizationId },
+    select: { id: true, name: true, unitsPerBlock: true, salePrice: true, archivedAt: true },
+  });
+  const byId = new Map(rows.map((row) => [row.id, row]));
+  for (const id of ids) {
+    const product = byId.get(id);
+    if (!product) throw new DomainError(ErrorCode.NOT_FOUND, { entity: 'product' });
+    if (product.archivedAt) {
+      throw new DomainError(ErrorCode.ENTITY_ARCHIVED, { entity: 'product', name: product.name });
+    }
+  }
+  return byId;
 }
