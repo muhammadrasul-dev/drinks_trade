@@ -60,6 +60,13 @@ export const saleDeleteInputSchema = z.object({
 });
 export type SaleDeleteInput = z.input<typeof saleDeleteInputSchema>;
 
+/** Posting (T-502): the draft and the version the user saw (optimistic lock). */
+export const salePostInputSchema = z.object({
+  id: z.uuid(),
+  version: z.number().int().min(0),
+});
+export type SalePostInput = z.input<typeof salePostInputSchema>;
+
 export const saleIdInputSchema = z.object({ id: z.uuid() });
 export type SaleIdInput = z.input<typeof saleIdInputSchema>;
 

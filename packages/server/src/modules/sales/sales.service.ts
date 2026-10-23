@@ -1,15 +1,21 @@
-// Sales (FR-3.1–3.3, business-logic §4): drafts (T-501). A draft touches
-// neither stock nor cash; each line copies the product's per-piece sale price
-// (OQ-05, OQ-15) and carries a stock warning (FR-3.3) — a short draft can be
-// saved, posting (T-502) re-checks under the locks. Any user may edit any
-// draft (OQ-14); concurrent edits are caught by the `version` column.
+// Sales (FR-3.1–3.3, business-logic §4): drafts (T-501) and posting (T-502).
+// A draft touches neither stock nor cash; each line copies the product's
+// per-piece sale price (OQ-05, OQ-15) and carries a stock warning (FR-3.3) — a
+// short draft can be saved, posting re-checks under the locks and moves stock
+// (inventory), cash (cash) and opens the credit debt (debts) in one
+// transaction. Any user may edit any draft (OQ-14); concurrent edits are
+// caught by the `version` column.
 import type { Prisma } from '@drinks/db';
 import {
+  CashboxType,
+  CashTxType,
+  DebtSource,
   DocStatus,
   DocType,
   DomainError,
   ErrorCode,
   lineStock,
+  MovementType,
   QtyUnit,
   type SaleDetail,
   type SaleLine,
@@ -33,6 +39,8 @@ import {
   saleIdInputSchema,
   type SaleListQuery,
   saleListQuerySchema,
+  type SalePostInput,
+  salePostInputSchema,
   type SaleUpdateInput,
   saleUpdateInputSchema,
 } from '@drinks/shared/schemas';
@@ -40,12 +48,14 @@ import type { z } from 'zod';
 
 import type { ServiceContext } from '../../core/context';
 import { resolveStoreDate, storeDayRange } from '../../core/dates';
-import { lockSale } from '../../core/locks';
+import { lockCashboxes, lockSale, lockWarehouses } from '../../core/locks';
 import { moneyToBigInt, moneyToNumber } from '../../core/money';
 import { nextDocNumber } from '../../core/numbering';
 import { assertCan } from '../../core/rbac';
 import { type Tx, withTransaction } from '../../core/tx';
 import { audit, isBackdated } from '../audit';
+import { cash } from '../cash';
+import { debts } from '../debts';
 import { inventory } from '../inventory';
 import { warehouses } from '../warehouses';
 
@@ -499,4 +509,226 @@ async function productOptions(ctx: ServiceContext): Promise<SaleProductOption[]>
   return rows.map((row) => ({ ...row, salePrice: moneyToNumber(row.salePrice) }));
 }
 
-export const sales = { list, get, create, update, remove, availability, productOptions };
+// ── Posting (T-502, BR-5, BR-7, business-logic §4.2) ─────────────────────
+
+const POST_SELECT = {
+  number: true,
+  docDate: true,
+  note: true,
+  totalAmount: true,
+  paidCash: true,
+  paidCard: true,
+  paidCredit: true,
+  lines: {
+    orderBy: { lineNo: 'asc' },
+    select: {
+      id: true,
+      lineNo: true,
+      productId: true,
+      subWarehouseId: true,
+      inputUnit: true,
+      inputQty: true,
+      qty: true,
+      unitPrice: true,
+      product: {
+        select: { name: true, unitsPerBlock: true, salePrice: true, archivedAt: true },
+      },
+    },
+  },
+} as const satisfies Prisma.SaleSelect;
+
+type PostRow = Prisma.SaleGetPayload<{ select: typeof POST_SELECT }>;
+
+/**
+ * Products must still be active; a BLOCK line must still hold inputQty × the
+ * product's current units per block (OQ-06) and every line the product's
+ * current sale price (OQ-29). Otherwise the user re-saves the draft, which
+ * recomputes pieces, prices and the total.
+ */
+function assertProductsUnchanged(lines: PostRow['lines']): void {
+  for (const line of lines) {
+    if (line.product.archivedAt !== null) {
+      throw new DomainError(ErrorCode.ENTITY_ARCHIVED, {
+        entity: 'product',
+        name: line.product.name,
+      });
+    }
+  }
+  const blockChanged = lines.filter(
+    (line) =>
+      line.inputUnit === QtyUnit.BLOCK && line.qty !== line.inputQty * line.product.unitsPerBlock,
+  );
+  if (blockChanged.length > 0) {
+    throw new DomainError(ErrorCode.UNITS_PER_BLOCK_CHANGED, {
+      lines: blockChanged.map((line) => ({
+        lineNo: line.lineNo,
+        productId: line.productId,
+        product: line.product.name,
+        qty: line.qty,
+        unitsPerBlock: line.product.unitsPerBlock,
+      })),
+    });
+  }
+  const priceChanged = lines.filter((line) => line.unitPrice !== line.product.salePrice);
+  if (priceChanged.length > 0) {
+    throw new DomainError(ErrorCode.SALE_PRICE_CHANGED, {
+      lines: priceChanged.map((line) => ({
+        lineNo: line.lineNo,
+        productId: line.productId,
+        product: line.product.name,
+        unitPrice: moneyToNumber(line.unitPrice),
+        salePrice: moneyToNumber(line.product.salePrice),
+      })),
+    });
+  }
+}
+
+/**
+ * Posts a draft (BR-5): goods leave the chosen sub-warehouses at the current
+ * average cost, which is frozen on each line (BR-6) and stays the average;
+ * any (sub-warehouse, product) short of stock fails the whole sale with
+ * INSUFFICIENT_STOCK (BR-7). The cash and card parts come IN to their
+ * cashboxes (SALE_RECEIPT) and the credit part opens a RECEIVABLE debt — one
+ * transaction, locks in business-logic §2 order, audit POST. Both roles may
+ * post (OQ-02); no error carries a cash amount or a cost (CLAUDE.md rule 6).
+ */
+async function post(ctx: ServiceContext, input: SalePostInput): Promise<SaleDetail> {
+  assertCan(ctx.user, 'sale.post');
+  const { id, version } = parseInput(salePostInputSchema, input);
+
+  return withTransaction(async (tx) => {
+    // 1. The document: still the draft the user saw.
+    await lockDraft(tx, ctx, id, version);
+    const doc: PostRow = await tx.sale.findUniqueOrThrow({ where: { id }, select: POST_SELECT });
+    const totalAmount = moneyToNumber(doc.totalAmount);
+    const paidCash = moneyToNumber(doc.paidCash);
+    const paidCard = moneyToNumber(doc.paidCard);
+    const paidCredit = moneyToNumber(doc.paidCredit);
+
+    // 3. Header rules need no further lock, so they fail first (OQ-19: before other work).
+    if (paidCash + paidCard + paidCredit !== totalAmount) {
+      throw new DomainError(ErrorCode.PAYMENT_SPLIT_MISMATCH);
+    }
+    if (paidCredit > 0 && !doc.note?.trim()) throw new DomainError(ErrorCode.NOTE_REQUIRED);
+    if (doc.docDate.getTime() > Date.now()) throw new DomainError(ErrorCode.DOC_DATE_IN_FUTURE);
+
+    // 2. Warehouses FOR SHARE, then the stock-count block (BR-8, §3) and the
+    //    archive state under that lock (§9c). A sub-warehouse never changes its
+    //    warehouse, so the first resolveActive may run before the lock.
+    const subWarehouseIds = doc.lines.map((line) => line.subWarehouseId);
+    const warehouseIds = [
+      ...new Set((await warehouses.resolveActive(tx, ctx, subWarehouseIds)).values()),
+    ];
+    await lockWarehouses(tx, ctx.storeId, warehouseIds);
+    await warehouses.assertNoOpenStockCount(tx, ctx, warehouseIds);
+    await warehouses.resolveActive(tx, ctx, subWarehouseIds);
+    assertProductsUnchanged(doc.lines);
+
+    // 4. Cashboxes of the paid parts: money comes IN, so no balance check.
+    const paid = [
+      { type: CashboxType.CASH, amount: paidCash },
+      { type: CashboxType.CARD, amount: paidCard },
+    ].filter((part) => part.amount > 0);
+    const locked = await lockCashboxes(
+      tx,
+      ctx.storeId,
+      paid.map((part) => part.type),
+    );
+    const cashboxes = new Map(locked.map((box) => [box.type, box]));
+
+    // 5–8. Stock out at the current average (inventory takes locks 6–7 and
+    //      throws INSUFFICIENT_STOCK per short pair), then the cost is frozen.
+    const movements = await inventory.issue(tx, ctx, {
+      type: MovementType.SALE,
+      docDate: doc.docDate,
+      lines: doc.lines.map((line) => ({
+        subWarehouseId: line.subWarehouseId,
+        productId: line.productId,
+        qty: line.qty,
+        lineNo: line.lineNo,
+        saleLineId: line.id,
+      })),
+    });
+    let costTotal = 0;
+    for (const [index, line] of doc.lines.entries()) {
+      const movement = movements[index]!;
+      const costAmount = -movement.costAmount;
+      costTotal += costAmount;
+      await tx.saleLine.update({
+        where: { id: line.id },
+        data: { unitCost: movement.unitCost, costAmount: moneyToBigInt(costAmount) },
+        select: { id: true },
+      });
+    }
+
+    // 9. Cash IN for the cash and card parts.
+    const cashTransactionIds: string[] = [];
+    for (const part of paid) {
+      const entry = await cash.record(tx, ctx, cashboxes.get(part.type)!, {
+        type: CashTxType.SALE_RECEIPT,
+        amount: part.amount,
+        txDate: doc.docDate,
+        note: doc.note,
+        saleId: id,
+      });
+      cashTransactionIds.push(entry.id.toString());
+    }
+
+    // 10. Credit part → RECEIVABLE debt; its note is the document note (OQ-19).
+    const debt =
+      paidCredit > 0
+        ? await debts.open(tx, ctx, {
+            source: DebtSource.SALE,
+            saleId: id,
+            amount: paidCredit,
+            note: doc.note ?? '',
+            debtDate: doc.docDate,
+          })
+        : null;
+
+    // 11–12. Status and cost total, then audit POST (costs are fine here: audit is OWNER-only).
+    const postedAt = new Date();
+    await tx.sale.update({
+      where: { id },
+      data: {
+        status: DocStatus.POSTED,
+        costTotal: moneyToBigInt(costTotal),
+        postedAt,
+        postedById: ctx.user.id,
+        version: { increment: 1 },
+      },
+      select: { id: true },
+    });
+    await audit.log(tx, ctx, {
+      action: 'POST',
+      entityType: 'sale',
+      entityId: id,
+      before: { status: DocStatus.DRAFT, version },
+      after: {
+        status: DocStatus.POSTED,
+        number: doc.number,
+        docDate: doc.docDate,
+        postedAt,
+        totalAmount,
+        paidCash,
+        paidCard,
+        paidCredit,
+        costTotal,
+        movements: movements.map((movement, index) => ({
+          lineNo: doc.lines[index]!.lineNo,
+          productId: movement.productId,
+          subWarehouseId: movement.subWarehouseId,
+          qty: movement.qtyDelta,
+          unitCost: movement.unitCost,
+          costAmount: -movement.costAmount,
+        })),
+        cashTransactionIds,
+        debtId: debt?.id ?? null,
+      },
+      backdated: isBackdated(doc.docDate),
+    });
+    return toDetail(tx, ctx, await loadDetail(tx, ctx, id));
+  });
+}
+
+export const sales = { list, get, create, update, remove, post, availability, productOptions };

@@ -5,13 +5,14 @@ import {
   saleAvailabilityInputSchema,
   saleDeleteInputSchema,
   saleDraftInputSchema,
+  salePostInputSchema,
   saleUpdateInputSchema,
 } from '@drinks/shared/schemas';
 import { revalidatePath } from 'next/cache';
 
 import { action } from '@/lib/action';
 
-// Sale drafts (T-501). The service checks permissions, re-validates and takes
+// Sale drafts (T-501) and posting (T-502). The service checks permissions, re-validates and takes
 // the locks; every write refreshes the sales pages.
 function refresh(): void {
   revalidatePath('/[locale]/sales', 'layout');
@@ -33,6 +34,12 @@ export const deleteSale = action(saleDeleteInputSchema, async (input, { ctx }) =
   await sales.remove(ctx, input);
   refresh();
   return null;
+});
+
+export const postSale = action(salePostInputSchema, async (input, { ctx }) => {
+  const sale = await sales.post(ctx, input);
+  refresh();
+  return { id: sale.id, version: sale.version };
 });
 
 /** The form's live stock check (FR-3.3); read-only. */

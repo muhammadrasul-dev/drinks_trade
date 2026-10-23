@@ -104,7 +104,7 @@ Qoralama yaratish/tahrirlash bloklanmaydi (BR-8).
 **Amalda (T-501)** — `packages/server/src/modules/sales/sales.service.ts` (`sales.list/get/create/update/remove/availability/productOptions`, ruxsat `sale.write`; `create`/`update` — `document.paymentSplit.write` ham; ikkala rol):
 - Kiritma — `@drinks/shared/schemas` `saleDraftInputSchema` (forma ham shu): 1–200 qator, `inputQty` 1…1 000 000, qatorda narx **yo'q**; to'lov qismlari ≥ 0, izoh ≤ 500 (bo'sh → `null`). Qator yoki hujjat jami xavfsiz butun sondan oshsa → `VALIDATION_FAILED`.
 - Sana, faol/begona mahsulot va sub-ombor (`NOT_FOUND` / `ENTITY_ARCHIVED`), `BLOCK` → joriy `unitsPerBlock`, raqamlash, `lockSale` + `version`, to'liq almashtirish, o'chirish va audit — xarid qoralamasi (§5.1 "Amalda") bilan bir xil.
-- 4-qadam: `unitPrice` — saqlash paytidagi `product.salePrice`; har saqlashda qayta nusxalanadi (forma ham joriy narxni ko'rsatadi). Saqlangandan keyin narx o'zgarsa bajarishda nima bo'lishi — OQ-29 (T-502).
+- 4-qadam: `unitPrice` — saqlash paytidagi `product.salePrice`; har saqlashda qayta nusxalanadi (forma ham joriy narxni ko'rsatadi). Saqlangandan keyin narx o'zgarsa bajarish rad etiladi — `SALE_PRICE_CHANGED` (OQ-29, §4.2).
 - 6-qadam (FR-3.3): qoralama DTO'sida har qatorga `available` (shu (sub-ombor, mahsulot) juftining joriy qoldig'i, `inventory.getAvailable`) va `stockShort` — juftning **barcha qatorlari yig'indisi** qoldiqdan oshsa, shu juftning har qatori belgilanadi (bajarishdagi 7-qadam bilan bir xil hisob; `@drinks/shared` `lineStock`). Hujjatda `stockShort` — birorta qator belgilangan. Saqlash bloklanmaydi. Bajarilgan/storno hujjatda `available = null`, `stockShort = false`. Tannarx maydonlari DTO'da yo'q.
 - Forma: jonli tekshiruv — `sales.availability(keys)` (yangi juftlar bir marta so'raladi), saqlangan qoralama DTO qiymatlari bilan boshlanadi. "Bajarish" T-502 gacha doim o'chiq; keyin ham saqlanmagan o'zgarish yoki `stockShort` bo'lsa o'chiq qoladi.
 - Ro'yxat: holat, sana oralig'i (Toshkent kunlari), raqam qismi (`45` → `S-000045`); yangilari birinchi, 50 tadan. Mahsulot tanlovi — `sales.productOptions(ctx)` (faol, `salePrice` bilan).
@@ -119,6 +119,8 @@ BEGIN
     paidCredit > 0 va sale.note bo'sh → NOTE_REQUIRED (OQ-19: izoh kontragent o'rnida)
     BLOCK qatorlar: qty = inputQty × product.unitsPerBlock (joriy) bo'lishi shart, aks holda
     UNITS_PER_BLOCK_CHANGED { lines } — foydalanuvchi qoralamani qayta saqlaydi (OQ-06)
+    line.unitPrice = product.salePrice (joriy) bo'lishi shart, aks holda
+    SALE_PRICE_CHANGED { lines } — qoralamani qayta saqlaydi (OQ-29)
  4. lock cashboxes (agar paidCash/paidCard > 0)
  5. lock product_cost (mahsulotlar bo'yicha)
  6. lock stock_balance (sub-ombor, mahsulot)
@@ -139,6 +141,14 @@ BEGIN
 COMMIT
 ```
 DB `CHECK (qty >= 0)` — 7-qadam xato qilsa ham manfiy qoldiq yozilmaydi (tranzaksiya rollback).
+
+**Amalda (T-502)** — `sales.post` (`sale.post`, ikkala rol — OQ-02), `purchases.post` (§5.2) bilan bir xil tartib:
+- `lockSale` + `version` (`DOCUMENT_CHANGED` / `DOCUMENT_NOT_DRAFT`); so'ng qo'shimcha qulfsiz sarlavha qoidalari: `PAYMENT_SPLIT_MISMATCH`, OQ-19 `NOTE_REQUIRED`, `DOC_DATE_IN_FUTURE`.
+- `lockWarehouses` (FOR SHARE) → `warehouses.assertNoOpenStockCount` → sub-ombor arxivi (`warehouses.resolveActive`) → mahsulot arxivi (`ENTITY_ARCHIVED { entity: 'product', name }` — §4.1 2-qadam va T-405 kabi) → `UNITS_PER_BLOCK_CHANGED { lines: [{ lineNo, productId, product, qty, unitsPerBlock }] }` → `SALE_PRICE_CHANGED { lines: [{ lineNo, productId, product, unitPrice, salePrice }] }`.
+- `lockCashboxes` (to'langan qismlar; pul KIRADI — balans tekshiruvi yo'q) → `inventory.issue(SALE)` (5–8: qulflar 6–7, juftlik bo'yicha yig'indi, `INSUFFICIENT_STOCK { lines: [{ lineNo, productId, product, subWarehouseId, available, required }] }` — miqdorlar maxfiy emas, tannarx/kassa yo'q). Harakatning `unitCost` / `-costAmount` qiymati `sale_line` ga yoziladi, `sale.cost_total = Σ cost_amount`.
+- `cash.record(SALE_RECEIPT)` naqd va karta uchun, `debts.open(SALE)` → `RECEIVABLE`; hammasi `tx_date` / `debt_date` = hujjat sanasi, izoh = hujjat izohi.
+- Audit `POST`: `before { status, version }`, `after` — summalar, `costTotal`, harakatlar (`lineNo`, `qty`, `unitCost`, `costAmount`), kassa yozuvlari id'lari, `debtId`; o'tgan sana → `backdated`. Qaytgan `SaleDetail` da tannarx yo'q (CLAUDE.md 6-qoida).
+- UI: "Bajarish" — saqlanmagan o'zgarish yoki qoldiq yetmasa o'chiq, tasdiqlash oynasi; qatorga ishora qiluvchi xatolar (`INSUFFICIENT_STOCK`, `UNITS_PER_BLOCK_CHANGED`, `SALE_PRICE_CHANGED`) o'sha qator ostida chiqadi.
 
 ### 4.3 Storno (BR-3)
 ```
@@ -336,7 +346,7 @@ Amalda (T-303): `isLowStock(stockQty, minStock)` (`@drinks/shared`); `stockQty` 
 - `create(ctx, input)`, `update(ctx, { id, ...input })` — `product.write` (Egasi ham, Xodim ham); kiritma `productCreateInputSchema` / `productUpdateInputSchema` (`@drinks/shared/schemas`): nom 1–200, `unitsPerBlock` 1–10 000, `salePrice` 0–10¹¹ butun so'm (1 dona), `minStock` ≥ 0 (dona), SKU/shtrix-kod ≤ 64 belgi bo'sh joysiz (bo'sh → `null`), `expiryDate` `YYYY-MM-DD` yoki bo'sh. `update` — barcha maydonlarni almashtiradi; o'zgarish bo'lmasa yozuv va audit yo'q.
 - Takroriy SKU/shtrix-kod → `DUPLICATE_VALUE { entity: 'product', field: 'sku' | 'barcode', archived }` (database §6.1); parallel so'rovda P2002 ham shunga aylanadi (`field` index nomidan).
 - Toifa/brend: yangi tanlov tashkilotniki va faol bo'lishi shart — boshqa tashkilotniki → `NOT_FOUND { entity }`, arxivlangan → `ENTITY_ARCHIVED { entity }`; mahsulotda allaqachon turgan (keyin arxivlangan) qiymat o'zgarmasa — qabul qilinadi.
-- **Blokdagi dona soni** (OQ-06): ikkala rol o'zgartiradi, servis cheklamaydi — UI avval ogohlantirish oynasi chiqaradi (eski → yangi, joriy qoldiqning blok ko'rinishi oldin/keyin, qoralamalar bajarishda tekshirilishi). Qoldiq donada — o'zgarmaydi. Bajarishdagi `UNITS_PER_BLOCK_CHANGED` tekshiruvi — T-405 / T-502.
+- **Blokdagi dona soni** (OQ-06): ikkala rol o'zgartiradi, servis cheklamaydi — UI avval ogohlantirish oynasi chiqaradi (eski → yangi, joriy qoldiqning blok ko'rinishi oldin/keyin, qoralamalar bajarishda tekshirilishi). Qoldiq donada — o'zgarmaydi. Bajarishdagi `UNITS_PER_BLOCK_CHANGED` tekshiruvi — T-405 / T-502; savdoda narx o'zgarishi — `SALE_PRICE_CHANGED` (OQ-29).
 - `archive` / `restore` — no-op takrorda; qoldiq bo'lsa ham ruxsat (OQ-20, UI qolgan miqdorni ko'rsatadi). Arxivlangan mahsulotni tahrirlash mumkin.
 - Rasm: `setImage(ctx, { id, data })` — ≤ 2 MB (`PRODUCT_IMAGE_MAX_BYTES`), format **baytlardan** (sharp) aniqlanadi: jpeg/png/webp, aks holda `VALIDATION_FAILED { fieldErrors: { image: ['tooBig' | 'invalidType'] } }`; EXIF bo'yicha aylantiriladi, 512×512 ichiga kichraytiriladi (kattalashtirilmaydi), WebP (q=85). Fayl avval yoziladi, tranzaksiya xato bersa o'chiriladi; almashtirilgan eski fayl commit'dan keyin o'chiriladi. `removeImage(ctx, { id })`, `readImage(ctx, { id })` (`product.read`, yo'q bo'lsa `NOT_FOUND { entity: 'productImage' }`).
 - Audit (`entityType: 'product'`): `CREATE` (`after` — barcha maydonlar, pul `number`), `UPDATE` (`before`/`after` — **faqat o'zgargan** maydonlar; rasm — `imagePath`), `ARCHIVE` / `RESTORE` (`archivedAt`).
@@ -397,6 +407,7 @@ Amalda (T-303): `isLowStock(stockQty, minStock)` (`@drinks/shared`); `stockQty` 
 | `DUPLICATE_VALUE` | SKU / shtrix-kod / nom / login takrorlangan |
 | `DOC_DATE_IN_FUTURE` | hujjat yoki kassa sanasi kelajakda (OQ-07) |
 | `UNITS_PER_BLOCK_CHANGED` | qoralama saqlangandan keyin blokdagi dona soni o'zgargan (OQ-06) |
+| `SALE_PRICE_CHANGED` | savdo qoralamasi saqlangandan keyin mahsulot narxi o'zgargan — qayta saqlash kerak (OQ-29) |
 | `INVALID_CREDENTIALS` | login yoki parol noto'g'ri (qaysi biri xato ekani aytilmaydi) |
 | `USER_INACTIVE` | faolsizlantirilgan akkaunt |
 | `TOO_MANY_ATTEMPTS` | 5 ta xato urinish, 15 daqiqa blok |

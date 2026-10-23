@@ -227,6 +227,7 @@
     "DUPLICATE_VALUE": "Bunday qiymat allaqachon mavjud.",
     "DOC_DATE_IN_FUTURE": "Sana kelajakda boʻlishi mumkin emas.",
     "UNITS_PER_BLOCK_CHANGED": "Mahsulotning blokdagi dona soni oʻzgargan. Miqdorlarni tekshirib, qayta saqlang.",
+    "SALE_PRICE_CHANGED": "Mahsulot narxi oʻzgargan. Qoralamani qayta saqlang — yangi narx va jami koʻrinadi.",
     "INVALID_CREDENTIALS": "Login yoki parol notoʻgʻri.",
     "USER_INACTIVE": "Akkaunt faolsizlantirilgan.",
     "TOO_MANY_ATTEMPTS": "Juda koʻp urinish. 15 daqiqadan keyin qayta urining.",
@@ -665,8 +666,18 @@
     },
     "post": {
       "button": "Bajarish",
+      "title": "{number} savdosini bajarasizmi?",
+      "description": "Tovar tanlangan sub-omborlardan chiqadi. Naqd va karta qismi kassaga kiradi, nasiya qismi “Bizga qarzdor” boʻlib yoziladi. Bajarilgan savdoni oʻzgartirib boʻlmaydi — faqat Egasi storno qila oladi.",
       "saveFirst": "Oʻzgarishlar saqlanmagan — bajarishdan oldin saqlang.",
-      "short": "Qoldiq yetmaydigan qatorlar bor — qoralamani saqlash mumkin, lekin bajarib boʻlmaydi."
+      "short": "Qoldiq yetmaydigan qatorlar bor — qoralamani saqlash mumkin, lekin bajarib boʻlmaydi.",
+      "done": "{number} bajarildi",
+      "failed": "Savdo bajarilmadi — qatorlardagi xatolarni koʻring.",
+      "lineShort": "Qoldiq yetmaydi: «{subWarehouse}» da {available} dona bor, shu mahsulotdan jami {required} dona kerak.",
+      "lineUnitsChanged": "Blokdagi dona soni oʻzgargan (endi {unitsPerBlock} dona) — qoralamani qayta saqlang.",
+      "linePriceChanged": "Narx oʻzgargan: {unitPrice} → {salePrice} — qoralamani qayta saqlang.",
+      "stockCount": "«{warehouse}» omborida {number} inventarizatsiyasi ochiq — u tugaguncha savdoni bajarib boʻlmaydi.",
+      "noteRequired": "Nasiya qismi bor — izohga mijoz kimligini yozing va saqlang.",
+      "splitMismatch": "Toʻlov qismlari jamiga teng emas — tuzatib, saqlang."
     },
     "form": {
       "date": "Sana",

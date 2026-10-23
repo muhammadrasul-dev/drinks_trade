@@ -74,9 +74,9 @@ Kassada pul yetmasa bajarilmaydi ("Kassada mablag' yetarli emas").
 2. Qator: mahsulot (nom yoki shtrix-kod) → **qaysi sub-ombordan** → soni (dona/blok). Narx mahsulot kartochkasidan avtomatik olinadi va savdoda o'zgartirilmaydi (narxni o'zgartirish — **Mahsulotlar** bo'limida).
 3. Qatorda shu sub-ombordagi qoldiq ko'rinadi. Yetmasa qator **qizil** bo'ladi va **Bajarish** tugmasi o'chadi (bir mahsulot bir sub-ombordan bir necha qatorda bo'lsa, qatorlar qo'shib hisoblanadi). Bunday qoralamani **saqlash mumkin** — keyin qoldiq kelganda yoki miqdorni kamaytirib bajarasiz.
 4. To'lov: Naqd + Karta + Nasiya = jami.
-5. **Bajarish** — tovar chiqadi, pul kassaga tushadi, nasiya "Menga qarz"ga tushadi.
+5. Avval **Saqlash**, keyin **Bajarish** → tasdiqlang. Tovar chiqadi, naqd va karta qismi kassaga tushadi, nasiya "Bizga qarzdor"ga tushadi (nasiya bo'lsa izohga mijozni yozing — izohsiz bajarilmaydi). Bajarilgan savdoni o'zgartirib bo'lmaydi.
 
-Bir vaqtda boshqa xodim shu tovarni sotib yuborgan bo'lsa, bajarishda tizim qayta tekshiradi va xato chiqaradi — qatorni to'g'irlang.
+Bir vaqtda boshqa xodim shu tovarni sotib yuborgan bo'lsa, bajarishda tizim qayta tekshiradi va xatoni **o'sha qator ostida** ko'rsatadi — qatorni to'g'irlang. Qoralama saqlangandan keyin mahsulot narxi yoki blokdagi dona soni o'zgargan bo'lsa ham bajarilmaydi: qoralamani qayta saqlang (yangi narx va jami ko'rinadi, to'lovni moslang).
 
 ## 8. Inventarizatsiya (sanoq)
 1. **Inventarizatsiya** → "Yangi" → omborni tanlang.
