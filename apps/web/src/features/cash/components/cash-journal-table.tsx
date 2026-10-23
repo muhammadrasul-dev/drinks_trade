@@ -7,6 +7,7 @@ import {
   formatDateTime,
   storeDateOf,
 } from '@drinks/shared';
+import { isReversibleCashTxType } from '@drinks/shared/schemas';
 import { DataTable, dataTableColumnHelper } from '@drinks/ui/components/data-table';
 import { cn } from '@drinks/ui/lib/utils';
 import { useTranslations } from 'next-intl';
@@ -16,12 +17,14 @@ import { MoneyText } from '@/components/money-text';
 import { Link } from '@/i18n/navigation';
 import { PURCHASES_HREF } from '@/features/purchases/list-params';
 
+import { CashReverseButton } from './cash-reverse-button';
+
 const col = dataTableColumnHelper<CashJournalEntry>();
 
 /**
  * Cash journal (T-701, FR-6.1): report date, cashbox, type, signed amount,
- * balance after the entry, what it belongs to, note, author. Read-only;
- * per-row actions (OQ-08 reversal) come with T-703.
+ * balance after the entry, what it belongs to, note, author. Manual entries
+ * not yet reversed get "Storno" (T-703, OQ-08); reversed ones are struck through.
  */
 export function CashJournalTable({ items }: { items: readonly CashJournalEntry[] }) {
   const t = useTranslations('cash');
@@ -77,6 +80,16 @@ export function CashJournalTable({ items }: { items: readonly CashJournalEntry[]
           header: t('columns.author'),
           cell: (info) => <span className="whitespace-nowrap">{info.getValue().fullName}</span>,
         }),
+        col.display({
+          id: 'actions',
+          header: () => <span className="sr-only">{t('columns.actions')}</span>,
+          cell: (info) => {
+            const entry = info.row.original;
+            return isReversibleCashTxType(entry.type) && !entry.reversedById ? (
+              <CashReverseButton entry={entry} />
+            ) : null;
+          },
+        }),
       ]),
     [t, tCashbox, tType],
   );
@@ -113,6 +126,7 @@ function SignedAmount({ entry }: { entry: CashJournalEntry }) {
     <span
       className={cn(
         'font-medium whitespace-nowrap tabular-nums',
+        entry.reversedById && 'line-through opacity-60',
         isIn ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-700 dark:text-red-400',
       )}
     >

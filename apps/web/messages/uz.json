@@ -218,6 +218,8 @@
     "STOCK_COUNT_ALREADY_OPEN": "Bu ombor uchun ochiq inventarizatsiya allaqachon bor.",
     "PAYMENT_SPLIT_MISMATCH": "Toʻlov qismlari yigʻindisi hujjat summasiga teng emas.",
     "CASHBOX_INSUFFICIENT": "Kassada mablagʻ yetarli emas.",
+    "CASH_TX_NOT_REVERSIBLE": "Bu yozuvni kassadan storno qilib boʻlmaydi — u hujjat yoki qarz orqali bekor qilinadi.",
+    "CASH_TX_ALREADY_REVERSED": "Yozuv allaqachon storno qilingan.",
     "DEBT_HAS_REPAYMENTS": "Qarz boʻyicha qaytarishlar bor. Avval ularni bekor qiling.",
     "DEBT_CANCELLED": "Qarz allaqachon bekor qilingan.",
     "DEBT_OVERPAYMENT": "Qaytarish summasi qarz qoldigʻidan katta.",
@@ -342,7 +344,8 @@
       "balanceAfter": "Balans",
       "reference": "Asos",
       "note": "Izoh",
-      "author": "Kiritgan"
+      "author": "Kiritgan",
+      "actions": "Amallar"
     },
     "reference": {
       "purchase": "Xarid {number}",
@@ -390,6 +393,15 @@
       "description": "Pul bir kassadan chiqib, ikkinchisiga kiradi. Jami pul oʻzgarmaydi.",
       "submit": "Oʻtkazish",
       "done": "Oʻtkazma saqlandi."
+    },
+    "reverse": {
+      "button": "Storno",
+      "title": "#{id} yozuvni storno qilasizmi?",
+      "description": "{amount} {cashbox} kassasiga teskari yozuv bilan qaytariladi. Asl yozuv jurnalda qoladi, storno qilingan yoʻl kira P&L dan chiqadi. Stornoni qaytarib boʻlmaydi.",
+      "descriptionTransfer": "Oʻtkazmaning ikkala tomoni birga storno qilinadi: {amount} {to} kassasidan chiqib, {from} kassasiga qaytadi. Asl yozuvlar jurnalda qoladi. Stornoni qaytarib boʻlmaydi.",
+      "note": "Sabab (ixtiyoriy)",
+      "notePlaceholder": "Masalan: summa xato kiritilgan",
+      "done": "#{id} yozuv storno qilindi."
     }
   },
   "debts": {

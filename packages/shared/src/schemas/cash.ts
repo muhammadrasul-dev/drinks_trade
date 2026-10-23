@@ -57,3 +57,29 @@ export const cashTransferInputSchema = z
   })
   .refine((value) => value.from !== value.to, { path: ['to'], message: 'same cashbox' });
 export type CashTransferInput = z.input<typeof cashTransferInputSchema>;
+
+// Reversal of a manual cash entry (T-703, OQ-08, business-logic §7). OWNER only.
+
+/**
+ * Entries typed by hand on the cash screen. Only these can be reversed from the
+ * journal; sale/purchase/debt entries are reversed through their document or
+ * debt. A transfer is reversed as a pair (both sides of its transfer_group_id).
+ */
+export const REVERSIBLE_CASH_TX_TYPES = [
+  CashTxType.TRAVEL_EXPENSE,
+  CashTxType.OTHER_EXPENSE,
+  CashTxType.TRANSFER_OUT,
+  CashTxType.TRANSFER_IN,
+] as const satisfies readonly CashTxType[];
+
+export function isReversibleCashTxType(type: CashTxType): boolean {
+  return (REVERSIBLE_CASH_TX_TYPES as readonly CashTxType[]).includes(type);
+}
+
+export const cashReverseInputSchema = z.object({
+  /** cash_transaction.id (bigint as a decimal string). */
+  id: z.string().regex(/^[1-9]\d{0,18}$/),
+  /** Optional reason, stored on the MANUAL_REVERSAL entry. */
+  note,
+});
+export type CashReverseInput = z.input<typeof cashReverseInputSchema>;

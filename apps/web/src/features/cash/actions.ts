@@ -1,14 +1,18 @@
 'use server';
 
 import { cashCommands } from '@drinks/server';
-import { cashExpenseInputSchema, cashTransferInputSchema } from '@drinks/shared/schemas';
+import {
+  cashExpenseInputSchema,
+  cashReverseInputSchema,
+  cashTransferInputSchema,
+} from '@drinks/shared/schemas';
 import { revalidatePath } from 'next/cache';
 
 import { action } from '@/lib/action';
 
-// Cash actions (T-702): travel expense, other expense, transfer. The service
-// checks permissions (OWNER only), re-validates, locks the cashboxes and
-// refuses to take a balance below zero.
+// Cash actions (T-702, T-703): travel expense, other expense, transfer and
+// the reversal of those entries. The service checks permissions (OWNER only),
+// re-validates, locks the cashboxes and refuses to take a balance below zero.
 function refresh(): void {
   revalidatePath('/[locale]/cash', 'page');
 }
@@ -29,4 +33,10 @@ export const transferCash = action(cashTransferInputSchema, async (input, { ctx 
   const result = await cashCommands.transfer(ctx, input);
   refresh();
   return { transferGroupId: result.transferGroupId };
+});
+
+export const reverseCashEntry = action(cashReverseInputSchema, async (input, { ctx }) => {
+  const result = await cashCommands.reverse(ctx, input);
+  refresh();
+  return result;
 });
