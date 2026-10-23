@@ -49,6 +49,7 @@ SRS'dagi biznes savollar yopilgan. Bu yerda — arxitektura va DB loyihalashda c
 | OQ-27 | Qarz qaytarish sanasi qarz sanasidan oldin bo'lishi mumkinmi? | Yo'q — qaytarish kuni ≥ qarz kuni (Toshkent), aks holda `VALIDATION_FAILED` (`date`) | Yopilgan — A (tavsiya, 2026-10-23) |
 | OQ-28 | Qoldiq hisobotida qaysi mahsulotlar chiqadi va tannarx ustunlari qaysi ruxsat bilan? | Qoldig'i bor (`qty > 0`) mahsulotlar; "Kam qolganlar" filtrida (joylashuv filtrisiz) qoldig'i 0 bo'lganlari ham; tannarx/qiymat — `report.sales.cost` (faqat Egasi), yangi ruxsat yo'q | Yopilgan — 1-A, 2-A (tavsiya, 2026-10-23) |
 | OQ-29 | Savdo qoralamasi saqlangandan keyin mahsulot narxi o'zgarsa, bajarish (T-502) qaysi narx bilan o'tadi? | Bajarish rad etiladi (`SALE_PRICE_CHANGED { lines }`), foydalanuvchi qoralamani qayta saqlaydi — yangi narx va jami ko'rinadi (OQ-06 kabi) | Yopilgan — A (tavsiya, 2026-10-23) |
+| OQ-30 | Qo'lda kiritilgan kassa yozuvi storno'si (T-703) qaysi sana bilan yoziladi: asl yozuv sanasi yoki storno payti? | Asl yozuvning `tx_date` si (OQ-01/OQ-26 kabi: xato yozuv o'z kunida nolga tushadi, jurnalda asl yozuv yonida turadi) | Ochiq — tavsiya bo'yicha qilingan (T-703) |
 
 ---
 
@@ -190,3 +191,10 @@ B ga o'tish — `debts.commands.ts` dagi `BEFORE_DEBT_DATE` tekshiruvini olib ta
 - **A (tavsiya):** bajarishda `line.unitPrice ≠ product.salePrice` bo'lsa → `SALE_PRICE_CHANGED { lines: [{ lineNo, product, unitPrice, salePrice }] }`; foydalanuvchi qoralamani qayta saqlaydi (yangi jami va to'lov qismlari ko'rinadi). BR-2 "bitta narx" saqlanadi, kassir pulni eski summada olmaydi. OQ-06 (`UNITS_PER_BLOCK_CHANGED`) bilan bir xil yo'l. Yangi xato kodi kerak.
 - **B:** saqlangan narx bilan bajariladi — mijozga aytilgan summa o'zgarmaydi, lekin narx o'zgargandan keyin eski narxda sotish mumkin bo'ladi.
 - **C:** bajarishda narx jimgina qayta hisoblanadi — jami o'zgaradi va to'lov qismlari mos kelmay `PAYMENT_SPLIT_MISMATCH` beradi (tushunarsiz xato), tavsiya etilmaydi.
+
+### OQ-30 — Kassa yozuvi storno'sining sanasi
+T-703. Xato kiritilgan yo'l kira/boshqa chiqim/o'tkazma storno qilinganda teskari `MANUAL_REVERSAL` yozuviga qaysi `tx_date` qo'yiladi? Hujjatlarda aytilmagan; `debts.cancel` (qo'lda qarz bekor qilish) hozir storno paytini yozadi.
+- **A (tavsiya, qilingan):** asl yozuvning `tx_date` si. OQ-01/OQ-26 bilan bir xil: xato yozuv go'yo bo'lmagandek o'z kunida nolga tushadi; jurnal `tx_date` bo'yicha tartiblangani uchun teskari yozuv asl yozuv yonida turadi. O'tgan kunli yozuvlarda `balance_after` ketma-ket bo'lmasligi mumkin (OQ-24 da qabul qilingan), jurnal "Kiritilgan: …" vaqtini ko'rsatadi.
+- **B:** storno payti (bugun). Pul aslida bugun "qaytgani" ko'rinadi, lekin asl kunning kassa jami noto'g'ri qoladi.
+P&L ga ta'sir yo'q: storno qilingan yo'l kira sanadan qat'i nazar hisobga olinmaydi (§8).
+

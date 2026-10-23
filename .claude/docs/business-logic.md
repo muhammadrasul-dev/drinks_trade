@@ -314,6 +314,8 @@ Kassa amallari (T-702, `cash.commands.ts`; hammasi `cash.write` — faqat OWNER,
 - `cashCommands.travelExpense(ctx, { cashbox, amount, note?, date })` — `lockCashboxes` → `cash.record(TRAVEL_EXPENSE)`; izoh ixtiyoriy.
 - `cashCommands.otherExpense(ctx, { cashbox, amount, note, date })` — xuddi shunday `OTHER_EXPENSE`; bo'sh izoh → `NOTE_REQUIRED` (`cash.record` dan, sxema emas).
 - `cashCommands.transfer(ctx, { from, to, amount, note?, date })` — `from = to` → `VALIDATION_FAILED` (`to`); ikkala kassa bitta `lockCashboxes` chaqiruvida, keyin `cash.record(TRANSFER_OUT)` manbada va `cash.record(TRANSFER_IN)` maqsadda — bitta yangi `transfer_group_id`, bir xil `tx_date` va izoh. OUT birinchi: manba yetmasa `CASHBOX_INSUFFICIENT`, ikkala yozuv ham yozilmaydi. Natija `{ transferGroupId, outId, inId }`.
+- `cashCommands.reverse(ctx, { id, note? })` (T-703, OQ-08) — qo'lda kiritilgan yozuv storno'si. Faqat `TRAVEL_EXPENSE`, `OTHER_EXPENSE`, `TRANSFER_OUT`/`TRANSFER_IN` (`@drinks/shared` dagi `REVERSIBLE_CASH_TX_TYPES`); savdo/xarid/qarz yozuvlari va `MANUAL_REVERSAL` → `CASH_TX_NOT_REVERSIBLE { type }` (ular o'z hujjati/qarzi orqali bekor qilinadi). Topilmagan yoki boshqa do'konniki → `NOT_FOUND { entity: 'cash_transaction' }`. O'tkazma **juft** storno qilinadi: qaysi tomoni tanlansa ham, shu `transfer_group_id` dagi ikkala yozuv. Tartib: yozuv(lar) qulfsiz o'qiladi (kassasini bilish uchun) → `lockCashboxes` (4-qadam, kerakli kassalar bitta chaqiruvda) → qulf ostida qayta tekshiruv: biror yozuvning storno'si bor → `CASH_TX_ALREADY_REVERSED` (parallel ikkinchi storno kassa qulfida kutadi va shu xatoni oladi; `reversal_of_id` UNIQUE — zaxira kafolat). Har asl yozuvga `cash.reverse` — summasi o'sha, yo'nalishi teskari `MANUAL_REVERSAL`, `reversal_of_id` → asl, `tx_date` = asl yozuv sanasi (OQ-30), izoh — storno sababi; teskari yozuvda `transfer_group_id` yo'q. Kirimni bekor qilish (o'tkazmaning maqsad tomoni) chiqim — balans yetmasa `CASHBOX_INSUFFICIENT`, hech narsa yozilmaydi. Audit: teskari yozuvga `CREATE` (`cash.record`) va asl yozuvga `REVERSE` (`after.reversalId`, `after.note`). Natija `{ reversalIds }`.
+- `cash.reverse(tx, ctx, cashbox, original, options)` (`cash.service.ts`) — teskari `MANUAL_REVERSAL` ni quradigan yagona joy; `debts.cancel` (qo'lda qarz) ham shuni ishlatadi.
 
 O'qish (T-701, `cash.queries.ts`): `cashQueries.balances(ctx)` — do'konning ikki kassasi (CASH, keyin CARD) joriy balansi bilan; `cashQueries.journal(ctx, query)` — `cash_transaction` jurnali: `from`/`to` (Toshkent kuni, `tx_date`), `cashbox`, `type`, `direction`, `page` (50 tadan); tartib — `tx_date` ↓, `id` ↓ (OQ-24); `totals` — barcha filtrlangan yozuvlar bo'yicha Σ kirim / Σ chiqim. Ikkalasi `cash.read` (faqat OWNER) — STAFF `FORBIDDEN` (CLAUDE.md 6-qoida).
 
@@ -403,6 +405,8 @@ Amalda (T-303): `isLowStock(stockQty, minStock)` (`@drinks/shared`); `stockQty` 
 | `STOCK_COUNT_ALREADY_OPEN` | BR-8 |
 | `PAYMENT_SPLIT_MISMATCH` | BR-9 |
 | `CASHBOX_INSUFFICIENT` | BR-9 (STAFF uchun xabarda balans summasi ko'rsatilmaydi) |
+| `CASH_TX_NOT_REVERSIBLE` | kassadan faqat yo'l kira, boshqa chiqim va o'tkazma storno qilinadi (OQ-08; `{ type }`) |
+| `CASH_TX_ALREADY_REVERSED` | kassa yozuvi allaqachon storno qilingan |
 | `DEBT_HAS_REPAYMENTS` | OQ-04 |
 | `DEBT_CANCELLED` | qarz allaqachon bekor qilingan (masalan, ikki marta storno) |
 | `DEBT_OVERPAYMENT` | qaytarish > qarz qoldig'i |
