@@ -215,6 +215,8 @@ BEGIN
 COMMIT
 ```
 
+Amalga oshirilishi (T-406, `purchases.reverse`): faqat OWNER (`document.reverse`, OQ-03) — STAFF → `FORBIDDEN`; kiritma `{ id, reason }`, sabab majburiy (trim, 1–500 belgi, `REVERSE_REASON_MAX`). `POSTED` emas → `DOCUMENT_NOT_POSTED` (ikkinchi storno ham). Qulflar §2 tartibida — yuqoridagi 3- va 4-qadam qulf bo'yicha **teskari**: avval kassalar (§2, 4), keyin qarz (§2, 5); xatolar tartibi o'zgarmaydi, chunki `debts.cancel` qarz qulfidan so'ng darhol chaqiriladi (`DEBT_HAS_REPAYMENTS` tovar harakatidan oldin). 2-qadam: `lockWarehouses` (FOR SHARE) → `assertNoOpenStockCount`; arxivlangan sub-ombor/mahsulot xato emas (tovari bor sub-ombor arxivlanmaydi — FR-2.2, demak 6-qadam yetmaslikni ko'rsatadi). 5–7 — `inventory.issue(PURCHASE_REVERSAL)` (`costAmount = lineTotal`, `PURCHASE_REVERSAL_INSUFFICIENT_STOCK { productId, product, subWarehouseId, subWarehouse, available, required }`); 8 — `cash.record(PURCHASE_REFUND)` har to'langan qism uchun (izoh = sabab), `debts.cancel` (kassa harakatisiz). Harakatlar va kassa yozuvlari **asl `doc_date`** bilan (OQ-26). `purchase`: `reversedAt`, `reversedById`, `reverseReason`, `version + 1`. Audit `REVERSE`: `before { status, version }`, `after` — sabab, harakatlar (avg oldin/keyin), kassa yozuvlari id'lari, `cancelledDebtId`; `meta.reason`, o'tgan sanali hujjatda `meta.backdated`. UI: bajarilgan xarid sahifasida "Storno" tugmasi (faqat OWNER) va sabab maydonli `ConfirmDialog`; bloklangan storno xabari oynada qoladi.
+
 ## 6. Inventarizatsiya (BR-8)
 
 ### 6.1 Ochish

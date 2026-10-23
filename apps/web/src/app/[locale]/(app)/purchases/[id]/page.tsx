@@ -1,5 +1,6 @@
 import { products, purchases, warehouses } from '@drinks/server';
 import {
+  can,
   ErrorCode,
   formatDate,
   isDomainError,
@@ -14,10 +15,12 @@ import { z } from 'zod';
 
 import { DocStatusBadge } from '@/features/purchases/components/doc-status-badge';
 import { PurchaseForm } from '@/features/purchases/components/purchase-form';
+import { PurchaseReverseButton } from '@/features/purchases/components/purchase-reverse-button';
 import { PurchaseView } from '@/features/purchases/components/purchase-view';
 import { getServiceContext, requireSection } from '@/lib/session';
 
-// One purchase (T-404): a draft opens in the form, anything else read-only.
+// One purchase (T-404): a draft opens in the form, anything else read-only;
+// the OWNER may reverse a posted one (T-406).
 export default async function PurchasePage({ params }: PageProps<'/[locale]/purchases/[id]'>) {
   const { locale, id } = await params;
   setRequestLocale(locale as Locale);
@@ -45,6 +48,12 @@ export default async function PurchasePage({ params }: PageProps<'/[locale]/purc
         date: formatDate(purchase.docDate),
         author: purchase.createdBy.fullName,
       })}
+      actions={
+        purchase.status === 'POSTED' &&
+        can(session.user.role, 'document.reverse') && (
+          <PurchaseReverseButton id={purchase.id} number={purchase.number} />
+        )
+      }
     />
   );
 

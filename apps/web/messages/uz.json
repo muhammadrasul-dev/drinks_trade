@@ -487,6 +487,16 @@
       "cashbox": "{cashbox, select, CASH {Naqd kassada} CARD {Karta kassasida} other {Kassada}} mablagʻ yetarli emas.",
       "noteRequired": "Nasiya qismi bor — izohga kimdan olinganini yozing va saqlang."
     },
+    "reverse": {
+      "button": "Storno",
+      "title": "{number} xaridini storno qilasizmi?",
+      "description": "Tovar sub-omborlardan chiqadi va oʻrtacha tannarx qayta hisoblanadi. Naqd va karta qismi kassaga qaytadi, nasiya qarzi bekor qilinadi. Storno qilingan xaridni qaytarib boʻlmaydi.",
+      "reason": "Sabab",
+      "reasonPlaceholder": "Nega storno qilinmoqda",
+      "done": "{number} storno qilindi",
+      "insufficientStock": "«{product}» — «{subWarehouse}» da {available} dona bor, storno uchun {required} dona kerak. Tovarning bir qismi sotilgan: avval tegishli savdoni storno qiling.",
+      "stockCount": "«{warehouse}» omborida {number} inventarizatsiyasi ochiq — u tugaguncha storno qilib boʻlmaydi."
+    },
     "form": {
       "date": "Sana",
       "note": "Izoh",
