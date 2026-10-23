@@ -160,14 +160,13 @@ function sumBy<L>(lines: readonly L[], keyFn: (line: L) => string, pick: (line: 
 async function assertInStore(tx: Tx, ctx: ServiceContext, keys: readonly StockKey[]) {
   const subWarehouseIds = [...new Set(keys.map((key) => key.subWarehouseId))];
   const productIds = [...new Set(keys.map((key) => key.productId))];
-  const [subWarehouses, products] = await Promise.all([
-    tx.subWarehouse.count({
-      where: { id: { in: subWarehouseIds }, warehouse: { storeId: ctx.storeId } },
-    }),
-    tx.product.count({
-      where: { id: { in: productIds }, organizationId: ctx.organizationId },
-    }),
-  ]);
+  // One after the other: a transaction is one connection, which runs one query at a time.
+  const subWarehouses = await tx.subWarehouse.count({
+    where: { id: { in: subWarehouseIds }, warehouse: { storeId: ctx.storeId } },
+  });
+  const products = await tx.product.count({
+    where: { id: { in: productIds }, organizationId: ctx.organizationId },
+  });
   if (subWarehouses !== subWarehouseIds.length) {
     throw new DomainError(ErrorCode.NOT_FOUND, { entity: 'sub_warehouse' });
   }
