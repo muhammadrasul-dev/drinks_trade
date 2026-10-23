@@ -27,8 +27,9 @@ import { useTranslations } from 'next-intl';
 import { type ReactElement, useState, useTransition } from 'react';
 import { useForm } from 'react-hook-form';
 
+import { AmountInput, CashboxSelect } from '@/components/money-fields';
+
 import { openDebt } from '../actions';
-import { AmountInput, CashboxSelect } from './debt-fields';
 
 interface DebtOpenDialogProps {
   /** RECEIVABLE = give (cash OUT), PAYABLE = take (cash IN). */
