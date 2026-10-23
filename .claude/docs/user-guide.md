@@ -82,8 +82,8 @@ Bir vaqtda boshqa xodim shu tovarni sotib yuborgan bo'lsa, bajarishda tizim qayt
 1. **Inventarizatsiya** → "Yangi inventarizatsiya" → omborni tanlang. Bitta omborda bir vaqtda faqat bitta ochiq inventarizatsiya bo'ladi.
 2. ⚠️ Shu paytdan boshlab **shu ombor bo'yicha savdo, xarid va storno bajarilmaydi** (qoralama yaratish mumkin). Barcha sahifalarda sariq ogohlantirish chiqadi. Sanoqni uzoq ochiq qoldirmang!
 3. Har sub-ombor va mahsulot uchun haqiqiy sonni kiriting (blok + dona) va **Saqlash**ni bosing. Tizim farqni ko'rsatadi. Bo'sh qoldirilgan qator sanalmagan hisoblanadi — uning qoldig'i o'zgarmaydi; tovar umuman yo'q bo'lsa **0** kiriting. Ro'yxatda yo'q tovar topilsa — pastdagi "Qo'shish" orqali sub-ombor va mahsulotni tanlang. Summalar (farq summasi, taxminiy kamomad/ortiqcha) faqat Egasiga ko'rinadi.
-4. **Bajarish** — qoldiq haqiqiy songa tenglashadi. Ombor bo'yicha kamomad — yo'qotish, ortiqcha — daromad sifatida P&L'ga tushadi. Bir sub-omborda kam, boshqasida ortiq (jami teng) bo'lsa — faqat joylashuv tuzatiladi, foydaga ta'sir yo'q. (Tovarni bir joydan boshqasiga ko'chirish ham shu yo'l bilan qilinadi.)
-5. Kerak bo'lmasa — **Bekor qilish** (blok yechiladi).
+4. **Bajarish** (avval **Saqlash**; kamida bitta qator sanalgan bo'lishi kerak) — tasdiqlash oynasida nechta qator sanalmagani ko'rsatiladi. Bajarilganda sanalgan qatorlarning qoldig'i haqiqiy songa tenglashadi (sanalmaganlari o'zgarmaydi). Ombor bo'yicha kamomad — yo'qotish, ortiqcha — daromad sifatida P&L'ga tushadi. Bir sub-omborda kam, boshqasida ortiq (jami teng) bo'lsa — faqat joylashuv tuzatiladi, foydaga ta'sir yo'q. (Tovarni bir joydan boshqasiga ko'chirish ham shu yo'l bilan qilinadi.)
+5. Kerak bo'lmasa — **Bekor qilish** (blok yechiladi). Bajarilgan inventarizatsiyani o'zgartirib ham, bekor qilib ham bo'lmaydi — xato topilsa, yangi inventarizatsiya o'tkazing.
 
 ## 9. Kassa (faqat Egasi)
 Ikkita kassa: **Naqd** va **Karta**, balanslari alohida. Kassa manfiy bo'lmaydi.
@@ -135,6 +135,7 @@ Kim, qachon, nimani o'zgartirgani (eski va yangi qiymat). O'tgan sana bilan kiri
 | Xabar | Sabab va yechim |
 |---|---|
 | "Qoldiq yetarli emas" | Sub-omborda tovar kam. Boshqa sub-ombordan soting yoki avval xarid kiriting |
+| "Inventarizatsiyada sanalgan qator yo'q" | Bajarish uchun kamida bitta qatorni sanab saqlang yoki inventarizatsiyani bekor qiling |
 | "Ombor inventarizatsiyada" | Shu omborda ochiq sanoq bor. Uni bajaring yoki bekor qiling (ombor/sub-omborni arxivlash ham shu paytda mumkin emas) |
 | "…da qoldiq bor. Qoldiq nolga tushgach arxivlash mumkin" | Ombor/sub-omborda tovar bor. Avval uni soting (yoki inventarizatsiyada boshqa sub-omborga o'tkazing), keyin arxivlang |
 | "Kassada mablag' yetarli emas" | Chiqim summasi kassa balansidan katta (o'tkazma stornosida — pul qaytadigan kassada yetarli emas) |
