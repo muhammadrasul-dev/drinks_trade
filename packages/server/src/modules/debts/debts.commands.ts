@@ -50,7 +50,7 @@ async function open(ctx: ServiceContext, input: DebtOpenInput): Promise<{ id: st
 
 /**
  * Repays any OPEN debt (manual or credit document) through the cashbox the
- * user picks (FR-7.2). A repayment dated before its debt is refused (OQ-26).
+ * user picks (FR-7.2). A repayment dated before its debt is refused (OQ-27).
  */
 async function repay(
   ctx: ServiceContext,

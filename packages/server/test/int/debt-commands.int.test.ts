@@ -374,7 +374,7 @@ describe('debtCommands.repay', () => {
     expect(error.code).toBe(ErrorCode.DEBT_CANCELLED);
   });
 
-  it('OQ-26: a repayment dated before its debt is refused', async () => {
+  it('OQ-27: a repayment dated before its debt is refused', async () => {
     const { id } = await debtCommands.open(owner, {
       direction: 'RECEIVABLE',
       cashbox: 'CASH',
