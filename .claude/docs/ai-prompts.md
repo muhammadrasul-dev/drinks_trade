@@ -612,3 +612,11 @@ check @.claude/docs/tasks.md and are where has not started tasks respond me info
 ```
 yes there is some inconsistencies. Fix theese and start you said task in other session, and then refoctor
 ```
+
+---
+
+## Prompt 62 — 1280px UI nuqsonini tuzatish va mantiq/funksiyalar joylashuvini refactor qilish, yangi sessiyada (2026-10-23)
+
+```
+okey fix this ui issue and refactor mainly logics and functions places in new session!
+```
