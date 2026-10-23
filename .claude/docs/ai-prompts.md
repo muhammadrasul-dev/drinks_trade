@@ -540,3 +540,11 @@ do theese tasks in seperate sessions, in additions refactor during doing tasks a
 ```
 check one task in '/Users/home/Desktop/Muhammadrasul/drinks_trade/.claude/docs/tasks.md'. And begin not started task. refactor and do testing during this proccess
 ```
+
+---
+
+## Prompt 53 — T-603 va T-802 ni alohida sessiyalarda, keyin qisqa refactor (2026-10-23)
+
+```
+T-603 (ochiq inventarizatsiya banneri) va T-802 (savdo hisoboti) start theese tasks in seperate sessions, then refactor  shortly
+```
