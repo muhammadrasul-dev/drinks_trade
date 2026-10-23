@@ -88,6 +88,8 @@ Shu qulfdan keyin arxiv tekshiruvi ham bajariladi: `warehouses.resolveActive(tx,
 
 Qoralama yaratish/tahrirlash bloklanmaydi (BR-8).
 
+**Amalda (T-601)** — bitta yordamchi: `warehouses.lockForPosting(tx, ctx, subWarehouseIds, { requireActive })` (`packages/server/src/modules/warehouses/warehouses.service.ts`). Hujjat qulfidan (1-qadam) keyin chaqiriladi: sub-omborlarning omborlari → `lockWarehouses` (FOR SHARE) → `assertNoOpenStockCount` → (`requireActive: true`, standart) qulf ostida `resolveActive` (`ENTITY_ARCHIVED`). Storno `requireActive: false` beradi — arxivdagi sub-ombor xato emas (tovari bor sub-ombor arxivlanmaydi, FR-2.2). Chaqiruvchilar: `sales.post`, `purchases.post`, `purchases.reverse`; **savdo storno'si (T-503) ham shu yordamchini `{ requireActive: false }` bilan chaqirishi shart.**
+
 ## 4. Savdo
 
 ### 4.1 Qoralama (create/update)
@@ -272,6 +274,16 @@ COMMIT
 
 ### 6.3 Bekor qilish
 `DRAFT → CANCELLED` (qoldiq o'zgarmaydi), blok yechiladi. Audit `CANCEL`.
+
+### 6.3a Amalda (T-601)
+`packages/server/src/modules/stock-counts/stock-counts.service.ts` — `stockCounts.list/get/openCounts/open/update/cancel`; ruxsat `stockCount.write` (ikkala rol; `openCounts` — `warehouse.read`). Kiritma — `@drinks/shared/schemas` `stockCount*InputSchema`.
+- **Ochish:** `lockWarehouses(exclusive)` (§2 2-qadam) → arxivdagi ombor `ENTITY_ARCHIVED { entity: 'warehouse', name }` → ochiq DRAFT bor → `STOCK_COUNT_ALREADY_OPEN { warehouseName, stockCountNumber }` → `nextDocNumber(STOCK_COUNT)` (`I-000001`; rad etilgan ochish raqam olmaydi) → `CREATE`. Sana — `resolveStoreDate` (OQ-07; o'tgan sana → audit `backdated`). Parallel ochishda bittasi o'tadi; P2002 (partial unique index) ham `STOCK_COUNT_ALREADY_OPEN`.
+- **Forma (`get`):** DRAFT — ombordagi qoldig'i bor (`qty > 0`, `inventory.getWarehouseStock`) barcha (sub-ombor, mahsulot) + sanalgan qatorlar; `systemQty` — jonli qoldiq (`inventory.getAvailable`), `countedQty` (sanalmagan → `null`), `diffQty`. Saralash: sub-ombor, mahsulot nomi. POSTED — faqat sanalgan qatorlar, `systemQty` snapshot (T-602); CANCELLED — sanalgan qatorlar, `systemQty = null`.
+- **Saqlash (`update`):** `lockStockCount` (1-qadam) + `version` (`DOCUMENT_NOT_DRAFT` / `DOCUMENT_CHANGED`); qatorlar to'liq almashtiriladi, `version + 1`. Qator — `{ subWarehouseId, productId, blocks, pieces }` → `countedQty = toPieces(blocks, pieces, joriy unitsPerBlock)`; faqat sanalgan qatorlar yuboriladi (OQ-13), takroriy juft → `VALIDATION_FAILED`, `countedQty > int4` → `VALIDATION_FAILED`. Sub-ombor shu omborning faol sub-ombori bo'lishi shart (boshqa ombor → `NOT_FOUND`, arxivda → `ENTITY_ARCHIVED`); mahsulot tashkilotniki, arxivdagisi faqat shu sub-omborda qoldig'i bo'lsa (OQ-30). Ombor qulflanmaydi: ochiq sanoq bor omborni/sub-omborni arxivlab bo'lmaydi (OQ-21). Audit `UPDATE` (`before`/`after`: sana, izoh, qatorlar `countedQty` bilan).
+- **Bekor qilish:** `lockStockCount` + `version` → `CANCELLED`, `cancelledAt/By`, `version + 1`, qoldiq va qatorlar o'zgarmaydi; audit `CANCEL` (`before { status, version }`). Commit'dan keyin blok yechiladi, shu omborda yangi sanoq ochish mumkin.
+- **Maxfiylik (6-qoida):** `stockCount.amount.read` (faqat OWNER) bo'lmasa DTO'da `avgCost`, `diffAmount`, `estimate`, `shortageAmount`, `surplusAmount` kalitlari **yo'q**. OWNER uchun `estimate` — joriy qatorlar bo'yicha §6.2 5–6-qadam (mahsulot bo'yicha ombor jami farqi × avg, sub-omborlar orasidagi farq 0).
+- **Ro'yxat:** ochiq (DRAFT) sanoqlar birinchi (BR-8: yaqqol ko'rinadi), keyin sana/raqam kamayishi; filtr — holat, ombor, raqam qismi; 50 tadan.
+- UI: `/stock-counts` (ro'yxat + "Yangi inventarizatsiya" oynasi — ochiq sanoqli ombor tanlanmaydi), `/stock-counts/[id]` (DRAFT — sanoq formasi: sariq blok ogohlantirishi, sub-ombor bo'yicha guruhlar, qidiruv, blok + dona, jonli farq, "N ta qator sanalmagan", topilgan tovarni qo'shish, OWNER — farq summasi va taxminiy kamomad/ortiqcha; boshqa holat — faqat o'qish). "Bajarish" — T-602.
 
 ### 6.4 Eslatma: tannarx 0 bo'lgan mahsulot
 Hech qachon xarid qilinmagan mahsulot ortiqcha chiqsa, `avgCost = 0` → ortiqcha summasi 0 so'm. Tovar qoldiqqa qo'shiladi, keyingi xarid o'rtachani to'g'ri hisoblaydi.

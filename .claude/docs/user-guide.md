@@ -79,9 +79,9 @@ Kassada pul yetmasa bajarilmaydi ("Kassada mablag' yetarli emas").
 Bir vaqtda boshqa xodim shu tovarni sotib yuborgan bo'lsa, bajarishda tizim qayta tekshiradi va xatoni **o'sha qator ostida** ko'rsatadi — qatorni to'g'irlang. Qoralama saqlangandan keyin mahsulot narxi yoki blokdagi dona soni o'zgargan bo'lsa ham bajarilmaydi: qoralamani qayta saqlang (yangi narx va jami ko'rinadi, to'lovni moslang).
 
 ## 8. Inventarizatsiya (sanoq)
-1. **Inventarizatsiya** → "Yangi" → omborni tanlang.
+1. **Inventarizatsiya** → "Yangi inventarizatsiya" → omborni tanlang. Bitta omborda bir vaqtda faqat bitta ochiq inventarizatsiya bo'ladi.
 2. ⚠️ Shu paytdan boshlab **shu ombor bo'yicha savdo, xarid va storno bajarilmaydi** (qoralama yaratish mumkin). Barcha sahifalarda sariq ogohlantirish chiqadi. Sanoqni uzoq ochiq qoldirmang!
-3. Har sub-ombor va mahsulot uchun haqiqiy sonni kiriting (blok + dona). Tizim farqni ko'rsatadi.
+3. Har sub-ombor va mahsulot uchun haqiqiy sonni kiriting (blok + dona) va **Saqlash**ni bosing. Tizim farqni ko'rsatadi. Bo'sh qoldirilgan qator sanalmagan hisoblanadi — uning qoldig'i o'zgarmaydi; tovar umuman yo'q bo'lsa **0** kiriting. Ro'yxatda yo'q tovar topilsa — pastdagi "Qo'shish" orqali sub-ombor va mahsulotni tanlang. Summalar (farq summasi, taxminiy kamomad/ortiqcha) faqat Egasiga ko'rinadi.
 4. **Bajarish** — qoldiq haqiqiy songa tenglashadi. Ombor bo'yicha kamomad — yo'qotish, ortiqcha — daromad sifatida P&L'ga tushadi. Bir sub-omborda kam, boshqasida ortiq (jami teng) bo'lsa — faqat joylashuv tuzatiladi, foydaga ta'sir yo'q. (Tovarni bir joydan boshqasiga ko'chirish ham shu yo'l bilan qilinadi.)
 5. Kerak bo'lmasa — **Bekor qilish** (blok yechiladi).
 

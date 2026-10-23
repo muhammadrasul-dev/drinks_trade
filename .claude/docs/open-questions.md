@@ -49,6 +49,7 @@ SRS'dagi biznes savollar yopilgan. Bu yerda — arxitektura va DB loyihalashda c
 | OQ-27 | Qarz qaytarish sanasi qarz sanasidan oldin bo'lishi mumkinmi? | Yo'q — qaytarish kuni ≥ qarz kuni (Toshkent), aks holda `VALIDATION_FAILED` (`date`) | Yopilgan — A (tavsiya, 2026-10-23) |
 | OQ-28 | Qoldiq hisobotida qaysi mahsulotlar chiqadi va tannarx ustunlari qaysi ruxsat bilan? | Qoldig'i bor (`qty > 0`) mahsulotlar; "Kam qolganlar" filtrida (joylashuv filtrisiz) qoldig'i 0 bo'lganlari ham; tannarx/qiymat — `report.sales.cost` (faqat Egasi), yangi ruxsat yo'q | Yopilgan — 1-A, 2-A (tavsiya, 2026-10-23) |
 | OQ-29 | Savdo qoralamasi saqlangandan keyin mahsulot narxi o'zgarsa, bajarish (T-502) qaysi narx bilan o'tadi? | Bajarish rad etiladi (`SALE_PRICE_CHANGED { lines }`), foydalanuvchi qoralamani qayta saqlaydi — yangi narx va jami ko'rinadi (OQ-06 kabi) | Yopilgan — A (tavsiya, 2026-10-23) |
+| OQ-30 | Inventarizatsiyada arxivlangan mahsulotni sanash mumkinmi? | Faqat shu sub-omborda qoldig'i bor bo'lsa (hisobdan chiqarish uchun); qoldig'i yo'q joyga arxivdagi mahsulotni qo'shish → `ENTITY_ARCHIVED` | Ochiq — tavsiya bo'yicha qilingan (T-601) |
 
 ---
 
@@ -190,3 +191,9 @@ B ga o'tish — `debts.commands.ts` dagi `BEFORE_DEBT_DATE` tekshiruvini olib ta
 - **A (tavsiya):** bajarishda `line.unitPrice ≠ product.salePrice` bo'lsa → `SALE_PRICE_CHANGED { lines: [{ lineNo, product, unitPrice, salePrice }] }`; foydalanuvchi qoralamani qayta saqlaydi (yangi jami va to'lov qismlari ko'rinadi). BR-2 "bitta narx" saqlanadi, kassir pulni eski summada olmaydi. OQ-06 (`UNITS_PER_BLOCK_CHANGED`) bilan bir xil yo'l. Yangi xato kodi kerak.
 - **B:** saqlangan narx bilan bajariladi — mijozga aytilgan summa o'zgarmaydi, lekin narx o'zgargandan keyin eski narxda sotish mumkin bo'ladi.
 - **C:** bajarishda narx jimgina qayta hisoblanadi — jami o'zgaradi va to'lov qismlari mos kelmay `PAYMENT_SPLIT_MISMATCH` beradi (tushunarsiz xato), tavsiya etilmaydi.
+
+### OQ-30 — Inventarizatsiyada arxivlangan mahsulot
+T-601. OQ-20 (A) qoldig'i bor mahsulotni arxivlashga ruxsat beradi — bunday mahsulotni sotib bo'lmaydi, lekin u omborda turadi. Inventarizatsiyada u nima bo'ladi? BR-8 "har sub-omborda har mahsulot sanaladi" deydi; arxiv haqida hech narsa yo'q.
+- **A (tavsiya, T-601 da shunday):** arxivdagi mahsulot sanoq formasida qoldig'i bor sub-omborlarda chiqadi (belgi bilan) va sanaladi — masalan, singan/yaroqsiz tovarni 0 qilib hisobdan chiqarish shu yo'l bilan. Qoldig'i yo'q sub-omborga arxivdagi mahsulotni qo'shish → `ENTITY_ARCHIVED { entity: 'product', name }` (arxivdagi tovar yangi joyga "kirmaydi"). "Qo'shish" ro'yxatida faqat faol mahsulotlar.
+- **B:** arxivdagi mahsulot umuman sanalmaydi — qoldig'i hisobotda abadiy qoladi, uni tushirish uchun avval arxivdan chiqarish kerak.
+B ga o'tish — `stock-counts.service.ts` `computeLines` da arxivdagi mahsulotni har doim rad etish (+ test).
