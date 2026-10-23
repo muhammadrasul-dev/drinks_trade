@@ -19,6 +19,11 @@ Kim uchun: do'kon **Egasi** va **Xodim**.
 
 Parolni unutsangiz — Egasiga murojaat qiling, u yangi parol o'rnatadi.
 
+**Bosh sahifa** (kirgandan keyin ochiladi, Egasi ham, Xodim ham) — uchta blok, faqat miqdor va sonlar (pul yo'q):
+- **Kam qolgan mahsulotlar** — do'kondagi jami qoldig'i minimal qoldiqdan kam faol mahsulotlar soni va eng kam qolgan 10 tasi (umuman qolmaganlari birinchi): qoldiq / minimal, blok va donada. Nom bosilsa — mahsulot kartochkasi; "Qoldiq hisobotida ko'rish" — to'liq ro'yxat (qoldiq hisoboti, "Kam qolganlar", faqat faol). Minimal qoldig'i 0 bo'lgan va arxivlangan mahsulotlar bu yerda chiqmaydi.
+- **Ochiq inventarizatsiyalar** — qaysi omborda sanoq ochiq (raqami bosilsa — sanoq sahifasi).
+- **Bajarilmagan qoralamalar** — savdo va xarid qoralamalari soni; bosilsa — o'sha ro'yxat, "Qoralama" holati bo'yicha.
+
 ## 3. Rollar — kim nimani ko'radi
 
 | Bo'lim | Egasi | Xodim |
@@ -113,10 +118,12 @@ Tushum
 − Sotilgan tovar tannarxi
 = Yalpi foyda
 − Yo'l kira
-− Inventarizatsiya kamomadi (+ ortiqcha)
+− Kamomad (inventarizatsiya)
++ Ortiqcha (inventarizatsiya)
 = SOF FOYDA
 ```
 Xarid summasi, qarzlar, "boshqa chiqim" va o'tkazmalar foydaga kirmaydi.
+Davr yuqoridagi **Kun** / **Oy** / **Yil** / **Oraliq** tugmalari bilan tanlanadi; ochilganda joriy oy (butun oy) ko'rsatiladi. Kun, oy va yilni ‹ › strelkalari bilan oldinga-orqaga surish mumkin (kelajakka emas), kunni sana maydonidan ham tanlash mumkin; **Oraliq** — "dan"/"gacha" sanalari. Kunlar Toshkent vaqti bo'yicha, hujjat sanasiga qarab: o'tgan sana bilan kiritilgan savdo o'sha kunga tushadi. Storno qilingan savdo va storno qilingan yo'l kira o'z sanasidan butunlay chiqadi (storno kunida ham ko'rinmaydi). Nasiya savdo ham tushumga kiradi. Sub-omborlar orasidagi farq (bir joyda kam, boshqasida ortiq) kamomad ham, ortiqcha ham emas. Har qator ostida nechta savdo / yozuv / inventarizatsiya hisoblangani yozilgan. Xodim bu hisobotni menyuda ko'rmaydi va ocholmaydi.
 
 ## 12. Foydalanuvchilar (faqat Egasi)
 Menyu → **Boshqaruv → Foydalanuvchilar**. Ro'yxatda F.I.O, login, rol, til, holat (Faol/Faolsiz) va oxirgi kirish vaqti. Egasining o'z qatorida faqat **Mening akkauntim** havolasi bor.

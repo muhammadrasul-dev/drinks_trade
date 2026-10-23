@@ -9,7 +9,27 @@
     "ru": "Русский"
   },
   "home": {
-    "greeting": "Xush kelibsiz, {name} ({role})."
+    "greeting": "Xush kelibsiz, {name} ({role}).",
+    "lowStock": {
+      "title": "Kam qolgan mahsulotlar",
+      "description": "Doʻkondagi jami qoldigʻi minimaldan past (arxivdagilarsiz).",
+      "empty": "Hamma mahsulot yetarli — qoldigʻi minimaldan past mahsulot yoʻq.",
+      "min": "min.",
+      "more": "Yana {count} ta mahsulot — qoldiq hisobotida.",
+      "all": "Qoldiq hisobotida koʻrish ({count})"
+    },
+    "stockCounts": {
+      "title": "Ochiq inventarizatsiyalar",
+      "empty": "Ochiq inventarizatsiya yoʻq.",
+      "warehouse": "«{warehouse}» ombori",
+      "all": "Inventarizatsiyalar roʻyxati"
+    },
+    "drafts": {
+      "title": "Bajarilmagan qoralamalar",
+      "sales": "Savdo",
+      "purchases": "Xarid",
+      "empty": "Bajarilmagan qoralama yoʻq."
+    }
   },
   "common": {
     "cancel": "Bekor qilish",
@@ -984,6 +1004,45 @@
       "cost": "Tannarx",
       "grossProfit": "Yalpi foyda"
     }
+  },
+  "pnlReport": {
+    "title": "P&L (foyda va zarar)",
+    "period": {
+      "label": "Davr",
+      "kinds": {
+        "day": "Kun",
+        "month": "Oy",
+        "year": "Yil",
+        "range": "Oraliq"
+      },
+      "previous": "Oldingi",
+      "next": "Keyingi",
+      "day": "Kun",
+      "from": "dan",
+      "to": "gacha",
+      "month": "{month, select, january {Yanvar} february {Fevral} march {Mart} april {Aprel} may {May} june {Iyun} july {Iyul} august {Avgust} september {Sentabr} october {Oktabr} november {Noyabr} december {Dekabr} other {{month}}} {year}",
+      "year": "{year}-yil",
+      "range": "{from} — {to}",
+      "fromOnly": "{from} dan",
+      "toOnly": "{to} gacha",
+      "all": "Butun davr"
+    },
+    "lines": {
+      "label": "Foyda va zarar hisobi",
+      "revenue": "Tushum",
+      "cogs": "Sotilgan tovar tannarxi",
+      "grossProfit": "Yalpi foyda",
+      "travelExpense": "Yoʻl kira",
+      "stockShortage": "Kamomad",
+      "stockSurplus": "Ortiqcha",
+      "netProfit": "Sof foyda"
+    },
+    "hints": {
+      "sales": "{count} ta savdo, nasiya ham",
+      "travelExpenses": "{count} ta yozuv, storno qilinganlarsiz",
+      "stockCounts": "{count} ta inventarizatsiya"
+    },
+    "excluded": "Xarid, qarz amallari, boshqa chiqim va kassalar orasidagi oʻtkazmalar foyda hisobiga kirmaydi. Storno qilingan hujjatlar oʻz sanasidan chiqadi."
   },
   "stockCounts": {
     "title": "Inventarizatsiya",

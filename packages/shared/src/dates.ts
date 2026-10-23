@@ -57,8 +57,33 @@ export function storeToday(now: Date = new Date(), timeZone: string = STORE_TIME
   return storeDateOf(now, timeZone);
 }
 
+/** `YYYY-MM-DD` store day → "23.10.2026". */
+export function formatStoreDay(day: string): string {
+  const [year, month, date] = day.split('-');
+  return `${date}.${month}.${year}`;
+}
+
+// Calendar arithmetic on `YYYY-MM-DD` / `YYYY-MM` strings. A store day is a
+// plain calendar date, so it is done in UTC where days are always 24 h.
+
+/** The store day `days` after `day` (negative: before); months and years roll over. */
+export function addStoreDays(day: string, days: number): string {
+  const [y, m, d] = day.split('-').map(Number);
+  return new Date(Date.UTC(y!, m! - 1, d! + days)).toISOString().slice(0, 10);
+}
+
+/** The `YYYY-MM` month `months` after `month` (negative: before). */
+export function addMonths(month: string, months: number): string {
+  const [y, m] = month.split('-').map(Number);
+  return new Date(Date.UTC(y!, m! - 1 + months, 1)).toISOString().slice(0, 7);
+}
+
+/** The last `YYYY-MM-DD` day of a `YYYY-MM` month (leap years included). */
+export function lastDayOfMonth(month: string): string {
+  return addStoreDays(`${addMonths(month, 1)}-01`, -1);
+}
+
 /** "23.10.2026" — the date part of formatDateTime. */
 export function formatDate(date: Date, timeZone: string = STORE_TIME_ZONE): string {
-  const [year, month, day] = storeDateOf(date, timeZone).split('-');
-  return `${day}.${month}.${year}`;
+  return formatStoreDay(storeDateOf(date, timeZone));
 }

@@ -38,7 +38,7 @@ newAvg = (Q * avg + inCost) / (Q + q)      // inCost — kirim summasi (so'm), q
 - **Pul** — butun so'm `number` (ADR-008); `formatSom` DB'dan kelgan `bigint` ni ham qabul qiladi.
 - `units.ts`: `toPieces(blocks, pieces, unitsPerBlock)`, `splitPieces(qty, unitsPerBlock)` (`qty ≥ 0`), `formatQty(qty, unitsPerBlock, labels?)` → `"3 blok 2 dona"`; bo'sh qism tushiriladi (`"3 blok"`, `"2 dona"`, `0` → `"0 dona"`), manfiy (inventarizatsiya farqi) → `"-3 blok 2 dona"`.
 - `money.ts`: `formatSom(amount, unit?)` → `"1 250 000 soʻm"` (raqam guruhlari va birlik oldidan **no-break space** U+00A0 — jadvalda qatorga bo'linmaydi); `roundHalfUp(value: string)` → butun so'm, noldan uzoqqa (`"2.5"` → 3, `"-2.5"` → −3).
-- `dates.ts` (T-204): `formatDateTime(date, timeZone = STORE_TIME_ZONE)` → `"23.10.2026 14:05"` (`DD.MM.YYYY HH:mm`, `Asia/Tashkent`) — UI'da sana-vaqt shu bilan chiqadi (locale'li `Intl` formati Node va brauzerda farq qiladi).
+- `dates.ts` (T-204): `formatDateTime(date, timeZone = STORE_TIME_ZONE)` → `"23.10.2026 14:05"` (`DD.MM.YYYY HH:mm`, `Asia/Tashkent`) — UI'da sana-vaqt shu bilan chiqadi (locale'li `Intl` formati Node va brauzerda farq qiladi). Sana arifmetikasi (Prompt 55 refactor): `addStoreDays(day, n)`, `addMonths(month, n)`, `lastDayOfMonth(month)` — `YYYY-MM-DD` / `YYYY-MM` satrlarida, UTC'da (do'kon kuni oddiy kalendar sanasi); P&L davri (`pnl-params.ts`) va integratsiya testlaridagi `day()` shundan foydalanadi.
 - Birlik so'zlari (`blok`/`dona`/`soʻm`) — standart o'zbekcha; UI tarjima qilingan so'zlarni parametr sifatida beradi (`enums.QtyUnit.*`, `common.som`; `MoneyText` / `QtyText` — T-203).
 - `stock-count.ts` (T-602): `countTotals(diffs)` — §6.2 5–6-qadam: farq mahsulot bo'yicha ombor jami qilinadi, keyin `roundHalfUp(Σ diff × avg)` → `{ shortageAmount, surplusAmount }`. Sanoq formasidagi taxmin, server `estimate` va bajarishdagi `shortage_amount` / `surplus_amount` — hammasi shu funksiyadan.
 - `costing.ts`: `costAmount(qty, unitCost)` = `roundHalfUp(qty × unitCost)` (§1.2, qty ishorali bo'lishi mumkin); `unitCostOf(lineTotal, qty)` (§5.1); `avgOnReceipt({ totalQty, avgCost, inQty, inCost })` (§1.3 — xarid va savdo storno'si); `avgOnPurchaseReversal({ totalQty, avgCost, outQty, outCost })` (§5.3: `Q − q = 0` → 0, manfiy → 0; `q > Q` → `RangeError`, chunki BR-3 tekshiruvi avval to'xtatishi kerak).
@@ -371,10 +371,22 @@ Kirmaydi: xarid summasi, qarz amallari, `OTHER_EXPENSE`, o'tkazmalar.
 Filtr: kun / oy / yil / ixtiyoriy oraliq (Toshkent vaqti).
 Savdo hisoboti (T-802, SRS §7.2, database §7.2) tushum va tannarxni shu qoida bilan oladi — `POSTED`, `doc_date` davrda, storno qilingan savdo asl sanasidan chiqadi — faqat mahsulot kesimida (`sale_line` bo'yicha): bir davr uchun hisobot jami = P&L dagi "Tushum" va "Tannarx (COGS)".
 
+Amalda (T-803): `reports.pnl(ctx, { from?, to? })` (`packages/server/src/modules/reports/pnl-report.queries.ts`) — ruxsat `report.pnl` (faqat OWNER; STAFF → `FORBIDDEN`, qisqartirilgan variant yo'q — butun hisobot maxfiy, CLAUDE.md 6-qoida). Kiritma `pnlReportQuerySchema` (= `reportPeriodSchema`, savdo hisoboti bilan umumiy): Toshkent kunlari, ikkala chet kiritiladi va ixtiyoriy (`storeDayRange`), `from > to` → `VALIDATION_FAILED`. O'qish, qulfsiz; har qator — o'z sanasi bo'yicha (BR-13: bajarish/storno payti emas):
+- `revenue`, `cogs` — `POSTED` savdolarning Σ `total_amount` / Σ `cost_total` (`doc_date`); `REVERSED` savdo asl kunidan chiqadi (OQ-01), storno kunida ham ko'rinmaydi. Nasiya savdo ham kiradi.
+- `travelExpense` — Σ `TRAVEL_EXPENSE` (`tx_date`), `MANUAL_REVERSAL` i bo'lganlarsiz (`reversedBy: null`); teskari yozuv ham asl sana bilan (OQ-30), lekin u yo'l kira emas — hisobga kirmaydi.
+- `stockShortage` — `POSTED` sanoqlarning (`doc_date`) Σ |`stock_count_result.amount`| (`amount < 0`), `stockSurplus` — Σ `amount > 0`; ikkalasi musbat. Natija mahsulot bo'yicha ombor jami (§6.2 5-qadam), shuning uchun sub-omborlar orasidagi ko'chish 0 — hech bir qatorga tushmaydi. `DRAFT`/`CANCELLED` sanoq hisoblanmaydi.
+- `grossProfit = revenue − cogs`, `netProfit = grossProfit − travelExpense − stockShortage + stockSurplus`; `counts` — savdolar, yo'l kira yozuvlari va sanoqlar soni (ekranda izoh sifatida).
+- Xarid, qarz amallari, `OTHER_EXPENSE`, o'tkazmalar o'qilmaydi.
+UI: `/reports/pnl` — Kun / Oy / Yil / Oraliq (oy va yil — to'liq kalendar oy/yil), parametrsiz — joriy oy (OQ-36).
+
 ## 9. Kam qoldiq ogohlantirishi (FR-1.3)
 `Σ stock_balance.qty (do'kon bo'yicha) < product.minStock` (va `minStock > 0`) → mahsulotlar ro'yxatida belgi + dashboard'da "Kam qolgan mahsulotlar" bloki. Push/SMS yo'q.
 Qoldiq hisobotida (T-801) ham shu qoida: `lowStock` ombor filtridan qat'i nazar do'kon bo'yicha jamiga qarab; "Kam qolganlar" filtri qoldig'i 0 mahsulotlarni ham ko'rsatadi (OQ-28).
 Amalda (T-303): `isLowStock(stockQty, minStock)` (`@drinks/shared`); `stockQty` = `product_cost.total_qty` (invariant bo'yicha `Σ stock_balance.qty` ga teng) — `inventory.getProductTotals` orqali; DTO'da `stockQty`, `lowStock`.
+Bosh sahifa (T-902): `packages/server/src/modules/dashboard/dashboard.queries.ts` — `dashboard.summary(ctx)`, faqat o'qish, qulfsiz; faqat miqdor va sonlar — hech bir rolga pul/tannarx yo'q (DTO `DashboardSummary`, `@drinks/shared`). Bosh sahifaning o'z ruxsati yo'q (`nav.ts`: `permission: null`), shuning uchun har blok rol u havola qiladigan sahifani ocha olsagina qaytadi (aks holda kalit umuman yo'q):
+- `lowStock` (`report.stock`) — **faol** (arxivlanmagan, OQ-39) mahsulotlardan `minStock > 0` va `isLowStock(getProductTotals().totalQty, minStock)` bo'lganlari: `total` va eng ko'p kamaygan `DASHBOARD_LOW_STOCK_LIMIT` (10) tasi — `stockQty / minStock` o'sish tartibida, teng bo'lsa nom bo'yicha (`compareStockShortage`, OQ-40). `total` = `/reports/stock?low=1&archived=0` dagi mahsulotlar soni (integratsiya testi tekshiradi).
+- `openStockCounts` (`warehouse.read`) — `stockCounts.openCounts` (T-603 banneri bilan bir xil).
+- `draftSales` (`sale.write`), `draftPurchases` (`purchase.write`) — do'kondagi `DRAFT` hujjatlar soni (kim yaratganidan qat'i nazar, OQ-14).
 
 ## 9a. Toifa va brend (T-302, FR-1.1)
 `packages/server/src/modules/products/catalog.service.ts` — `categories` va `brands` (bir xil API, jadval adapteri orqali):
