@@ -95,7 +95,7 @@ Ikkita kassa: **Naqd** va **Karta**, balanslari alohida. Kassa manfiy bo'lmaydi.
 | Qarz berish / olish | Qarzlar → "Qarz berish" / "Qarz olish" (izoh majburiy) | Yo'q |
 | Kassalar orasida o'tkazma | Kassa → "O'tkazma" | Yo'q |
 
-Xato kiritilgan yozuv (masalan, yo'l kira summasi noto'g'ri) o'chirilmaydi: yozuv yonidagi **Storno** tugmasi teskari yozuv yaratadi, ikkalasi ham jurnalda qoladi.
+Xato kiritilgan yozuv (masalan, yo'l kira summasi noto'g'ri) o'chirilmaydi: jurnalda yozuv yonidagi **Storno** → tasdiqlang (sabab ixtiyoriy). Teskari yozuv asl yozuv sanasi bilan yaratiladi, ikkalasi ham jurnalda qoladi, asl summa chizib qo'yiladi va "Storno qilingan" belgisi chiqadi. Storno faqat yo'l kira, boshqa chiqim va o'tkazmada bor; o'tkazma ikkala tomoni bilan birga bekor bo'ladi. Savdo, xarid va qarz yozuvlari o'z hujjati yoki qarzi orqali storno qilinadi. Storno qilingan yo'l kira foydadan chiqadi.
 
 ## 10. Qarzlar (faqat Egasi)
 - Tepada ikki karta: **Bizga qarzdor** (nasiya savdo, berilgan qarz) va **Bizning qarzimiz** (nasiya xarid, olingan qarz) — ochiq qarzlar bo'yicha jami qoldiq.
@@ -137,7 +137,7 @@ Kim, qachon, nimani o'zgartirgani (eski va yangi qiymat). O'tgan sana bilan kiri
 | "Qoldiq yetarli emas" | Sub-omborda tovar kam. Boshqa sub-ombordan soting yoki avval xarid kiriting |
 | "Ombor inventarizatsiyada" | Shu omborda ochiq sanoq bor. Uni bajaring yoki bekor qiling (ombor/sub-omborni arxivlash ham shu paytda mumkin emas) |
 | "…da qoldiq bor. Qoldiq nolga tushgach arxivlash mumkin" | Ombor/sub-omborda tovar bor. Avval uni soting (yoki inventarizatsiyada boshqa sub-omborga o'tkazing), keyin arxivlang |
-| "Kassada mablag' yetarli emas" | Chiqim summasi kassa balansidan katta |
+| "Kassada mablag' yetarli emas" | Chiqim summasi kassa balansidan katta (o'tkazma stornosida — pul qaytadigan kassada yetarli emas) |
 | "To'lov summasi hujjat summasiga teng emas" | Naqd + Karta + Nasiya ni tekshiring |
 | "Avval tegishli savdoni storno qiling" | Xarid tovarining bir qismi sotilgan, xaridni bekor qilib bo'lmaydi |
 | "Hujjat o'zgargan, sahifani yangilang" | Boshqa foydalanuvchi shu qoralamani tahrirlagan |
