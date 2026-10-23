@@ -15,6 +15,7 @@ import {
   DomainError,
   ErrorCode,
   MovementType,
+  stockKeyOf,
 } from '@drinks/shared';
 
 import type { ServiceContext } from '../../core/context';
@@ -121,8 +122,6 @@ export interface AdjustResult {
 
 // ── Helpers ──────────────────────────────────────────────────────────────
 
-const keyOf = (key: StockKey): string => `${key.subWarehouseId}:${key.productId}`;
-
 function assertLines(lines: readonly unknown[]): void {
   if (lines.length === 0) throw new RangeError('Inventory call needs at least one line');
 }
@@ -191,7 +190,7 @@ async function lockAll(tx: Tx, ctx: ServiceContext, keys: readonly StockKey[]): 
   const balances = await lockStockBalances(tx, keys);
   return {
     costs: new Map(costs.map((row) => [row.productId, row])),
-    balances: new Map(balances.map((row) => [keyOf(row), row])),
+    balances: new Map(balances.map((row) => [stockKeyOf(row), row])),
   };
 }
 
@@ -199,7 +198,8 @@ const avgOf = (locked: Locked, productId: string): CostString =>
   decimalToString(locked.costs.get(productId)!.avgCost);
 const totalQtyOf = (locked: Locked, productId: string): number =>
   locked.costs.get(productId)!.totalQty;
-const balanceOf = (locked: Locked, key: StockKey): number => locked.balances.get(keyOf(key))!.qty;
+const balanceOf = (locked: Locked, key: StockKey): number =>
+  locked.balances.get(stockKeyOf(key))!.qty;
 
 /** Writes the new qty of every touched balance and product_cost row. */
 async function saveTotals(
@@ -314,7 +314,7 @@ export async function receive(
   await saveTotals(
     tx,
     ctx,
-    sumBy(input.lines, keyOf, (l) => l.qty),
+    sumBy(input.lines, stockKeyOf, (l) => l.qty),
     locked,
     products,
   );
@@ -356,8 +356,8 @@ export async function issue(tx: Tx, ctx: ServiceContext, input: IssueInput): Pro
   const lines: readonly (SaleIssueLine | CostedLine)[] = input.lines;
   const locked = await lockAll(tx, ctx, lines);
 
-  const outByKey = sumBy(lines, keyOf, (l) => l.qty);
-  const short = lines.filter((line) => balanceOf(locked, line) < outByKey.get(keyOf(line))!);
+  const outByKey = sumBy(lines, stockKeyOf, (l) => l.qty);
+  const short = lines.filter((line) => balanceOf(locked, line) < outByKey.get(stockKeyOf(line))!);
   if (short.length > 0) await throwShortage(tx, input.type, short, locked, outByKey);
 
   const outQty = sumBy(
@@ -391,7 +391,7 @@ export async function issue(tx: Tx, ctx: ServiceContext, input: IssueInput): Pro
   await saveTotals(
     tx,
     ctx,
-    sumBy(lines, keyOf, (l) => -l.qty),
+    sumBy(lines, stockKeyOf, (l) => -l.qty),
     locked,
     products,
   );
@@ -442,12 +442,12 @@ async function throwShortage(
         product: productNames.get(line.productId),
         subWarehouseId: line.subWarehouseId,
         available: balanceOf(locked, line),
-        required: outByKey.get(keyOf(line)),
+        required: outByKey.get(stockKeyOf(line)),
       })),
     });
   }
   // §5.3 reports one (sub-warehouse, product): the first short one in lock order.
-  const [first] = [...short].sort((a, b) => keyOf(a).localeCompare(keyOf(b)));
+  const [first] = [...short].sort((a, b) => stockKeyOf(a).localeCompare(stockKeyOf(b)));
   const subWarehouse = await tx.subWarehouse.findUniqueOrThrow({
     where: { id: first!.subWarehouseId },
     select: { name: true },
@@ -458,7 +458,7 @@ async function throwShortage(
     subWarehouseId: first!.subWarehouseId,
     subWarehouse: subWarehouse.name,
     available: balanceOf(locked, first!),
-    required: outByKey.get(keyOf(first!)),
+    required: outByKey.get(stockKeyOf(first!)),
   });
 }
 
@@ -478,8 +478,9 @@ export async function adjust(
   const seen = new Set<string>();
   for (const line of input.lines) {
     assertQty(line.countedQty, 'countedQty', 0);
-    if (seen.has(keyOf(line))) throw new RangeError(`Duplicate count line ${keyOf(line)}`);
-    seen.add(keyOf(line));
+    if (seen.has(stockKeyOf(line)))
+      throw new RangeError(`Duplicate count line ${stockKeyOf(line)}`);
+    seen.add(stockKeyOf(line));
   }
   const locked = await lockAll(tx, ctx, input.lines);
 
@@ -504,7 +505,7 @@ export async function adjust(
   await saveTotals(
     tx,
     ctx,
-    new Map(counted.map((line) => [keyOf(line), line.qtyDelta])),
+    new Map(counted.map((line) => [stockKeyOf(line), line.qtyDelta])),
     locked,
     new Map(
       products
@@ -579,11 +580,11 @@ export async function getAvailable(
     },
     select: { subWarehouseId: true, productId: true, qty: true },
   });
-  const qtyByKey = new Map(rows.map((row) => [keyOf(row), row.qty]));
+  const qtyByKey = new Map(rows.map((row) => [stockKeyOf(row), row.qty]));
   return keys.map(({ subWarehouseId, productId }) => ({
     subWarehouseId,
     productId,
-    qty: qtyByKey.get(keyOf({ subWarehouseId, productId })) ?? 0,
+    qty: qtyByKey.get(stockKeyOf({ subWarehouseId, productId })) ?? 0,
   }));
 }
 

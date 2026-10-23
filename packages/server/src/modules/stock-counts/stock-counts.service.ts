@@ -25,6 +25,7 @@ import {
   type StockCountRow,
   StockCountStatus,
   storeDateOf,
+  stockKeyOf,
   toPieces,
 } from '@drinks/shared';
 import {
@@ -49,7 +50,7 @@ import { lockStockCount, lockWarehouses, type StockKey } from '../../core/locks'
 import { decimalToString, moneyToBigInt, moneyToNumber } from '../../core/money';
 import { nextDocNumber } from '../../core/numbering';
 import { assertCan } from '../../core/rbac';
-import { type Tx, withTransaction } from '../../core/tx';
+import { isUniqueViolation, type Tx, withTransaction } from '../../core/tx';
 import { audit, isBackdated } from '../audit';
 import { inventory } from '../inventory';
 import { warehouses } from '../warehouses';
@@ -94,8 +95,6 @@ interface CountedLine extends StockKey {
   countedQty: number;
 }
 
-const keyOf = (key: StockKey) => `${key.subWarehouseId}:${key.productId}`;
-
 const showAmounts = (ctx: ServiceContext) => can(ctx.user.role, 'stockCount.amount.read');
 
 /** Posting results (T-602), OWNER only: absent keys for STAFF, not null (rule 6). */
@@ -139,7 +138,7 @@ async function loadRow(db: Tx, ctx: ServiceContext, id: string): Promise<DetailR
 async function toDetail(db: Tx, ctx: ServiceContext, row: DetailRow): Promise<StockCountDetail> {
   const draft = row.status === StockCountStatus.DRAFT;
   const posted = row.status === StockCountStatus.POSTED;
-  const counted = new Map(row.lines.map((line) => [keyOf(line), line]));
+  const counted = new Map(row.lines.map((line) => [stockKeyOf(line), line]));
 
   const keys: StockKey[] = row.lines.map(({ subWarehouseId, productId }) => ({
     subWarehouseId,
@@ -148,14 +147,14 @@ async function toDetail(db: Tx, ctx: ServiceContext, row: DetailRow): Promise<St
   const systemQty = new Map<string, number>();
   if (draft) {
     for (const stock of await inventory.getWarehouseStock(db, ctx, row.warehouse.id)) {
-      if (!counted.has(keyOf(stock))) keys.push(stock);
+      if (!counted.has(stockKeyOf(stock))) keys.push(stock);
     }
     for (const stock of await inventory.getAvailable(db, ctx, keys)) {
-      systemQty.set(keyOf(stock), stock.qty);
+      systemQty.set(stockKeyOf(stock), stock.qty);
     }
   } else {
     for (const line of row.lines) {
-      if (line.systemQty !== null) systemQty.set(keyOf(line), line.systemQty);
+      if (line.systemQty !== null) systemQty.set(stockKeyOf(line), line.systemQty);
     }
   }
 
@@ -190,8 +189,8 @@ async function toDetail(db: Tx, ctx: ServiceContext, row: DetailRow): Promise<St
   const rows: StockCountRow[] = keys.map((key) => {
     const product = productById.get(key.productId)!;
     const sub = subById.get(key.subWarehouseId)!;
-    const system = systemQty.get(keyOf(key)) ?? null;
-    const countedQty = counted.get(keyOf(key))?.countedQty ?? null;
+    const system = systemQty.get(stockKeyOf(key)) ?? null;
+    const countedQty = counted.get(stockKeyOf(key))?.countedQty ?? null;
     const diffQty = system !== null && countedQty !== null ? countedQty - system : null;
     const result: StockCountRow = {
       subWarehouse: { id: sub.id, name: sub.name, archived: sub.archivedAt !== null },
@@ -327,10 +326,6 @@ function snapshotOf(row: DetailRow) {
       countedQty,
     })),
   };
-}
-
-function isUniqueViolation(error: unknown): boolean {
-  return typeof error === 'object' && error !== null && 'code' in error && error.code === 'P2002';
 }
 
 // ── Queries ──────────────────────────────────────────────────────────────

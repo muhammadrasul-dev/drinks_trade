@@ -31,7 +31,7 @@ import {
 import type { ServiceContext } from '../../core/context';
 import { lockWarehouses } from '../../core/locks';
 import { assertCan } from '../../core/rbac';
-import { type Tx, withTransaction } from '../../core/tx';
+import { isUniqueViolation, type Tx, withTransaction } from '../../core/tx';
 import { audit } from '../audit';
 import { inventory } from '../inventory';
 
@@ -86,11 +86,6 @@ function toItem(row: WarehouseRow, stocked: ReadonlySet<string>): WarehouseItem 
     hasStock: subWarehouses.some((sub) => sub.hasStock),
     subWarehouses,
   };
-}
-
-/** Unique-constraint violation (P2002) — a concurrent create/rename won the same name. */
-function isUniqueViolation(error: unknown): boolean {
-  return typeof error === 'object' && error !== null && 'code' in error && error.code === 'P2002';
 }
 
 /** Runs a write; a unique violation from a concurrent request → DUPLICATE_VALUE. */
