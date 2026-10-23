@@ -572,3 +572,11 @@ T-803 va T-902 theese test should do seperate sessions, then do refactor
 ```
 yes merge to main, and then begin you sayed tasks in seperate sessions, after theese done do simplky refactor
 ```
+
+---
+
+## Prompt 57 — Boshlanmagan bitta vazifani boshlash, keyin oddiy refactor (2026-10-23)
+
+```
+check @.claude/docs/tasks.md and start one task which not started. And then simply refactor that finished your task
+```
