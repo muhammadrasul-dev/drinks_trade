@@ -3,7 +3,7 @@
 import {
   type ActionError,
   costAmount,
-  type CostString,
+  countTotals,
   type ProductOption,
   splitPieces,
   type StockCountDetail,
@@ -23,7 +23,7 @@ import {
 } from '@drinks/ui/components/select';
 import { toast } from '@drinks/ui/components/sonner';
 import { cn } from '@drinks/ui/lib/utils';
-import { PlusIcon, SearchIcon, XCircleIcon } from 'lucide-react';
+import { CheckCircle2Icon, PlusIcon, SearchIcon, XCircleIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useId, useMemo, useState, useTransition } from 'react';
 
@@ -33,7 +33,7 @@ import { QtyText } from '@/components/qty-text';
 import { useRouter } from '@/i18n/navigation';
 import { ProductPicker } from '@/features/purchases/components/product-picker';
 
-import { cancelStockCount, updateStockCount } from '../actions';
+import { cancelStockCount, postStockCount, updateStockCount } from '../actions';
 
 interface StockCountFormProps {
   count: StockCountDetail;
@@ -87,6 +87,8 @@ function digits(value: string): string {
  * system qty, block + piece inputs and the live difference. A row left empty
  * is not counted and keeps its balance (OQ-13); "0" is a count. Extra goods
  * are added as rows. Amounts appear only when the server sent them (OWNER).
+ * "Bajarish" (T-602) posts the saved count after a confirmation that names
+ * the uncounted rows.
  */
 export function StockCountForm({ count, products, subWarehouses, today }: StockCountFormProps) {
   const t = useTranslations('stockCounts');
@@ -162,25 +164,18 @@ export function StockCountForm({ count, products, subWarehouses, today }: StockC
   const countedRows = computed.filter((item) => item.counted !== null).length;
   const uncounted = computed.length - countedRows;
 
-  // BR-8 estimate: per product over the whole warehouse (moves between sub-warehouses cancel out).
-  const estimate = useMemo(() => {
-    if (!showAmounts) return null;
-    const byProduct = new Map<string, { diff: number; avgCost: CostString }>();
-    for (const item of computed) {
-      if (item.diff === null || item.row.avgCost === undefined) continue;
-      const entry = byProduct.get(item.row.product.id) ?? { diff: 0, avgCost: item.row.avgCost };
-      entry.diff += item.diff;
-      byProduct.set(item.row.product.id, entry);
-    }
-    let shortage = 0;
-    let surplus = 0;
-    for (const { diff, avgCost } of byProduct.values()) {
-      const amount = costAmount(diff, avgCost);
-      if (amount < 0) shortage -= amount;
-      else surplus += amount;
-    }
-    return { shortage, surplus };
-  }, [computed, showAmounts]);
+  // BR-8 estimate, as the server computes it on posting.
+  const estimate = showAmounts
+    ? countTotals(
+        computed.flatMap(({ row, diff }) =>
+          diff === null || row.avgCost === undefined
+            ? []
+            : [{ productId: row.product.id, diffQty: diff, avgCost: row.avgCost }],
+        ),
+      )
+    : null;
+  // Posting takes the saved count; the confirmation names what it leaves out.
+  const postBlocked = dirty ? t('post.saveFirst') : countedRows === 0 ? t('post.empty') : null;
 
   const needle = search.trim().toLowerCase();
   const visible = computed.filter(
@@ -231,6 +226,19 @@ export function StockCountForm({ count, products, subWarehouses, today }: StockC
       toast.success(tCommon('saved'));
       router.refresh();
     });
+  }
+
+  async function onPost(): Promise<boolean> {
+    const result = await postStockCount({ id: count.id, version });
+    if (!result.ok) {
+      const code = result.error.code;
+      if (code === 'DOCUMENT_CHANGED' || code === 'DOCUMENT_NOT_DRAFT') setStale(true);
+      toast.error(errorMessage(result.error));
+      return false;
+    }
+    toast.success(t('post.done', { number: count.number }));
+    router.refresh();
+    return true;
   }
 
   async function onCancel(): Promise<boolean> {
@@ -468,11 +476,11 @@ export function StockCountForm({ count, products, subWarehouses, today }: StockC
             <>
               <div className="flex justify-between gap-2">
                 <span className="text-muted-foreground">{t('form.shortage')}</span>
-                <MoneyText amount={estimate.shortage} className="text-destructive" />
+                <MoneyText amount={estimate.shortageAmount} className="text-destructive" />
               </div>
               <div className="flex justify-between gap-2">
                 <span className="text-muted-foreground">{t('form.surplus')}</span>
-                <MoneyText amount={estimate.surplus} />
+                <MoneyText amount={estimate.surplusAmount} />
               </div>
               <p className="text-xs text-muted-foreground">{t('form.estimateHint')}</p>
             </>
@@ -498,10 +506,54 @@ export function StockCountForm({ count, products, subWarehouses, today }: StockC
         </p>
       )}
 
-      <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
+      {/* Actions on the left like the sale form: toasts (bottom right) never cover them. */}
+      <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onSave}
+          disabled={isPending || stale || !dirty}
+        >
+          {tCommon('save')}
+        </Button>
         <ConfirmDialog
           trigger={
-            <Button type="button" variant="outline" className="text-destructive">
+            <Button type="button" disabled={isPending || stale || postBlocked !== null}>
+              <CheckCircle2Icon />
+              {t('post.button')}
+            </Button>
+          }
+          title={t('post.title', { number: count.number })}
+          description={t('post.description', { warehouse: count.warehouse.name })}
+          confirmLabel={t('post.button')}
+          onConfirm={onPost}
+        >
+          {(uncounted > 0 || estimate) && (
+            <div className="flex flex-col gap-2 text-sm">
+              {uncounted > 0 && (
+                <p className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
+                  {t('form.uncounted', { count: uncounted })}
+                </p>
+              )}
+              {estimate && (
+                <>
+                  <div className="flex justify-between gap-2">
+                    <span className="text-muted-foreground">{t('form.shortage')}</span>
+                    <MoneyText amount={estimate.shortageAmount} className="text-destructive" />
+                  </div>
+                  <div className="flex justify-between gap-2">
+                    <span className="text-muted-foreground">{t('form.surplus')}</span>
+                    <MoneyText amount={estimate.surplusAmount} />
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+        </ConfirmDialog>
+        {postBlocked && <span className="text-sm text-muted-foreground">{postBlocked}</span>}
+        <ConfirmDialog
+          trigger={
+            <Button type="button" variant="outline" className="text-destructive sm:ml-auto">
               <XCircleIcon />
               {t('cancel.button')}
             </Button>
@@ -512,12 +564,6 @@ export function StockCountForm({ count, products, subWarehouses, today }: StockC
           destructive
           onConfirm={onCancel}
         />
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          {dirty && <span className="text-sm text-muted-foreground">{t('form.unsaved')}</span>}
-          <Button type="button" onClick={onSave} disabled={isPending || stale || !dirty}>
-            {tCommon('save')}
-          </Button>
-        </div>
       </div>
     </div>
   );

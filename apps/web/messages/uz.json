@@ -216,6 +216,7 @@
     "PURCHASE_REVERSAL_INSUFFICIENT_STOCK": "Xaridni storno qilib boʻlmaydi: mahsulotning bir qismi allaqachon sotilgan.",
     "WAREHOUSE_IN_STOCK_COUNT": "Omborda inventarizatsiya ketmoqda. Tugaguncha harakatlar bloklangan.",
     "STOCK_COUNT_ALREADY_OPEN": "Bu ombor uchun ochiq inventarizatsiya allaqachon bor.",
+    "STOCK_COUNT_EMPTY": "Inventarizatsiyada sanalgan qator yoʻq — kamida bitta qatorni sanang yoki inventarizatsiyani bekor qiling.",
     "PAYMENT_SPLIT_MISMATCH": "Toʻlov qismlari yigʻindisi hujjat summasiga teng emas.",
     "CASHBOX_INSUFFICIENT": "Kassada mablagʻ yetarli emas.",
     "CASH_TX_NOT_REVERSIBLE": "Bu yozuvni kassadan storno qilib boʻlmaydi — u hujjat yoki qarz orqali bekor qilinadi.",
@@ -1030,7 +1031,6 @@
       "surplus": "Ortiqcha (taxminan)",
       "estimateHint": "Ombor boʻyicha jami farq × oʻrtacha tannarx. Sub-omborlar orasidagi farq summaga taʼsir qilmaydi.",
       "reload": "Sahifani yangilash",
-      "unsaved": "Oʻzgarishlar saqlanmagan",
       "archivedItem": "«{name}» arxivda — uni bu yerda sanab boʻlmaydi."
     },
     "cancel": {
@@ -1038,6 +1038,14 @@
       "title": "{number} inventarizatsiyasini bekor qilasizmi?",
       "description": "Kiritilgan sanoq saqlanadi, lekin qoldiq oʻzgarmaydi. «{warehouse}» omboridagi blok darhol olib tashlanadi.",
       "done": "{number} bekor qilindi"
+    },
+    "post": {
+      "button": "Bajarish",
+      "title": "{number} inventarizatsiyasini bajarasizmi?",
+      "description": "Sanalgan qatorlarning qoldigʻi haqiqiy songa tenglashadi, kamomad va ortiqcha yoziladi. «{warehouse}» omboridagi blok olib tashlanadi. Bajarilgan inventarizatsiyani oʻzgartirib ham, bekor qilib ham boʻlmaydi.",
+      "saveFirst": "Oʻzgarishlar saqlanmagan — bajarishdan oldin saqlang.",
+      "empty": "Bajarish uchun kamida bitta qatorni sanang va saqlang.",
+      "done": "{number} bajarildi"
     },
     "view": {
       "postedAt": "Bajarilgan",
