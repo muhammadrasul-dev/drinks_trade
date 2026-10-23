@@ -487,3 +487,11 @@ and 3 worktree too.
 ```
 start next tasks which don't interfere in separate sessions
 ```
+
+---
+
+## Prompt 47 — OQ'lar tavsiya bo'yicha, T-406/T-501/T-704/T-801 ni refactor qilib merge qilish (2026-10-23)
+
+```
+all as recommended, refactor and merge them
+```
