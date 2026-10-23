@@ -593,6 +593,23 @@ export async function getStockedSubWarehouses(
   return new Set(rows.map((row) => row.subWarehouseId));
 }
 
+/**
+ * Every (sub-warehouse, product) of the store's warehouse that holds stock
+ * (qty > 0) — the rows of the stock count form (§6.1). No lock: while a count
+ * is open nothing posts there (BR-8), and posting re-reads under the lock.
+ */
+export async function getWarehouseStock(
+  db: Tx,
+  ctx: ServiceContext,
+  warehouseId: string,
+): Promise<(StockKey & { qty: number })[]> {
+  return db.stockBalance.findMany({
+    where: { qty: { gt: 0 }, subWarehouse: { warehouseId, warehouse: { storeId: ctx.storeId } } },
+    select: { subWarehouseId: true, productId: true, qty: true },
+    orderBy: [{ subWarehouseId: 'asc' }, { productId: 'asc' }],
+  });
+}
+
 export interface ProductTotals {
   productId: string;
   /** Pieces across the store's warehouses. */
