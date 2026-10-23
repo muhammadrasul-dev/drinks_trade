@@ -14,6 +14,8 @@ SRS'dagi biznes savollar yopilgan. Bu yerda — arxitektura va DB loyihalashda c
 
 **2026-10-23 (Prompt 41):** OQ-23 yopildi — tavsiya bo'yicha (A). **Ochiq savol qolmadi.**
 
+**2026-10-23:** OQ-25 (T-901) yopildi — B: audit jurnalida faqat joriy do'kon yozuvlari.
+
 | # | Savol | Tavsiya | Holat |
 |---|---|---|---|
 | OQ-01 | Storno qilingan savdo P&L'da qaysi sanada aks etadi? | Asl hujjat sanasida (hujjat davr hisobidan butunlay chiqadi) | Yopilgan — asl sanada (A) |
@@ -40,6 +42,7 @@ SRS'dagi biznes savollar yopilgan. Bu yerda — arxitektura va DB loyihalashda c
 | OQ-23 | Xarid qatorida narx 0 bo'lishi mumkinmi (bonus/aksiya tovari)? | Ha — `inputPrice ≥ 0`; tannarx 0 bilan kiradi va o'rtacha tannarxni pasaytiradi | Yopilgan — A: 0 narx ruxsat |
 | OQ-20 | Omborda qoldig'i bor mahsulotni arxivlash mumkinmi? | Ha — ruxsat, tasdiqlash oynasida qolgan miqdor va "sotib bo'lmaydi" ogohlantirishi; arxivdan istalgan payt chiqariladi | Yopilgan — A: ruxsat, ogohlantirish bilan |
 | OQ-24 | Kassa jurnali qaysi tartibda ko'rsatiladi: hisobot sanasi (`tx_date`) yoki kiritilgan vaqt bo'yicha? | `tx_date` bo'yicha, yangisi tepada (teng bo'lsa — keyin kiritilgani tepada); o'tgan sana bilan kiritilgan yozuvlarda `balance_after` ketma-ket bo'lmasligi mumkin | Yopilgan — A (2026-10-23) |
+| OQ-25 | Audit jurnalida do'konga bog'lanmagan (`store_id IS NULL`) yozuvlar — muvaffaqiyatsiz kirish (`LOGIN_FAILED`) — Egasiga ko'rinadimi? | Ha — o'z tashkilotidagi foydalanuvchi haqidagilari va noma'lum login bilan urinishlar | Yopilgan — B (foydalanuvchi, 2026-10-23) |
 
 ---
 
@@ -146,3 +149,9 @@ B ga o'tish — `packages/shared/src/schemas/purchase.ts` da `.min(0)` → `.min
 - **A (tavsiya, T-701 da shunday):** `tx_date` kamayish bo'yicha, teng bo'lsa `id` kamayish bo'yicha. Sana filtri bilan bir xil mantiq; lekin kecha sanasi bilan bugun kiritilgan yozuv kechagi yozuvlar orasida turadi va uning `balance_after` qo'shni qatorlardan "sakraydi" (jadvalda kiritilgan vaqt ham ko'rsatiladi).
 - **B:** kiritilish tartibi (`id` kamayish) — `balance_after` doim ketma-ket, lekin sana ustuni tartibsiz ko'rinishi mumkin.
 B ga o'tish — `cash.queries.ts` da `orderBy: [{ id: 'desc' }]` (+ test).
+### OQ-25 — Audit jurnalida do'konsiz yozuvlar
+**Javob (2026-10-23): B** — tavsiyadan farqli. Audit sahifasi faqat joriy do'kon yozuvlarini ko'rsatadi (`store_id = ctx.storeId`); `store_id IS NULL` bo'lgan muvaffaqiyatsiz kirishlar hozircha kerak emas. `audit.queries.ts` va `audit.int.test.ts` shunga moslandi, `LOGIN_FAILED` filtr/tarjimalardan olib tashlandi (yozuvchi o'zgarmadi — yozuvlar bazada qoladi).
+T-901. `audit_log.store_id` ixtiyoriy: `LOGIN_FAILED` (`auth.service`) sessiyasiz yoziladi va `store_id = NULL`, `entity_id` — topilgan foydalanuvchi id'si yoki noma'lum bo'lsa terilgan login. Jurnal "do'kon darajasida" (database §2), lekin bu yozuvlar hech bir do'konga tegishli emas. BR-12 "har o'zgarish… faqat Egasi ko'radi" deydi, kirish urinishlari haqida aniq aytmaydi.
+- **A (tavsiya):** Egasi o'z do'koni yozuvlarini **va** `store_id IS NULL`, `entity_type = 'user'` bo'lgan yozuvlarni ko'radi — boshqa tashkilot foydalanuvchisi haqidagilari bundan mustasno. Noma'lum login bilan urinishlar ham ko'rinadi (v1 da bitta tashkilot, ular kimga tegishli ekanini aniqlab bo'lmaydi). Egasi parolni taxmin qilish urinishlarini ko'ra oladi.
+- **B (tanlandi, T-901 da shunday):** faqat `store_id = joriy do'kon` — muvaffaqiyatsiz kirishlar jurnalda ko'rinmaydi (faqat `login_attempt` blokida ishlaydi).
+A ga qaytish — `audit.queries.ts` dagi `where` ga `store_id IS NULL`, `entity_type = 'user'` (o'z tashkiloti foydalanuvchilari) shartini `OR` bilan qo'shish, `LOGIN_FAILED` ni `AUDIT_ACTIONS` va tarjimalarga qaytarish (+ test).

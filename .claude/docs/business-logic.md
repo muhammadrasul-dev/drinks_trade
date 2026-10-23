@@ -350,6 +350,13 @@ Amalda (T-303): `isLowStock(stockQty, minStock)` (`@drinks/shared`); `stockQty` 
 - Boshqa do'konniki → `NOT_FOUND { entity }`. O'zgarishsiz nom / qayta arxivlash / qayta tiklash — no-op. Arxivdagi tugunni qayta nomlash mumkin.
 - Audit: `CREATE` (`after.name`, sub-omborda `after.warehouseId` ham), `UPDATE` (`before/after.name`), `ARCHIVE` / `RESTORE` (`archivedAt`); `entityType` = `warehouse` | `sub_warehouse`.
 
+## 9d. Audit jurnali (T-901, BR-12, BR-13)
+- Faqat Egasi (`audit.read`); STAFF — sahifada 403, serverda `FORBIDDEN`. Faqat o'qish: `audit_log` ga yozuvchi yagona — `audit.log` (architecture §5.4).
+- Faqat joriy do'kon yozuvlari (`store_id = ctx.storeId`). Do'konsiz yozuvlar (`LOGIN_FAILED`) ko'rsatilmaydi (OQ-25, B).
+- Filtrlar: foydalanuvchi yoki "tizim" (`user_id IS NULL`, masalan CLI orqali parol tiklash), obyekt turi, amal, obyekt ID, sana oralig'i — Toshkent kuni bo'yicha `[from 00:00, to+1 00:00)`. 50 tadan, `created_at DESC, id DESC`.
+- `before`/`after`/`meta` dan maxfiy kalitlar (`pass…`, `hash`, `token`, `secret`) o'qishda ham olib tashlanadi. `meta.backdated` → "O'tgan sana" belgisi (BR-13).
+- Farq: ikkala tomon bo'lsa faqat o'zgargan maydonlar; hujjat qatorlari `lineNo` bo'yicha (qo'shildi / olib tashlandi / o'zgardi).
+
 ## 10. Xato kodlari (`shared/errors.ts`)
 
 | Kod | Qachon |
