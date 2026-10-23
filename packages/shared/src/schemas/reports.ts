@@ -17,3 +17,19 @@ export const stockReportQuerySchema = z.object({
   archived: z.boolean().optional(),
 });
 export type StockReportQuery = z.input<typeof stockReportQuerySchema>;
+
+/**
+ * Sales report (T-802, SRS §7.2): an inclusive `YYYY-MM-DD` range of store
+ * days (Asia/Tashkent); either end may be open. The page fills in the current
+ * month when the URL has no range (OQ-35).
+ */
+export const salesReportQuerySchema = z
+  .object({
+    from: z.iso.date().optional(),
+    to: z.iso.date().optional(),
+  })
+  .refine((value) => !value.from || !value.to || value.from <= value.to, {
+    path: ['to'],
+    message: 'to before from',
+  });
+export type SalesReportQuery = z.input<typeof salesReportQuerySchema>;
