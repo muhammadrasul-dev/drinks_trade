@@ -511,3 +511,11 @@ remove worktrees and start T-702 and T-502 in separate sessions
 ```
 I hit my usage limit while you were working, but it has reset now. Please continue from where you left off.
 ```
+
+---
+
+## Prompt 50 — Savdoni bajarib bo'lmayapti, savdo bo'limini tekshirish (2026-10-23)
+
+```
+bro i cannot bajarish this sale. Maybe it is not working well, check this in sales sections.
+```
