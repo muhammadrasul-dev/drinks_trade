@@ -130,7 +130,7 @@ export async function renderXlsx(document: ReportDocument): Promise<Buffer> {
   }
   if (document.totals) {
     const totals = document.totals;
-    const total = writeRow({ ...totals, emphasis: 'total' }, (column) => {
+    writeRow({ ...totals, emphasis: 'total' }, (column) => {
       const value = cellValue(column, totals.cells[column.key]);
       if (!column.sum || document.rows.length === 0 || typeof value !== 'number') return value;
       const letter = sheet.getColumn(column.key).letter;
@@ -139,7 +139,6 @@ export async function renderXlsx(document: ReportDocument): Promise<Buffer> {
         result: value,
       };
     });
-    total.eachCell((cell) => (cell.border = { top: RULE }));
   }
   if (document.note) {
     sheet.addRow([]);
