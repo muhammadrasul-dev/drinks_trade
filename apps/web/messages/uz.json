@@ -359,6 +359,42 @@
       "next": "Keyingi"
     }
   },
+  "stockReport": {
+    "title": "Mahsulotlar qoldigʻi",
+    "empty": "Qoldiq topilmadi.",
+    "archivedTag": "arxiv",
+    "lowStock": "Kam qoldi",
+    "lowStockTitle": "Minimal qoldiq: {min}",
+    "pieces": "= {qty} dona",
+    "storeQty": "Doʻkonda jami: {qty}",
+    "filters": {
+      "label": "Filtrlar",
+      "warehouse": "Ombor",
+      "allWarehouses": "Barcha omborlar",
+      "subWarehouse": "Sub-ombor",
+      "allSubWarehouses": "Barcha sub-omborlar",
+      "category": "Toifa",
+      "brand": "Brend",
+      "archived": "Mahsulot holati",
+      "archivedAll": "Faol va arxiv",
+      "archivedActive": "Faqat faol",
+      "archivedOnly": "Faqat arxiv",
+      "lowStock": "Kam qolganlar",
+      "reset": "Tozalash"
+    },
+    "totals": {
+      "label": "Hisobot boʻyicha jami",
+      "products": "Mahsulotlar:",
+      "value": "Qoldiq qiymati (tannarxda):"
+    },
+    "columns": {
+      "product": "Mahsulot",
+      "locations": "Joylashuv (ombor → sub-ombor)",
+      "qty": "Qoldiq",
+      "avgCost": "Oʻrtacha tannarx (1 dona)",
+      "value": "Qiymati"
+    }
+  },
   "products": {
     "title": "Mahsulotlar",
     "add": "Mahsulot qoʻshish",

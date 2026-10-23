@@ -864,6 +864,7 @@ JOIN product p        ON p.id  = sb.product_id
 WHERE w.store_id = $1 AND sb.qty > 0
 ORDER BY p.name, w.name, sw.name;
 ```
+Amalda (T-801): `reports.stock` (`modules/reports/stock-report.queries.ts`) — shu so'rov Prisma bilan, ustiga mahsulot filtrlari (toifa, brend, arxiv — `organization_id` bo'yicha) va joylashuv filtri (ombor, sub-ombor). Do'kon bo'yicha jami va o'rtacha tannarx — `product_cost` dan (`inventory.getProductTotals`); `value = costAmount(qty, avg_cost)`. "Kam qolganlar" filtrida (joylashuvsiz) `stock_balance` qatori yo'q, `min_stock > 0` mahsulotlar ham qo'shiladi (OQ-27).
 
 ### 7.2 Savdo hisoboti (mahsulot kesimida)
 ```sql
