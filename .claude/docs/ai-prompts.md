@@ -636,3 +636,11 @@ yes, first run tests and merge and push to main
 ```
 yes, do theese works and give information after that
 ```
+
+---
+
+## Prompt 65 — Texnik hujjatlarni loyiha imkoniyatlari bilan solishtirib, mijozlar uchun professional README yozish (2026-10-23)
+
+```
+bro we need check technical document and copare future and project oportuniy step by step and write all understanding all place for using real clients to readme file. It should be professional documents
+```

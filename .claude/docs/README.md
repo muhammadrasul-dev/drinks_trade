@@ -15,6 +15,6 @@ Ichimliklar do'koni uchun mini-ERP. Biznes talablar: [01-srs.md](01-srs.md) (v1.
 | [user-guide.md](user-guide.md) | Foydalanuvchi qo'llanmasi (Egasi, Xodim) | Do'kon egasi, xodim |
 | [ai-prompts.md](ai-prompts.md) | AI'ga berilgan barcha promptlar tarixi | Hamma |
 
-**Holat (2026-10-22):** barcha texnik savollar yopildi (faqat OQ-12 — deploy — keyingi bosqichga qoldi). Hujjatlar v1.0 nomzodi. Kod yozish hali boshlanmagan.
+**Holat (2026-10-23):** v1.0 tayyor — [ish rejasi](tasks.md) dagi barcha vazifalar bajarilgan (T-1003 bekor qilingan), ochiq savol yo'q (OQ-12 yopilgan: loyiha faqat lokal ishlaydi). Mijozlar uchun umumiy tavsif — repo ildizidagi [README.md](../../README.md).
 
 **O'qish tartibi (yangi ishtirokchi yoki AI uchun):** 01-srs → tasks → architecture → database → business-logic → conventions.
