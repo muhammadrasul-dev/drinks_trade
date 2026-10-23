@@ -503,3 +503,11 @@ all as recommended, refactor and merge them
 ```
 remove worktrees and start T-702 and T-502 in separate sessions
 ```
+
+---
+
+## Prompt 49 — Limit tiklangandan keyin davom ettirish (2026-10-23)
+
+```
+I hit my usage limit while you were working, but it has reset now. Please continue from where you left off.
+```
